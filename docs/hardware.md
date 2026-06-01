@@ -3,7 +3,9 @@
 Reverse-engineering record for writing a custom framework. Source: stock firmware at
 `/Users/rocry/Downloads/firmware/` (v1.4.0.0422). Started 2026-06-01.
 
-Confidence tags: **[C]** confirmed by direct evidence · **[?]** unconfirmed / inferred · **[HW]** needs the physical device to settle.
+Confidence tags: **[C]** confirmed by direct evidence · **[C-RE]** decoded from the binary · **[?]** unconfirmed / inferred · **[HW]** needs the physical device to settle.
+
+> **Recovered pin map + 103-command finsh list → [`firmware-analysis.md`](firmware-analysis.md).** USB-connect test (2026-06-01): device does **not** enumerate — no serial, no disk volume. Charge-only port.
 
 ---
 
@@ -28,15 +30,15 @@ Confidence tags: **[C]** confirmed by direct evidence · **[?]** unconfirmed / i
 | Subsystem | Part / detail | Tag |
 |---|---|---|
 | MCU | SF32LB52x N16R8, dual M33 | C / ? |
-| Display | **e-paper** (EPD busy-pin handshake, partial+full refresh, 4-level gray, ghost-clear); driver module named `st7789`; frontlight PWM on **PA01** | C |
-| Display controller + resolution | unknown (`CO5300`/`TFT` are SDK-template leftovers) | ? / HW |
+| Display | **e-paper** (4-level gray, partial+full refresh, busy-pin); **LCDC1 dual-SPI: CS=PA03 CLK=PA04 D0=PA05 D1=PA06**; frontlight PWM on **PA01**; driver module named `st7789` | C / C-RE |
+| Display controller + resolution | unknown (`CO5300`/`TFT` = SDK-template leftovers) | ? / HW |
 | Touch | **CST816** (I²C) | C |
 | Charger | **AW32001** (I²C) | C |
 | Fuel gauge | **BQ27220** (I²C) | C |
 | Audio | amp **AW8155** + SoC internal codec/`audprc` + PDM mic; 3A AEC/AGC/ANS; Opus | C |
 | Radio | **BLE + BT-classic only, NO WiFi**; internet via **BT-PAN tethering** | C |
-| Buses live | uart1/2, spi1, i2c1/2/4, gpio, pwm2, gpadc, flash1/2 | C |
-| I²C bus↔chip↔address mapping | unknown | ? |
+| Bus pins (recovered) | flash MPI2 `PA12/13/14/15/16/17`; console **UART1 RX=PA18 TX=PA19**; I²C1 `SCL=PA07`; I²C2 `SCL=PA31 SDA=PA32`; SPI1 `CLK=PA28 CS=PA29 DIO=PA24 DI=PA25` | C-RE |
+| I²C bus↔chip↔address mapping | unknown (2 buses; CST816/AW32001/BQ27220/AW8155 split TBD) | ? |
 
 ## 4. Memory / flash layout
 
@@ -54,9 +56,10 @@ NOR @ `0x12000000` (16 MB → `0x13000000`). Addresses below from `update.json`,
 
 - **[C]** Stock update path = **microSD "tf_ota"**: FAT32 card with `update.json` + the 3 `.bin` files → device verifies version+CRC32, writes, reboots. Skips if version not newer. **This is the safe recovery path — keep a known-good card.**
 - **[C]** Live **RT-Thread finsh shell** is compiled in. Commands present: `pin`, `regop`, `list_device`, `lcd_rreg`/`lcd_ctrl`, `epd_stat`/`epd_test`, `fal`, `nvds`, `kvdb_debug`.
-- **[C]** Debug UART / SWD pair = **PA18 / PA19** (the pins `dbguart2jlink` re-muxes; it writes pinmux regs `0x5000307c` / `0x50003080`).
+- **[C-RE]** Console/debug UART = **USART1: PA18=RX, PA19=TX** (recovered from firmware; also the SWD pair per datasheet — `dbguart2jlink` re-muxes them). **Attach a 3.3 V USB-UART here for the finsh shell.**
 - **[?]** finsh password likely `rtthread`; console baud likely 1000000 (else 115200) — both unverified.
-- **[C, from docs]** Custom builds flash with **`sftool -c SF32LB52`** over UART; enter ROM serial loader via the **Mode strap pin** (Mode=1). Exact Mode-pin location on this board **[HW]**.
+- **[C]** Boot straps (datasheet): `Bootstrap[1]=PA13`, `Bootstrap[0]=PA17` — sampled at reset (these pins double as MPI2 flash D1/D3 at runtime); LL=SPI-NOR boot.
+- **[C, from docs]** Flash custom builds with **`sftool -c SF32LB52 -p <port> -b 1000000 write_flash <file>@<addr>`** over UART (PA18/PA19); `--before default_reset` auto-enters the loader. sftool v0.2.3 ships macOS prebuilt binaries.
 
 ## 6. Cloud / protocol (for reference, not needed for bring-up)
 
@@ -78,7 +81,7 @@ NOR @ `0x12000000` (16 MB → `0x13000000`). Addresses below from `update.json`,
 - OpenSiFli SDK: https://github.com/OpenSiFli/SiFli-SDK **[C]**
 - OpenSiFli flash tool `sftool`: https://github.com/OpenSiFli/sftool **[? referenced by SDK docs]**
 - SiFli docs/wiki/downloads: https://wiki.sifli.com · https://docs.sifli.com · https://downloads.sifli.com **[C, reachable]**
-- Datasheet **DS0056 SF32LB56x V1.8** (note: this is **56x**, not our 52x): https://downloads.sifli.com/silicon/DS0056-SF32LB56x-Datasheet%20V1p8.pdf **[C]** — *still need the SF32LB52x datasheet* **[?]**
+- Datasheet **DS0052 SF32LB52x** (EN V2.3 / 中文 V2.4). Local: `refs/datasheets/DS0052-SF32LB52x-Datasheet-V2p3.pdf` (+ zh). URL: https://downloads.sifli.com/silicon/DS0052-SF32LB52x-Datasheet%20V2p3.pdf **[C]**. SKUs: SF32LB520U36/523UB6/525UC6/527UD6, all QFN68L, **45 GPIO (PA00–PA44)**.
 - RE precedent (sister SF32LB551, methodology + eZip format + default creds): https://blog.byterialab.com/reversing-the-xiaomi-redmi-watch-through-crafted-watchfaces/ **[C]**
 
 ---
@@ -88,10 +91,7 @@ NOR @ `0x12000000` (16 MB → `0x13000000`). Addresses below from `update.json`,
 Only steps I'm confident about, in order. No architecture guesses yet.
 
 1. **Read the chip marking** (open case) → settle 52x vs 56x. Everything downstream depends on it. **[HW]**
-2. **Get the pin map.** Three confirmed-viable methods, cheapest first:
-   - **finsh console** on PA18/PA19 → run `pin`, `list_device`, `regop`, `lcd_rreg` → reads live config, no disassembly. **[HW]**
-   - **Disassemble** `hcpu_app.bin` at base `0x12218000` (M33 Thumb-2) → recover every `HAL_PIN_Set(pad,func,flags,hcpu)` call; decode `func` via `sf32lb52x/bf0_pin_const.c`. Needs no hardware — **I can run this now.**
-   - **SWD dump** (J-Link/DAPLink on PA18/PA19) → full flash image + real partition table. **[HW]**
+2. **Pin map — DONE (partial)**, see [`firmware-analysis.md`](firmware-analysis.md). To COMPLETE it (I²C1 SDA, the EPD/touch GPIO roles, the SPI1 device): attach USB-UART to **PA18(RX)/PA19(TX)** and run `pin` + `list_device` on the live finsh console. **[HW]**
 3. **Keep a recovery microSD** with the stock files before touching anything (the tf_ota path is the un-brick).
 4. **Base the custom framework on the OpenSiFli SDK**, `sf32lb52-lcd_n16r8` board template; flash via `sftool -c SF32LB52`. Confirm the Mode strap pin location first.
 5. **Defer**: display controller/resolution and per-chip I²C addresses — resolve via `lcd_rreg` + `list_device`/`i2c` scan on the live console (step 2a), not by guessing.

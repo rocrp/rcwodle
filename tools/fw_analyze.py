@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Static pin-map recovery for SiFli SF32LB52x HCPU firmware.
 
-Disassembles hcpu_app.bin (Thumb-2, Cortex-M33, XIP base 0x12218000), finds the
-most-called function whose call sites set r0+r1 to immediates (= HAL_PIN_Set
-candidate), and decodes each call's (pad, func, flags, hcpu) into signal names
-using the SDK's pin_pad / pin_function enums.
+Disassembles hcpu_app.bin (Thumb-2, Cortex-M33, XIP base 0x12218000), models r0-r3
+immediates per call site, and finds the function whose calls best decode to valid
+(pad, func, hcpu) tuples (= HAL_PIN_Set). Decodes each call using the SDK enums.
 
-Run: uv run --with capstone python tools/fw_analyze.py
+Fast path: detail=False, parse op_str text. Run:
+  uv run --with capstone python tools/fw_analyze.py
 """
 
 import collections
@@ -14,14 +14,12 @@ import re
 import sys
 
 from capstone import CS_ARCH_ARM, CS_MODE_MCLASS, CS_MODE_THUMB, Cs
-from capstone.arm import ARM_INS_BL, ARM_INS_BLX, ARM_INS_MOV, ARM_INS_MOVT, ARM_INS_MOVW, ARM_OP_IMM, ARM_OP_REG
 
 FW = "/Users/rocry/Downloads/firmware/hcpu_app.bin"
 HDR = "/Users/rocry/w/_tmp/SiFli-SDK/drivers/cmsis/sf32lb52x/bf0_pin_const.h"
 BASE = 0x12218000
 
 
-# ---- parse the two enums from the header -------------------------------------
 def parse_enums(path):
     txt = open(path).read()
     enums = {}
@@ -29,9 +27,7 @@ def parse_enums(path):
         vals, cur = {}, -1
         for line in body.splitlines():
             line = re.sub(r"/\*.*?\*/", "", line).split("//")[0].strip().rstrip(",")
-            if not line:
-                continue
-            m = re.match(r"([A-Za-z_]\w*)\s*(?:=\s*([0-9xXa-fA-F]+))?$", line)
+            m = re.match(r"([A-Za-z_]\w*)\s*(?:=\s*([0-9xXa-fA-F]+))?$", line) if line else None
             if not m:
                 continue
             cur = int(m.group(2), 0) if m.group(2) else cur + 1
@@ -41,54 +37,100 @@ def parse_enums(path):
 
 
 enums = parse_enums(HDR)
-PAD = enums["pin_pad"]  # value -> PAD_xxx
-FUNC = enums["pin_function"]  # value -> signal name
-PULL = {0: "NOPULL", 1: "PULLUP", 2: "PULLDOWN"}  # PIN_NOPULL/UP/DOWN (verify)
+PAD = enums["pin_pad"]
+FUNC = enums["pin_function"]
+PULL = {0: "NOPULL", 16: "PULLDOWN", 48: "PULLUP"}  # PE=0x10, PS=0x20
 print(f"enums: pin_pad={len(PAD)} pin_function={len(FUNC)}", file=sys.stderr)
 
-# ---- disassemble -------------------------------------------------------------
+REG = re.compile(r"^(r\d+|sb|sl|fp|ip|sp|lr|pc)$")
+BRANCH = frozenset(
+    [
+        "b",
+        "bx",
+        "beq",
+        "bne",
+        "bcs",
+        "bhs",
+        "bcc",
+        "blo",
+        "bmi",
+        "bpl",
+        "bvs",
+        "bvc",
+        "bhi",
+        "bls",
+        "bge",
+        "blt",
+        "bgt",
+        "ble",
+        "bal",
+        "cbz",
+        "cbnz",
+        "cmp",
+        "cmn",
+        "tst",
+        "teq",
+    ]
+)
+
 code = open(FW, "rb").read()
 md = Cs(CS_ARCH_ARM, CS_MODE_THUMB | CS_MODE_MCLASS)
-md.detail = True
+md.detail = False
 
-calls = collections.defaultdict(list)  # target -> [(addr, r0,r1,r2,r3)]
-regs = {}  # reg name -> int|None
-pos = 0
-N = len(code)
+calls = collections.defaultdict(list)
+regs = {}
+pos, N, cnt = 0, len(code), 0
 while pos < N - 1:
     advanced = False
     for ins in md.disasm(code[pos:], BASE + pos):
         advanced = True
-        ops = ins.operands
-        try:
-            _, written = ins.regs_access()
-        except Exception:
-            written = []
-        wset = {ins.reg_name(r) for r in written}
-        d = None
-        if ins.id == ARM_INS_MOV and len(ops) == 2 and ops[0].type == ARM_OP_REG:
-            d = ins.reg_name(ops[0].reg)
-            if ops[1].type == ARM_OP_IMM:
-                regs[d] = ops[1].imm & 0xFFFFFFFF
-            elif ops[1].type == ARM_OP_REG:
-                regs[d] = regs.get(ins.reg_name(ops[1].reg))
-            wset.discard(d)
-        elif ins.id == ARM_INS_MOVW and len(ops) == 2 and ops[1].type == ARM_OP_IMM:
-            d = ins.reg_name(ops[0].reg)
-            regs[d] = ops[1].imm & 0xFFFF
-            wset.discard(d)
-        elif ins.id == ARM_INS_MOVT and len(ops) == 2 and ops[1].type == ARM_OP_IMM:
-            d = ins.reg_name(ops[0].reg)
-            regs[d] = None if regs.get(d) is None else (regs[d] & 0xFFFF) | ((ops[1].imm & 0xFFFF) << 16)
-            wset.discard(d)
-        elif ins.id in (ARM_INS_BL, ARM_INS_BLX) and ops and ops[0].type == ARM_OP_IMM:
-            tgt = ops[0].imm
-            calls[tgt].append((ins.address, regs.get("r0"), regs.get("r1"), regs.get("r2"), regs.get("r3")))
-            for r in ("r0", "r1", "r2", "r3", "r12", "lr"):
-                regs[r] = None
-            continue
-        for r in wset:
-            regs[r] = None
+        cnt += 1
+        if cnt % 400000 == 0:
+            print(f"  ..{cnt} insns @0x{ins.address:08x}", file=sys.stderr)
+        m, o = ins.mnemonic, ins.op_str
+        if m in ("bl", "blx"):
+            if o.startswith("#"):
+                try:
+                    tgt = int(o[1:], 0)
+                    calls[tgt].append((ins.address, regs.get("r0"), regs.get("r1"), regs.get("r2"), regs.get("r3")))
+                except ValueError:
+                    pass
+            for r in ("r0", "r1", "r2", "r3", "r12", "ip", "lr"):
+                regs.pop(r, None)
+        elif m.startswith("movt"):
+            p = [x.strip() for x in o.split(",")]
+            if len(p) == 2 and p[1].startswith("#") and p[0] in regs:
+                try:
+                    regs[p[0]] = (regs[p[0]] & 0xFFFF) | ((int(p[1][1:], 0) & 0xFFFF) << 16)
+                except ValueError:
+                    regs.pop(p[0], None)
+            elif p:
+                regs.pop(p[0], None)
+        elif m.startswith("movw"):
+            p = [x.strip() for x in o.split(",")]
+            if len(p) == 2 and p[1].startswith("#"):
+                try:
+                    regs[p[0]] = int(p[1][1:], 0) & 0xFFFF
+                except ValueError:
+                    regs.pop(p[0], None)
+        elif m.startswith("mov"):
+            p = [x.strip() for x in o.split(",")]
+            if len(p) == 2 and REG.match(p[0]):
+                if p[1].startswith("#"):
+                    try:
+                        regs[p[0]] = int(p[1][1:], 0) & 0xFFFFFFFF
+                    except ValueError:
+                        regs.pop(p[0], None)
+                elif REG.match(p[1]) and p[1] in regs:
+                    regs[p[0]] = regs[p[1]]
+                else:
+                    regs.pop(p[0], None)
+            elif p and REG.match(p[0]):
+                regs.pop(p[0], None)
+        elif m not in BRANCH and not m.startswith("str") and not m.startswith("push") and not m.startswith("stm"):
+            first = o.split(",", 1)[0].strip()
+            if REG.match(first):
+                regs.pop(first, None)
         np = ins.address - BASE + ins.size
         if np <= pos:
             break
@@ -97,36 +139,38 @@ while pos < N - 1:
         pos += 2
         regs.clear()
 
-
-# ---- rank candidates ---------------------------------------------------------
-def score(lst):
-    return sum(1 for _, a, b, *_ in lst if a is not None and b is not None)
+print(f"  total {cnt} insns, {len(calls)} call targets", file=sys.stderr)
 
 
-ranked = sorted(calls.items(), key=lambda kv: score(kv[1]), reverse=True)
-print("\n# top call targets by (#sites with r0&r1 immediate):")
-for tgt, lst in ranked[:12]:
-    print(f"  0x{tgt:08x}  total_calls={len(lst):4d}  with_imm_r0r1={score(lst):4d}")
+def valid(lst):  # how many calls decode to a real (pad PA/PB, func, hcpu in 0/1)
+    n = 0
+    for _, r0, r1, r2, r3 in lst:
+        if r0 in PAD and r1 in FUNC and r3 in (0, 1) and PAD[r0].startswith(("PAD_PA", "PAD_PB")):
+            n += 1
+    return n
 
-# ---- dump decoded table for the top candidate --------------------------------
-if ranked:
-    tgt, lst = ranked[0]
-    print(f"\n# decoded call sites of top candidate 0x{tgt:08x} (assumed HAL_PIN_Set: pad,func,flags,hcpu)")
-    rows = []
-    for addr, r0, r1, r2, r3 in lst:
-        if r0 is None or r1 is None:
-            continue
-        pad = PAD.get(r0, f"?{r0}")
-        fn = FUNC.get(r1, f"?{r1}")
-        pull = PULL.get(r2, f"flags={r2}") if r2 is not None else "?"
-        cpu = {1: "HCPU", 0: "LCPU"}.get(r3, f"?{r3}")
-        rows.append((pad, fn, pull, cpu, addr))
-    # de-dup identical (pad,func) keeping first
-    seen = set()
-    for pad, fn, pull, cpu, addr in rows:
-        key = (pad, fn, cpu)
-        if key in seen:
-            continue
-        seen.add(key)
-        print(f"  {pad:10s} {fn:18s} {pull:9s} {cpu:5s}  @0x{addr:08x}")
-    print(f"\n# {len(seen)} unique (pad,func,cpu) tuples from {len(lst)} calls")
+
+ranked = sorted(calls.items(), key=lambda kv: valid(kv[1]), reverse=True)
+print("\n# top targets by valid (pad,func,hcpu) decode rate:")
+for tgt, lst in ranked[:8]:
+    print(f"  0x{tgt:08x}  calls={len(lst):4d}  valid_pin_decodes={valid(lst):4d}")
+
+# merge all high-confidence pin-setter targets (HAL_PIN_Set + veneers/wrappers)
+PINSET = [(t, l) for t, l in calls.items() if valid(l) >= 5 and valid(l) >= 0.4 * len(l)]
+print("\n# merging pin-setter targets: " + ", ".join(f"0x{t:08x}({valid(l)}/{len(l)})" for t, l in PINSET))
+
+pins = {}  # pad -> set of (func, pull, cpu)
+for t, l in PINSET:
+    for addr, r0, r1, r2, r3 in l:
+        if r0 in PAD and r1 in FUNC and r3 in (0, 1) and PAD[r0].startswith(("PAD_PA", "PAD_PB")):
+            pins.setdefault(PAD[r0][4:], set()).add((FUNC[r1], PULL.get(r2, f"f{r2}"), "HCPU" if r3 else "LCPU"))
+
+
+def padkey(p):
+    return (p[1], int(p[2:]))
+
+
+print(f"\n# recovered pin map ({len(pins)} pads):")
+for pad in sorted(pins, key=padkey):
+    for fn, pull, cpu in sorted(pins[pad]):
+        print(f"  {pad:5s} {fn:18s} {pull:9s} {cpu}")
