@@ -1,0 +1,30 @@
+{
+  "version": "V1.4.0.0246",
+  "generated_at": "2026-05-23T04:32:47Z",
+  "files": [
+    {
+      "name": "ezip_image.bin",
+      "addr": "0x12460000",
+      "region_size": "0x00680000",
+      "size": 1132764,
+      "crc32": "0x14FDCAB9",
+      "file_id": 1
+    },
+    {
+      "name": "font_data.bin",
+      "addr": "0x12AE0000",
+      "region_size": "0x00400000",
+      "size": 1702412,
+      "crc32": "0xADF81AF6",
+      "file_id": 2
+    },
+    {
+      "name": "hcpu_app.bin",
+      "addr": "0x12218000",
+      "region_size": "0x00240000",
+      "size": 2142852,
+      "crc32": "0xE6A5825E",
+      "file_id": 0
+    }
+  ]
+}

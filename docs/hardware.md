@@ -31,7 +31,8 @@ Confidence tags: **[C]** confirmed by direct evidence · **[C-RE]** decoded from
 |---|---|---|
 | MCU | SF32LB52x N16R8, dual M33 | C / ? |
 | Display | **e-paper** (4-level gray, partial+full refresh, busy-pin); **LCDC1 dual-SPI: CS=PA03 CLK=PA04 D0=PA05 D1=PA06**; frontlight PWM on **PA01**; driver module named `st7789` | C / C-RE |
-| Display controller + resolution | unknown (`CO5300`/`TFT` = SDK-template leftovers) | ? / HW |
+| Display resolution | **528 × 792** (portrait), recovered from create-call | C-RE |
+| Display controller | unknown (`CO5300`/`TFT` = SDK-template leftovers) | ? / HW |
 | Touch | **CST816** (I²C) | C |
 | Charger | **AW32001** (I²C) | C |
 | Fuel gauge | **BQ27220** (I²C) | C |
