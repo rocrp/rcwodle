@@ -42,12 +42,65 @@ Merged from 2 pin-setter call targets (`0x1221e2c0`, `0x1244f788`). 974k instruc
 - **NOR flash 16 MB** → MPI2/QSPI2 (`0x12000000`): `CS=PA12, CLK=PA16, D0=PA15, D1=PA13, D2=PA14, D3=PA17`.
 - **Console/debug UART** → USART1: `RX=PA18, TX=PA19` (also the SWD pair per datasheet).
 - **I²C1** `SCL=PA07` (SDA `[?]`) · **I²C2** `SCL=PA31, SDA=PA32`. Which of CST816 / AW32001 / BQ27220 / AW8155 sits on which bus = `[?]` (needs live `i2c` scan or deeper RE).
-- **SPI1** `CLK=PA28, CS=PA29, DIO=PA24, DI=PA25` — peripheral `[?]`.
+- **SPI1** `CLK=PA28, CS=PA29, DIO=PA24, DI=PA25` — device `[?]`; **likely the microSD/TF card in SPI mode** (firmware probes `sdcard` and no SDMMC pins were recovered) or a NOR MTD. Unconfirmed.
 
 **Limits (honest):** static recovery only captures `HAL_PIN_Set` calls with constant args, so
 this map is high-confidence but **partial**. Missing: I²C1 SDA, the per-GPIO purposes
 (EPD/touch control lines), and any pin set via computed args. The live finsh `pin` /
 `list_device` dump (UART on PA18/PA19) would complete and cross-check it.
+
+## I²C device map (`tools/fw_xref.py`)
+
+Each driver's init function references exactly one bus-name string → solid bus assignment.
+
+| Bus | Pins | Device | Addr (7-bit) | Tag |
+|---|---|---|---|---|
+| I²C1 | SCL=PA07, SDA=? (likely PA08) | CST816 touch | **0x15** (`0x2a` = 0x15<<1 seen) | C-RE |
+| I²C2 | SCL=PA31, SDA=PA32 | AW32001 charger | **0x49** (seen directly) | C-RE |
+| I²C2 | (same bus) | BQ27220 fuel gauge | 0x55 (part default; not seen in scan) | C-RE bus / ? addr |
+| — | GPIO / I²S | AW8155 speaker amp | **not on I²C** (mode-pin controlled) | C-RE |
+
+## Flash / partition layout (refined)
+
+flash2 = MPI2/QSPI2, base `0x12000000`, 16 MB. FAL magic `0x45503130` found only for dfu+ble
+(the rest of the layout lives in the ftab, not FAL):
+
+| Region | Offset | Addr | Size |
+|---|---|---|---|
+| ftab + bootloader (+?) | 0x000000 | 0x12000000 | → 0x218000 |
+| HCPU app | 0x218000 | 0x12218000 | 0x240000 |
+| dfu (FAL) | 0x458000 | 0x12458000 | 16 K |
+| ble NVDS (FAL) | 0x45c000 | 0x1245c000 | 16 K |
+| ezip assets | 0x460000 | 0x12460000 | 0x680000 |
+| font_data | 0xAE0000 | 0x12AE0000 | 0x400000 |
+| FS / KVDB | 0xEE0000 | 0x12EE0000 | ~1.1 M |
+
+## Audio
+
+Opus codec; sample rates 16000 / 24000 / 48000 present; configurable `frame_ms`/`frame_dur`;
+full **3A** front-end (AEC/AGC/ANS); PDM mic. Speaker via **AW8155** class-D amp (GPIO mode
+control, not I²C). Architecture: `audio_server` + `audio_3a` (uplink/downlink/far-end) + HFP.
+
+## Power (AW32001 charger + BQ27220 gauge, both I²C2)
+
+- **AW32001 @0x49**: configured **IIN=550mA, ICHG=512mA, IPRE=31mA, VBAT=4.20V, VSYS=4.60V**;
+  registers REG00..REG0C; shipping mode (EN_HIZ / FET_DIS / DIS_SHIPINT) for storage; the
+  `shutdown` path requests shipping mode (fallback = SoC shutdown).
+- **BQ27220**: reports percent, voltage(mV), current(mA), avg power(mW), batt_status, charging.
+
+## Fonts & assets
+
+- `font_data.bin` = standard **TTF/OTF** (sfnt `0x00010000`; GDEF/GPOS tables). Embedded face:
+  **Ubuntu Mono Bold v0.80** (Dalton Maag) + a CJK face. Rendered via LVGL `tiny_ttf`
+  (stb_truetype). → a custom framework can use stock TTFs.
+- `ezip_image.bin` = sprite atlas: 22 sprites, 24-byte descriptors `{fmt, w, h, size, XIP-ptr}`,
+  sizes 28×28 … **528×256**, XIP-mapped at `0x12460000`.
+
+## Display resolution
+
+Not stored as a readable string/constant; the largest asset is 528×256 → screen width is
+**≥ ~528** (e-reader form factor). **Exact resolution + EPD controller part = unconfirmed [?]**
+— read live via `lcd_rreg` / `epd_stat`, or by disassembling the LCDC init.
 
 ## finsh / MSH command inventory (103)
 

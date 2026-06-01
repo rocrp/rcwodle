@@ -38,7 +38,7 @@ Confidence tags: **[C]** confirmed by direct evidence · **[C-RE]** decoded from
 | Audio | amp **AW8155** + SoC internal codec/`audprc` + PDM mic; 3A AEC/AGC/ANS; Opus | C |
 | Radio | **BLE + BT-classic only, NO WiFi**; internet via **BT-PAN tethering** | C |
 | Bus pins (recovered) | flash MPI2 `PA12/13/14/15/16/17`; console **UART1 RX=PA18 TX=PA19**; I²C1 `SCL=PA07`; I²C2 `SCL=PA31 SDA=PA32`; SPI1 `CLK=PA28 CS=PA29 DIO=PA24 DI=PA25` | C-RE |
-| I²C bus↔chip↔address mapping | unknown (2 buses; CST816/AW32001/BQ27220/AW8155 split TBD) | ? |
+| I²C devices | **I²C1:** CST816 touch @0x15. **I²C2** (PA31/32): AW32001 charger @0x49 + BQ27220 gauge @0x55. AW8155 amp = not I²C (GPIO mode pin) | C-RE |
 
 ## 4. Memory / flash layout
 
@@ -48,8 +48,9 @@ NOR @ `0x12000000` (16 MB → `0x13000000`). Addresses below from `update.json`,
 |---|---|---|---|
 | (ftab + bootloader + ?) | `0x12000000`–`0x12218000` | ~2.2 MB | contents **[?]** (likely ftab/bootloader/lcpu) |
 | `hcpu_app.bin` | `0x12218000` | `0x240000` | HCPU app, XIP |
-| `ezip_image.bin` | `0x12460000` | `0x680000` | eZip UI asset atlas |
-| `font_data.bin` | `0x12AE0000` | `0x400000` | packed fonts |
+| dfu / ble NVDS (FAL) | `0x12458000` / `0x1245c000` | 16 K each | OTA flag + BLE bond store |
+| `ezip_image.bin` | `0x12460000` | `0x680000` | eZip sprite atlas (≤528×256) |
+| `font_data.bin` | `0x12AE0000` | `0x400000` | TTF (Ubuntu Mono Bold + CJK) |
 | (FS / KVDB) | `0x12EE0000`–`0x13000000` | ~1.1 MB | **[?]** |
 
 ## 5. Flashing & low-level access
