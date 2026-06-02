@@ -81,9 +81,8 @@ this loop **cannot brick the recovery path**.
 **Channel A — USB cable (daily driver).** Enter recovery: power off → hold recovery button (GPIO-43;
 exact physical button TBD by experiment) → plug USB → enumerates `/dev/cu.usbmodem*`. Then:
 ```
-python tools/wodle_usbrec.py hello                                    # link + region check
-python tools/wodle_usbrec.py write --addr 0x12218000 --file <app>.bin # BEGIN→ERASE→WRITE(crc)→COMMIT
-python tools/wodle_usbrec.py reboot
+python tools/wodle_flash.py hello                                # link + device info
+python tools/wodle_flash.py write <app>.bin --addr 0x12218000    # BEGIN→ERASE→WRITE→VERIFY→COMMIT→REBOOT
 ```
 Protocol + region access cracked; CLI frame-format unit-verified. End-to-end on hardware = the one
 unproven step; the button experiment + `hello` validate it in <1 min.

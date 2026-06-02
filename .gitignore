@@ -4,6 +4,7 @@
 # Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
 
 # CMake / C++ out-of-source builds (e.g. tools/usb_recovery_qt/build)
 build/

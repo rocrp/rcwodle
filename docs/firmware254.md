@@ -85,10 +85,10 @@ exactly Python `zlib.crc32(payload)`. Confirmed from the bitwise routine at `0x1
 worker, then validates. `RX error len=%u expected=%u` ⇒ a length-prefixed read (header→payload). Host
 side: send the whole frame in one write; read responses by syncing on `HVR1`, reading 24-byte header,
 then `size` payload bytes. (One transport nuance — header-then-payload split vs single write — is the
-only thing left to confirm live; `tools/wodle_usbrec.py` sends contiguous, the robust choice.)
+only thing left to confirm live; `tools/wodle_flash.py` sends contiguous, the robust choice.)
 
 **Entry:** device Settings → "USB recovery", or finsh `usb_recovery_mode` → reboots into CDC; appears as
-`/dev/cu.usbmodem*` on macOS. Drive with **`tools/wodle_usbrec.py`** (pyserial, no BLE/UART/PAN needed).
+`/dev/cu.usbmodem*` on macOS. Drive with **`tools/wodle_flash.py`** (pyserial, no BLE/UART/PAN needed).
 
 ## 3. `app_new.bin` = the real V0853 app
 2.3 MB, `chip_model sf32lb563`, `xiaozhi.me`, `__cmd_xiaozhi2` — the actual new application installed

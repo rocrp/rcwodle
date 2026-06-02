@@ -87,8 +87,13 @@ HELLO → BEGIN → for each file (app, font, ezip):
 
 - `flash <manifest>` — full sequence above. Flags: `--port`, `--dry-run` (print plan, no port),
   `--verify-only`, `--no-reboot`, `--yes` (skip the destructive-op confirm), `--only app,font`.
-- low-level verbs for bring-up: `hello`, `erase --addr --size`, `write --addr --file`,
-  `verify --addr --file`, `commit`, `reboot`. Shared `--port`.
+- `write <bin> --addr <a>` — flash one raw `.bin` in a single session (firmware dev loop):
+  HELLO→BEGIN→ERASE→WRITE→VERIFY→COMMIT→reboot. `--no-reboot`, `--yes`, `--port`.
+- `hello`, `reboot` — one-shot link probe / exit-recovery. Shared `--port`.
+
+Per-partition flashing from a manifest uses `flash --only app`; the standalone à la carte
+verbs (begin/erase/verify/commit) were dropped — the recovery session doesn't survive a port
+close between separate CLI invocations, so they can't be composed across processes anyway.
 
 Default `flash` reboots on success (job done = device running new firmware); `--no-reboot`
 keeps it in recovery for re-verify.
