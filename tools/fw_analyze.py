@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["capstone"]
+# ///
 """Static pin-map recovery for SiFli SF32LB52x HCPU firmware.
 
 Disassembles hcpu_app.bin (Thumb-2, Cortex-M33, XIP base 0x12218000), models r0-r3
@@ -6,7 +10,7 @@ immediates per call site, and finds the function whose calls best decode to vali
 (pad, func, hcpu) tuples (= HAL_PIN_Set). Decodes each call using the SDK enums.
 
 Fast path: detail=False, parse op_str text. Run:
-  uv run --with capstone python tools/fw_analyze.py
+  uv run tools/fw_analyze.py
 """
 
 import collections

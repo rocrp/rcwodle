@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["capstone"]
+# ///
 """Cross-reference chip drivers to their I2C bus + slave address in hcpu_app.bin.
 
 The image is XIP-mapped 1:1 at BASE, so VA = BASE + file_offset. We resolve
@@ -6,7 +10,7 @@ The image is XIP-mapped 1:1 at BASE, so VA = BASE + file_offset. We resolve
 string and each bus-name string ("i2c1"/"i2c2"/...), then report co-located
 buses and candidate 7-bit I2C addresses (immediates 0x08-0x77).
 
-Run: uv run --with capstone python tools/fw_xref.py
+Run: uv run tools/fw_xref.py
 """
 
 import re

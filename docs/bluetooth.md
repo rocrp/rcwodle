@@ -121,8 +121,8 @@ BT-Classic for the app link.
    from the phone.
 2. From a normal Ghostty/Terminal (NOT zellij/SSH — BT is silently denied there):
    ```
-   uv run --with bleak python tools/wodle_ble.py scan          # find "AI Dou"
-   uv run --with bleak python tools/wodle_ble.py info <addr>    # dump every GATT service/char
+   uv run tools/wodle_ble.py scan          # find "AI Dou"
+   uv run tools/wodle_ble.py info <addr>    # dump every GATT service/char
    ```
 3. If `info` shows a service with **write + notify** characteristics → there may be a usable channel;
    `tools/wodle_ble.py listen/send` can then probe it.

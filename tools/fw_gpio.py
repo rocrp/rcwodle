@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["capstone"]
+# ///
 """Infer GPIO control-line roles: for each driver (by anchor string), find its
 function and report immediates that equal an unassigned GPIO pad index. For
 HCPU, RT-Thread pin number == PA index, so immediate N => PA<N>.
 
 Validation anchors: EPD backlight should show 1 (PA01), button should show 34 (PA34).
 
-Run: uv run --with capstone python tools/fw_gpio.py
+Run: uv run tools/fw_gpio.py
 """
 
 import re

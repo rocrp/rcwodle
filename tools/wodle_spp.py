@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["pyobjc-framework-Cocoa", "pyobjc-framework-IOBluetooth"]
+# ///
 """wodle classic-Bluetooth SPP CLI (macOS / PyObjC IOBluetooth).
 
 The wodle's primary app transport is BT-Classic (it runs an SPP server + A2DP/HFP/PAN).
@@ -10,9 +14,9 @@ Mac (it isn't yet; it's bonded to the phone). Validate once it's pairable. RFCOM
 follows the IOBluetooth API; mac classic-BT support is finicky, so treat as a starting point.
 
 Run from a real Terminal (not zellij/SSH — BT silently denied there):
-  uv run --with pyobjc-framework-IOBluetooth python tools/wodle_spp.py inquiry
-  uv run --with pyobjc-framework-IOBluetooth python tools/wodle_spp.py sdp <addr>
-  uv run --with pyobjc-framework-IOBluetooth python tools/wodle_spp.py connect <addr> [hex|str:text]
+  uv run tools/wodle_spp.py inquiry
+  uv run tools/wodle_spp.py sdp <addr>
+  uv run tools/wodle_spp.py connect <addr> [hex|str:text]
 """
 
 import sys

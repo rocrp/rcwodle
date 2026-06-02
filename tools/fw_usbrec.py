@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["capstone"]
+# ///
 """Recover the USB-recovery frame magic/version from dfu_pan.bin.
 
 The recovery service prints '[usb_recovery] FRAME reject ... magic=0x%08x version=%u'
@@ -13,7 +17,7 @@ constant just before branching to that printf. We:
      auto-flagging magic candidates (materialized 32-bit consts shown as ASCII + every
      cmp). The magic is the const compared right before the reject branch.
 
-  uv run --with capstone python tools/fw_usbrec.py
+  uv run tools/fw_usbrec.py
 """
 
 import struct

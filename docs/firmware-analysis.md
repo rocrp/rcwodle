@@ -243,5 +243,5 @@ and (b) FLIRT-match symbols into the stock binary.
 ## Reproduce
 
 ```
-uv run --with capstone python tools/fw_analyze.py
+uv run tools/fw_analyze.py
 ```

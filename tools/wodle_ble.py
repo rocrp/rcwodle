@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["bleak"]
+# ///
 """wodle BLE CLI — talk to the "AI Dou" (SiFli SF32LB52x) over BLE GATT.
 
 The device exposes a custom 128-bit GATT service (found in firmware:
@@ -10,10 +14,10 @@ Ghostty/Terminal window (grant Bluetooth when macOS prompts). If `scan` finds no
 that's the most likely cause — not the device.
 
 Usage (via uv, auto-installs bleak):
-  uv run --with bleak python tools/wodle_ble.py scan
-  uv run --with bleak python tools/wodle_ble.py info  <addr-or-name>
-  uv run --with bleak python tools/wodle_ble.py listen <addr-or-name> [char-uuid]
-  uv run --with bleak python tools/wodle_ble.py send  <addr-or-name> <char-uuid> <hex|str:text>
+  uv run tools/wodle_ble.py scan
+  uv run tools/wodle_ble.py info  <addr-or-name>
+  uv run tools/wodle_ble.py listen <addr-or-name> [char-uuid]
+  uv run tools/wodle_ble.py send  <addr-or-name> <char-uuid> <hex|str:text>
 """
 
 import asyncio

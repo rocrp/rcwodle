@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["capstone"]
+# ///
 """Find display resolution by reading the immediate args of create-style calls
 (e.g. lv_display_create(hor,ver), LCDC config). Reports bl sites where r0 & r1
 are both resolution-like integers, grouped by target.
 
-Run: uv run --with capstone python tools/fw_res.py
+Run: uv run tools/fw_res.py
 """
 
 import collections
@@ -20,7 +24,33 @@ md = Cs(CS_ARCH_ARM, CS_MODE_THUMB | CS_MODE_MCLASS)
 md.detail = False
 REG = re.compile(r"^(r\d+|sb|sl|fp|ip|sp|lr|pc)$")
 BR = frozenset(
-    ["b", "bx", "beq", "bne", "bcs", "bhs", "bcc", "blo", "bmi", "bpl", "bvs", "bvc", "bhi", "bls", "bge", "blt", "bgt", "ble", "bal", "cbz", "cbnz", "cmp", "cmn", "tst", "teq"]
+    [
+        "b",
+        "bx",
+        "beq",
+        "bne",
+        "bcs",
+        "bhs",
+        "bcc",
+        "blo",
+        "bmi",
+        "bpl",
+        "bvs",
+        "bvc",
+        "bhi",
+        "bls",
+        "bge",
+        "blt",
+        "bgt",
+        "ble",
+        "bal",
+        "cbz",
+        "cbnz",
+        "cmp",
+        "cmn",
+        "tst",
+        "teq",
+    ]
 )
 calls = collections.defaultdict(list)
 regs = {}

@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["capstone"]
+# ///
 """For each anchor substring, find the enclosing function(s) and dump every other
 string literal that function references (via `ldr rX,[pc]` literal pools). Reveals
 config-file paths, the keys parsed next to them, and nearby log messages.
 
-Run: uv run --with capstone python tools/fw_strxref.py
+Run: uv run tools/fw_strxref.py
 """
 
 import re

@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["bleak"]
+# ///
 """Continuously watch for the wodle to appear over BLE; the instant it does, connect,
 dump its full GATT, and print a verdict on whether a usable control channel exists.
 
 Runs hands-free: leave it running, then power-cycle the wodle or take it off the phone.
 The moment it advertises, this captures the answer. Exits when the device is found.
 
-  uv run --with bleak python tools/wodle_watch.py [max_minutes]
+  uv run tools/wodle_watch.py [max_minutes]
 """
 
 import asyncio

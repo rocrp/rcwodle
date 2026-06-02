@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["capstone", "pyelftools"]
+# ///
 """FLIRT-lite: locate functions from a symboled reference ELF inside the stripped
 stock firmware by masked byte-signature matching.
 
@@ -8,7 +12,7 @@ stock image for that pattern. A unique match => that symbol's address in the
 stock firmware. Especially useful to pin HAL_PIN_Set and rt_pin_attach_irq.
 
 Usage:
-  uv run --with pyelftools --with capstone python tools/fw_symmatch.py <ref.elf> [name1 name2 ...]
+  uv run tools/fw_symmatch.py <ref.elf> [name1 name2 ...]
 If no names given, matches a default watchlist + any FUNC symbol >= 24 bytes.
 """
 
