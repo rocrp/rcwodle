@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+
+# CMake / C++ out-of-source builds (e.g. tools/usb_recovery_qt/build)
+build/
