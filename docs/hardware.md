@@ -15,9 +15,9 @@ Confidence tags: **[C]** confirmed by direct evidence · **[C-RE]** decoded from
 - **[C]** Dual-core **Cortex-M33** (HCPU + LCPU).
 - **[C]** Stack: **RT-Thread** + **LVGL v9** + cherryusb/MUSB + lwIP 2.1.2 + FlashDB. Built with GCC arm-none-eabi.
 - **[C]** Silicon memory map is **SF32LB52x-style**: flash XIP base `0x12000000` = `QSPI2_MEM_BASE` (verified in SDK `drivers/cmsis/sf32lb52x/mem_map.h:102`). Also `dbguart2jlink` exists only `#if SF32LB52X`; `sftool` only supports `-c SF32LB52`; board macro `SF32LB52_LCD_N16R8_TFT_CO5300` embedded.
-- **[?]** Exact part: **SF32LB52x, N16R8** (≈16 MB ext QSPI NOR + 8 MB PSRAM, from the `N16R8` board tag). Firmware self-labels `sf32lb563` / board `hdk563` — treat as vendor mislabel.
+- **[C]** Exact part: **SF32LB525 (525UC6)**, N16R8 (16 MB ext QSPI NOR + 8 MB PSRAM). Confirmed by **physical board marking "思澈/SiFli 525"** (user, 2026-06-02) — matches the part already chosen in `board/wodle/ptab.yaml` (`SF32LB525UC6`). Firmware self-labels `sf32lb563`/`hdk563` — **confirmed mislabel** (build is `sf32lb52-lcd_n16r8`, `sftool -c SF32LB52`, XIP base `0x12000000`=QSPI2, `dbguart2jlink` `#if SF32LB52X`). SiFli's own 525 EVB = SDK board `eh-lb525`.
 - **[C]** Product = "AI Dou" (`ai_dou`), vendor **hiveton** (`hiveton-dou-project`). A XiaoZhi-AI voice e-reader.
-- **[HW]** **#1 open question: confirm silicon by reading the chip silkscreen.** Determines which CMSIS enum set (`sf32lb52x` vs `sf32lb56x`) to use for pin decoding.
+- **[C]** ~~#1 open question: 52x vs 56x~~ **RESOLVED → SF32LB52x (525).** Use the `sf32lb52x` CMSIS enum set for pin decoding. Remaining HW open items: EPD controller/resolution detail + GPIO roles (§8), and whether the cellular modem (below) is populated.
 
 ## 2. Why there is no `/dev/cu.*`
 
@@ -37,9 +37,12 @@ Confidence tags: **[C]** confirmed by direct evidence · **[C-RE]** decoded from
 | Charger | **AW32001** (I²C) | C |
 | Fuel gauge | **BQ27220** (I²C) | C |
 | Audio | amp **AW8155** + SoC internal codec/`audprc` + PDM mic; 3A AEC/AGC/ANS; Opus | C |
-| Radio | **BLE + BT-classic only, NO WiFi**; internet via **BT-PAN tethering** | C |
+| Radio (on-chip) | **BLE + BT-classic only, NO WiFi** (SiFli internal); internet via **BT-PAN tether** to a phone (lwIP-over-BNEP). Both fw v0422 & v0853: `net: BT/PAN only manager initialized` | C |
+| Cellular (board) | **Quectel EG800Q** — LTE **Cat 1 bis (4G)** modem (LGA; ~10/5 Mbps; variants EG800Q-NA / EG800K-EU 2G+4G). Reported on PCB (user, 2026-06-02). **NOT used by either firmware** — exhaustive bin scan found zero AT / SIM / Quectel / USB-modem-CDC code. So on the builds we have it is **unpopulated or fw-unused**; a 4G data path needs different firmware. **Confirm by PCB inspection** (LGA module + nano-SIM holder) | ?-HW |
 | Bus pins (recovered) | flash MPI2 `PA12/13/14/15/16/17`; console **UART1 RX=PA18 TX=PA19**; I²C1 `SCL=PA07`; I²C2 `SCL=PA31 SDA=PA32`; SPI1 `CLK=PA28 CS=PA29 DIO=PA24 DI=PA25` | C-RE |
 | I²C devices | **I²C1:** CST816 touch @0x15. **I²C2** (PA31/32): AW32001 charger @0x49 + BQ27220 gauge @0x55. AW8155 amp = not I²C (GPIO mode pin) | C-RE |
+
+> **Connectivity caveat (2026-06-02).** A `boot.network_mode=bt` setting exists on the SD card (`config/network_mode.cfg`) — the *name* implies the product family is designed for **selectable** network modes, consistent with a 4G SKU. But **only `bt` is implemented** in fw v0422/v0853 (no `4g`/`cell` mode token found). If the EG800Q is populated, a custom framework could add **standalone 4G** (no phone tether): the modem attaches over UART (AT) or USB — find which SiFli UART is wired to it (only UART1=PA18/19 console is mapped so far; UART2=PA20/27 is a candidate).
 
 ## 4. Memory / flash layout
 
@@ -92,7 +95,7 @@ NOR @ `0x12000000` (16 MB → `0x13000000`). Addresses below from `update.json`,
 
 Only steps I'm confident about, in order. No architecture guesses yet.
 
-1. **Read the chip marking** (open case) → settle 52x vs 56x. Everything downstream depends on it. **[HW]**
+1. ~~Read the chip marking → settle 52x vs 56x.~~ **DONE — it's SF32LB525.** New PCB question instead: **is the Quectel EG800Q (4G) populated, and is there a nano-SIM holder?** If yes, trace which SiFli UART/USB feeds it → unlocks standalone-4G in a custom build. **[HW]**
 2. **Pin map — DONE (partial)**, see [`firmware-analysis.md`](firmware-analysis.md). To COMPLETE it (I²C1 SDA, the EPD/touch GPIO roles, the SPI1 device): attach USB-UART to **PA18(RX)/PA19(TX)** and run `pin` + `list_device` on the live finsh console. **[HW]**
 3. **Keep a recovery microSD** with the stock files before touching anything (the tf_ota path is the un-brick).
 4. **Base the custom framework on the OpenSiFli SDK**, `sf32lb52-lcd_n16r8` board template; flash via `sftool -c SF32LB52`. Confirm the Mode strap pin location first.
