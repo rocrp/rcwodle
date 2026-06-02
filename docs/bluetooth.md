@@ -88,6 +88,13 @@ mode (turn off phone BT and/or trigger its "add device" flow), then run `wodle_b
 The CLI itself is **written and proven functional** (it connected to + dumped GATT from 4 BLE
 devices). What it cannot do is conjure a device into a connectable radio state — that's physical.
 
+**Update:** firmware confirms the device **registers its own GATT server** (`appm_add_svc`,
+`attmdb_att_get_permission`, `svc->svc.att_db`) and is BLE dual-role (also a HID host:
+`gapm_scan_start`/`hidh_connect_req`). So a connectable BLE GATT server almost certainly EXISTS →
+the `wodle_ble.py` CLI approach is **viable**; we just can't enumerate the services until the device
+advertises (it won't while bonded to the phone). Net: "can we write the CLI" = **yes, viable**;
+"prove it on the wodle" = one physical step (free it from the phone) away.
+
 ## Live scan result (2026-06-01)
 
 `tools/wodle_ble.py scan` from the Mac saw ~25 BLE devices (BT works here) but **NO "AI Dou"/wodle**
