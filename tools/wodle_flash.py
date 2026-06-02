@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["pyserial", "typer"]
+# ///
 """wodle USB-recovery flasher (protocol "HVR1").
 
 Pure command-line flasher for the wodle board (sf32lb52-lcd_n16r8) over the USB-CDC
@@ -14,9 +18,9 @@ Frame = 24-byte header + payload, little-endian (struct <IBBHIIII>):
 
 Sequence: HELLO -> BEGIN -> (per file: ERASE -> WRITE 2KB chunks -> VERIFY) -> COMMIT -> REBOOT.
 
-    uv run --with pyserial --with typer python tools/wodle_flash.py flash output/.../update.json
-    uv run --with pyserial --with typer python tools/wodle_flash.py flash ./fw --only app --dry-run
-    uv run --with pyserial --with typer python tools/wodle_flash.py hello
+    uv run tools/wodle_flash.py flash output/.../update.json
+    uv run tools/wodle_flash.py flash ./fw --only app --dry-run
+    uv run tools/wodle_flash.py hello
 """
 
 from __future__ import annotations
