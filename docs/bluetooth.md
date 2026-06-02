@@ -71,6 +71,19 @@ haven't seen (strings can't prove a negative — needs live GATT discovery). A M
 roles to scripting). The **cloud WebSocket** is the true "like the app" control path but needs a
 self-hosted XiaoZhi server (user declined).
 
+## BT-core image check (2026-06-02, firmware254 `dfu_pan.bin`) — settles it at the source
+
+`dfu_pan.bin` is the **LCPU/BT-core image** (where BLE GATT services actually live). Mining it:
+**zero custom 128-bit UUID strings**, no NUS/serial-trans/FExx/FFFx custom service — only
+`appm_add_svc` (registering standard services) + GAP name / pairing / GATTC (client). So the device
+exposes **no custom BLE control service**. A "BLE CLI like the app" is therefore not possible — not
+because we couldn't connect, but because there is no control characteristic to talk to. This is now
+verified in both the HCPU app and the BT core, not inferred.
+
+**However — firmware254 revealed the real Mac-accessible channel: USB-CDC recovery** (see
+`firmware254.md`). Enter it from the device Settings menu → it appears as `/dev/cu.usbmodem*` → a
+documented flash protocol. That, or UART finsh, are the genuine ways to talk to the device locally.
+
 ## Reachability — exhaustively tested (2026-06-01), device NOT connectable in current state
 
 | Transport | Test | Result |
