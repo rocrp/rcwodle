@@ -8,6 +8,20 @@ integers via the SDK enums (`sf32lb52x/bf0_pin_const.h`).
 Confidence: **[C-RE]** decoded from the binary, high confidence for explicit peripheral
 functions · **[?]** inferred / not yet pinned down.
 
+> ⚑ **Superseded by the official schematic (2026-06-03).** The vendor dev package includes the SoC
+> pin-assignment schematic → the **authoritative net→PAxx map now lives in
+> [`../refs/schematic/README.md`](../refs/schematic/README.md)** (tag **[C-sch]**). The binary-recovered
+> map below is **correct where it overlaps** (LCDC1, flash, UART1, I²C2, SPI1) and is kept for method +
+> provenance, but the schematic **wins on conflicts**. Net effect of the cross-check:
+> - **Confirmed:** EPD `CS=PA03 CLK=PA04 DIO0=PA05 DC=PA06`, flash `PA12–17` (straps PA13/PA17), console
+>   `UART1 PA18/19`, sensor `I²C2 SCL=PA31 SDA=PA32`, **SPI1 = microSD** (PA24/25/28/29).
+> - **Resolved unknowns:** EPD `RST=PA00`, `TE/BUSY≈PA02`; touch `I²C1 SCL=PA07 / SDA=PA08`, `INT=PA42`;
+>   `TFDET=PA33`; `PWRKEY=PA34`; `KEY2=PA43 / KEY3=PA44`; **NFC on SPI2 (PA37–40)**; **4G modem on UART2
+>   (PA26/27)**, enables `CAT1_PWR_EN=PA09 + CAT1EN=PA20`.
+> - **Corrected** (two RE inferences that had borrowed the DevKit `board.conf`):
+>   audio-PA enable is **PA11**, not PA10 (**PA10 = system `PWR_EN`**); charger INT is **PA41** (`PWR_INT`),
+>   not PA44 (**PA44 = KEY3**).
+
 ## Recovered pin map (HCPU)
 
 Merged from 2 pin-setter call targets (`0x1221e2c0`, `0x1244f788`). 974k instructions scanned.
@@ -34,17 +48,25 @@ Merged from 2 pin-setter call targets (`0x1221e2c0`, `0x1244f788`). 974k instruc
 | PA29 | `SPI1_CS` | NOPULL | SPI1 chip-select | C-RE |
 | PA31 | `I2C2_SCL` | PULLUP | **I²C bus 2** clock | C-RE |
 | PA32 | `I2C2_SDA` | PULLUP | I²C bus 2 data | C-RE |
-| PA34 | GPIO | PD | **KEY1 / power button** (ref `board.conf` KEY1_PIN=34 + datasheet) | C-RE+ref |
-| PA10 | GPIO | — | **AW8155 speaker-amp enable** (ref `board.conf` AW8155_GPIO_PIN=10 ✕ wodle GPIO) | C-RE+ref |
-| PA44 | GPIO | — | **AW32001 charger INT** (ref `board.conf` CHARGER_INT_PIN=44 ✕ wodle GPIO) | C-RE+ref |
-| PA00, PA21, PA33, PA38, PA42, PA43 | GPIO | mixed | EPD BUSY/RST/DC + touch INT/RST (wodle-specific; not in ref board) | ? |
+| PA34 | GPIO | PD | **PWRKEY / KEY1 / power button** (schematic `LONGPRESS_RST`; ref `board.conf` KEY1_PIN=34) | C-sch |
+| PA10 | GPIO | — | **system `PWR_EN`** ~~AW8155 amp enable~~ — schematic: PA10=`PWR_EN`; the AW8155 enable is **PA11** (`PA_EN`) | C-sch |
+| PA44 | GPIO | — | **KEY3 button** ~~AW32001 charger INT~~ — schematic: PA44=`KEY3`; charger INT is **PA41** (`PWR_INT`) | C-sch |
+| PA00 | GPIO | — | **EPD reset** (`LCDC1_SPI_RSTB`) | C-sch |
+| PA02 | GPIO | — | **EPD TE / BUSY** (`LCDC1_SPI_TE`) | C-sch |
+| PA33 | GPIO | — | **microSD card-detect** (`TFDET`) | C-sch |
+| PA37–40 | SPI2 | — | **NFC** (DIO/DI/CLK/CS) | C-sch |
+| PA42 | GPIO | — | **touch INT** (`TP_INT`) | C-sch |
+| PA43 | GPIO | — | **KEY2 button** | C-sch |
+| PA21 | — | — | not routed on schematic sheet 1 — still unknown | ? |
 
-**Buses summarised:**
-- **E-paper panel** → LCDC1 in 2-data-lane SPI: `CS=PA03, CLK=PA04, D0=PA05, D1=PA06` (+ RST/DC/BUSY among the GPIOs above).
+**Buses summarised** (schematic-confirmed unless noted):
+- **E-paper panel (UC8179C)** → LCDC1 SPI: `CS=PA03, CLK=PA04, DIO0=PA05, DC=PA06`, `RST=PA00`, frontlight `PWM=PA01`, `TE/BUSY≈PA02`.
 - **NOR flash 16 MB** → MPI2/QSPI2 (`0x12000000`): `CS=PA12, CLK=PA16, D0=PA15, D1=PA13, D2=PA14, D3=PA17`.
 - **Console/debug UART** → USART1: `RX=PA18, TX=PA19` (also the SWD pair per datasheet).
-- **I²C1** `SCL=PA07` (SDA `[?]`) · **I²C2** `SCL=PA31, SDA=PA32`. Which of CST816 / AW32001 / BQ27220 / AW8155 sits on which bus = `[?]` (needs live `i2c` scan or deeper RE).
-- **SPI1** `CLK=PA28, CS=PA29, DIO=PA24, DI=PA25` — device `[?]`; **likely the microSD/TF card in SPI mode** (firmware probes `sdcard` and no SDMMC pins were recovered) or a NOR MTD. Unconfirmed.
+- **Touch I²C1** `SCL=PA07, SDA=PA08`, `INT=PA42` → CST836U @0x15 · **sensor I²C2** `SCL=PA31, SDA=PA32`, `INT=PA30` → AW32001 @0x49 (INT=PA41) + BQ27220 @0x55. AW8155 amp = GPIO enable `PA11`.
+- **microSD (TF)** → SPI1 `CLK=PA28, CS=PA29, DIO=PA24, DI=PA25`, card-detect `TFDET=PA33`. **Confirmed** (was `[?]`).
+- **4G modem (Quectel)** → USART2 `RX=PA26, TX=PA27`, enables `CAT1_PWR_EN=PA09 + CAT1EN=PA20`. Populated, unused by stock fw.
+- **NFC** → SPI2 `DIO=PA37, DI=PA38, CLK=PA39, CS=PA40`. Populated, unused by stock fw; controller part TBD.
 
 **Limits (honest):** static recovery only captures `HAL_PIN_Set` calls with constant args, so
 this map is high-confidence but **partial**. Missing: I²C1 SDA, the per-GPIO purposes
@@ -66,9 +88,11 @@ complete and cross-check it.
 
 wodle derives from the SiFli DevKit board `sf32lb52-lcd_n16r8`. Its `hcpu/board.conf` names pins;
 cross-referencing with wodle's *independently* recovered GPIO set corroborates:
-- **PA10 = AW8155 speaker-amp enable** (`AW8155_GPIO_PIN=10`; also GPIO in wodle) **[C-RE+ref]**
-- **PA44 = AW32001 charger INT** (`CHARGER_INT_PIN=44`; also GPIO in wodle) **[C-RE+ref]**
-- **PA34 = KEY1 / power button** (`KEY1_PIN=34`; matches wodle + datasheet) **[C-RE+ref]**
+- ~~PA10 = AW8155 amp enable~~ / ~~PA44 = charger INT~~ — these DevKit `board.conf` values **do NOT
+  hold on wodle** (the schematic shows wodle rewired them): on wodle **PA10 = `PWR_EN`**, the AW8155
+  enable is **PA11** (`PA_EN`); **PA44 = `KEY3`**, the charger INT is **PA41** (`PWR_INT`). A caution
+  that DevKit cross-refs need schematic confirmation. **[C-sch]**
+- **PA34 = KEY1 / power button** (`KEY1_PIN=34`; matches wodle schematic `PWRKEY` + datasheet) **[C-sch]**
 
 Reference-only (NOT in wodle's recovered set → wodle differs): `KEY2=PA11`, `LED1=PA26`.
 Base board panel = **CO5300 TFT/AMOLED** (`LCD_USING_TFT_CO5300`) — wodle swapped it for e-paper,
@@ -86,13 +110,13 @@ The shared base board's pinmux has **named** functions. Cross-referencing resolv
 | PA02 | `LCDC1_SPI_TE` (tearing) | wodle likely same | ref |
 | PA03–06 | LCD CS/CLK/DIO0/DIO1 | matches wodle display | C-RE+ref |
 | **PA07/PA08** | DevKit: LCD QSPI DIO2/DIO3 | **wodle uses 2-lane LCD → frees PA07/08 for I2C1**; so **I2C1 = SCL PA07 / SDA PA08** | C-RE (SDA inferred) |
-| **PA10** | `AUDIO_PA_CTRL` | = AW8155 enable (also board.conf) | C-RE+ref |
+| **PA10** | `AUDIO_PA_CTRL` | ⚠ wodle differs → PA10 = `PWR_EN`; AW8155 enable = **PA11** | C-sch |
 | PA18/19 | UART1 debug | matches wodle console | C-RE+ref |
 | **PA20/PA27** | `USART2` log UART | possible 2nd UART on wodle (unverified) | ref |
 | **PA24/25/28/29** | `SPI1 (TF card)` | **identical to wodle SPI1 → SPI1 = microSD, CONFIRMED** | C-RE+ref |
 | PA34 | Key1 power (kept PD for UART-download) | matches wodle | C-RE+ref |
 | **PA35/PA36** | `USB_DP/USB_DM` (analog) | the USB port (charge/MSC) | ref |
-| **PA44** | `VBUS_DET` | = charger/USB detect (board.conf CHARGER_INT) | C-RE+ref |
+| **PA44** | `VBUS_DET` | ⚠ wodle differs → PA44 = `KEY3`; charger INT = **PA41** (`PWR_INT`) | C-sch |
 | touch | DevKit: RESET=PA09, INT=PA31, I2C1=PA30/33 | **wodle REWIRED** (PA31 = wodle I2C2_SCL) → wodle touch INT/RESET are elsewhere | ⚠ differs |
 
 **Key takeaways:** (1) wodle is a DevKit derivative but the vendor **rewired I2C and touch control pins**
@@ -106,10 +130,14 @@ Each driver's init function references exactly one bus-name string → solid bus
 
 | Bus | Pins | Device | Addr (7-bit) | Tag |
 |---|---|---|---|---|
-| I²C1 | SCL=PA07, SDA=? (likely PA08) | CST816 touch | **0x15** (`0x2a` = 0x15<<1 seen) | C-RE |
-| I²C2 | SCL=PA31, SDA=PA32 | AW32001 charger | **0x49** (seen directly) | C-RE |
+| I²C1 | SCL=PA07, SDA=PA08, INT=PA42 | **CST836U** touch (panel C2283A) | **0x15** (`0x2a` = 0x15<<1 seen) | C-sch |
+| I²C2 | SCL=PA31, SDA=PA32, INT=PA30 | AW32001 charger (INT also PA41) | **0x49** (seen directly) | C-sch |
 | I²C2 | (same bus) | BQ27220 fuel gauge | 0x55 (part default; not seen in scan) | C-RE bus / ? addr |
-| — | GPIO / I²S | AW8155 speaker amp | **not on I²C** (mode-pin controlled) | C-RE |
+| — | GPIO `PA11` | AW8155 speaker amp | **not on I²C** (`PA_EN` enable pin) | C-sch |
+
+> Firmware's driver is named `cst816`, but the physical part is **CST836U** (same Hynitron CST8xx
+> family, register- and address-compatible) — confirmed by the vendor TP-test package
+> (`refs/datasheets/CZ_C2283A_CST836U_TP_test.zip`: `chip_type=cst8xx`, `x_res=528 y_res=792`).
 
 ## Flash / partition layout
 
@@ -155,8 +183,9 @@ control, not I²C). Architecture: `audio_server` + `audio_3a` (uplink/downlink/f
 
 **528 × 792** (portrait e-reader). Recovered from a one-shot create call `f(528, 792)`
 @0x1221f5f8 (`tools/fw_res.py`) — the only clean large (W,H) pair in the image, and 528 matches
-the widest UI asset. **[C-RE]** The **EPD controller part** is still unknown — `lcd_rreg` on
-hardware, or decoding the SPI init byte sequence, would name it.
+the widest UI asset. **[C-RE]** Now corroborated by the vendor filename `3.68_528X792`. The **EPD
+controller is UltraChip UC8179C** (3.68″) — named by the vendor driver reference in
+[`../refs/epd/`](../refs/epd/), which also gives the full init sequence + GC/DU/4-gray LUTs. **[C-sch]**
 
 ## finsh / MSH command inventory (103)
 

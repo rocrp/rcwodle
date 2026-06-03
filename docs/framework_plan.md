@@ -6,18 +6,21 @@ Goal: build your own firmware for the wodle (SF32LB525 N16R8, 528×792 e-paper) 
 ## Big lever: start from upstream source, not clean-room
 
 The stock app is a fork of **[`78/xiaozhi-sf32`](https://github.com/78/xiaozhi-sf32)** on board
-`sf32lb52-lcd_n16r8` (see [`README.md`](../README.md)). That repo is the **real XiaoZhi app source** —
-audio (Opus + 3A), BT-PAN networking, MCP server, LVGL UI, state machine, OTA. So a custom framework
-has two clean entry points:
+`sf32lb52-lcd_n16r8` (see [`README.md`](../README.md); the vendor's reference SDK is SiFli's official
+fork [`OpenSiFli/xiaozhi-sf32`](https://github.com/OpenSiFli/xiaozhi-sf32), same board). That repo is
+the **real XiaoZhi app source** — audio (Opus + 3A), BT-PAN networking, MCP server, LVGL UI, state
+machine, OTA. So a custom framework has two clean entry points:
 
 - **Reuse the upstream app**, re-targeted to `board/wodle/` (link @ `0x12218000`) — swap only the
-  hiveton-specific bits: the **e-paper display driver** (upstream is ST7789/CO5300; wodle is EPD) and
-  the **reader/books UI**. Everything else (BT-PAN, audio, cloud protocol) is already written.
+  hiveton-specific bits: the **e-paper display driver** (upstream is ST7789/CO5300; wodle is a
+  **UC8179C** EPD — command set + LUTs in [`../refs/epd/`](../refs/epd/)) and the **reader/books UI**.
+  Everything else (BT-PAN, audio, cloud protocol) is already written.
 - **Clean board bring-up** (own RT-Thread app) using `board/wodle/` — more control, but you re-implement
   the XiaoZhi stack.
 
-Either way the **gating unknown is the same**: the EPD controller part (to write the display driver)
-and a UART console for feedback. Get those first (below), then the upstream-reuse path is fastest.
+The former **gating unknowns are now closed by the official package**: EPD controller (UC8179C) and the
+full pin map (`../refs/schematic/`). A UART console is still worth wiring for boot logs and to settle
+the EPD BUSY line — but the upstream-reuse path is now unblocked.
 
 ## Proven so far (offline, this Mac)
 
@@ -46,15 +49,15 @@ edit → scons --board=wodle → build_wodle_hcpu/<app>.bin
 recover if it doesn't boot: restore refs/card_snapshot_0246/firmware/ (or Downloads 0422) to card /firmware/
 ```
 
-## Blockers before a *custom* app can work on hardware (need your help)
+## Blockers before a *custom* app can work on hardware
 
-1. **EPD controller is unidentified.** The screen is e-paper at 528×792 over LCDC1 2-lane QSPI
-   (CS=PA03 CLK=PA04 D0=PA05 D1=PA06, RESET=PA00, backlight PWM=PA01), but we don't know the
-   controller chip → can't write a working display driver yet. **Needs:** `lcd_rreg` over the UART
-   console, or you tell me the panel marking.
-2. **No debug feedback without UART.** A custom app that mis-boots is invisible (no screen driver, no
-   serial). **Needs:** USB-UART on **PA18(RX)/PA19(TX)** for the finsh console + logs. This also
-   completes the last unknown GPIOs (EPD BUSY/DC, touch INT/RST among PA21/33/38/42/43).
+1. ~~**EPD controller is unidentified.**~~ **RESOLVED — UltraChip UC8179C** (3.68″ 528×792), wired to
+   LCDC1 SPI (`CS=PA03 CLK=PA04 SDA(DIO0)=PA05 DC=PA06 RST=PA00`, frontlight `PWM=PA01`). Full init
+   sequence + GC/DU/4-gray LUTs in [`../refs/epd/`](../refs/epd/) → the display driver can be written
+   now. One detail to confirm on hardware: the **BUSY** net (likely PA02/TE) and the exact TRES (792×528).
+2. **No debug feedback without UART** *(reduced — still nice-to-have).* The pin map is now known from the
+   schematic, so a custom app no longer flies blind on pins; but a mis-boot is still invisible without a
+   screen or serial. **Wire USB-UART on PA18(RX)/PA19(TX)** for boot logs + to confirm the EPD BUSY line.
 3. **Vendor-bootloader compatibility unverified.** Our app links to 0x12218000, but whether the
    stock bootloader inits clocks/PSRAM compatibly for an SDK-v2.5.0 app is unproven. **De-risk by**
    flashing the official **0422 first** (already staged) to confirm the loop end-to-end.
@@ -63,7 +66,7 @@ recover if it doesn't boot: restore refs/card_snapshot_0246/firmware/ (or Downlo
 
 1. **Flash 0422 now** (card is staged + ejected) → reinsert into wodle, power on → confirms the SD
    flash loop works on your unit. Zero risk (official newer firmware).
-2. **Wire USB-UART to PA18/PA19** → finsh console: run `lcd_rreg`/`epd_stat` (EPD controller +
-   resolution), `pin`/`list_device` (finish pin map), `i2c` scan (confirm addresses).
-3. Then a custom **minimal app** (boot + LED/GPIO toggle, or EPD "hello") becomes a real, testable
-   target and I can write the board's display + input drivers.
+2. **Write the UC8179C driver** (LCDC1 SPI; `refs/epd/` command set + LUTs) and **wire USB-UART to
+   PA18/PA19** → use `lcd_rreg`/`epd_test` + boot logs to confirm BUSY + TRES against the real panel.
+3. Then a custom **minimal app** (boot + EPD "hello") becomes a real, testable target — display + input
+   drivers can be written straight from the schematic pin map.

@@ -3,7 +3,14 @@
 Reverse-engineering record for writing a custom framework. Source: stock firmware at
 `/Users/rocry/Downloads/firmware/` (v1.4.0.0422). Started 2026-06-01.
 
-Confidence tags: **[C]** confirmed by direct evidence · **[C-RE]** decoded from the binary · **[?]** unconfirmed / inferred · **[HW]** needs the physical device to settle.
+Confidence tags: **[C]** confirmed by direct evidence · **[C-RE]** decoded from the binary · **[C-sch]** confirmed by the official schematic · **[?]** unconfirmed / inferred · **[HW]** needs the physical device to settle.
+
+> **Official dev package [C, 2026-06-03].** The vendor's `小豆子开发环境包20260530` ("ai_dou / 小豆子"
+> dev package) is now in hand → `refs/`. It resolves the long-standing unknowns: **schematic pin map**
+> ([`refs/schematic/`](../refs/schematic/) — sheet 1/2, the pin authority), **EPD controller = UltraChip
+> UC8179C** ([`refs/epd/`](../refs/epd/)), **touch = CST836U** (panel C2283A), and the **4G modem + NFC
+> wiring**. Component datasheets (AW32001, BQ27220, Quectel AT manual) live in the gitignored
+> `refs/datasheets/`. Where the schematic and the binary RE disagree, **the schematic wins** ([C-sch]).
 
 > **Recovered pin map + 103-command finsh list → [`firmware-analysis.md`](firmware-analysis.md).** USB-connect test (2026-06-01): device does **not** enumerate — no serial, no disk volume. Charge-only port.
 
@@ -19,7 +26,7 @@ Confidence tags: **[C]** confirmed by direct evidence · **[C-RE]** decoded from
 - **[C]** Silicon memory map is **SF32LB52x-style**: flash XIP base `0x12000000` = `QSPI2_MEM_BASE` (verified in SDK `drivers/cmsis/sf32lb52x/mem_map.h:102`). Also `dbguart2jlink` exists only `#if SF32LB52X`; `sftool` only supports `-c SF32LB52`; board macro `SF32LB52_LCD_N16R8_TFT_CO5300` embedded.
 - **[C]** Exact part: **SF32LB525 (525UC6)**, N16R8 (16 MB ext QSPI NOR + 8 MB PSRAM). Confirmed by **physical board marking "思澈/SiFli 525"** (user, 2026-06-02) — matches the part already chosen in `board/wodle/ptab.yaml` (`SF32LB525UC6`). Firmware self-labels `sf32lb563`/`hdk563` — **confirmed mislabel** (build is `sf32lb52-lcd_n16r8`, `sftool -c SF32LB52`, XIP base `0x12000000`=QSPI2, `dbguart2jlink` `#if SF32LB52X`). SiFli's own 525 EVB = SDK board `eh-lb525`.
 - **[C]** Product = "AI Dou" (`ai_dou`), vendor **hiveton** (`hiveton-dou-project`). A XiaoZhi-AI voice e-reader.
-- **[C]** ~~#1 open question: 52x vs 56x~~ **RESOLVED → SF32LB52x (525).** Use the `sf32lb52x` CMSIS enum set for pin decoding. Remaining HW open items: EPD controller/resolution detail + GPIO roles (§8), and whether the cellular modem (below) is populated.
+- **[C]** ~~#1 open question: 52x vs 56x~~ **RESOLVED → SF32LB52x (525).** Use the `sf32lb52x` CMSIS enum set for pin decoding. ~~Remaining HW open items: EPD controller + GPIO roles + modem-populated~~ — **all resolved by the official package (§3, `refs/`)**: EPD = **UC8179C 528×792**, full **schematic pin map**, modem **wired to UART2 + populated**. Only on-hardware validation (EPD BUSY line, driver bring-up) remains (§8).
 
 ## 2. Why there is no `/dev/cu.*`
 
@@ -27,24 +34,27 @@ Confidence tags: **[C]** confirmed by direct evidence · **[C-RE]** decoded from
 - **[C]** Device does **not** enumerate on USB at all — verified against the live `ioreg` USB tree. USB port is **charge / mass-storage only**.
 - **Conclusion: a serial port will never appear. Do not look for USB-serial drivers.**
 
-## 3. Components (mined from `hcpu_app.bin`)
+## 3. Components (from `hcpu_app.bin` RE + the official schematic)
 
 | Subsystem | Part / detail | Tag |
 |---|---|---|
 | MCU | SF32LB52x N16R8, dual M33 | C / ? |
-| Display | **e-paper** (4-level gray, partial+full refresh, busy-pin); **LCDC1 dual-SPI: CS=PA03 CLK=PA04 D0=PA05 D1=PA06**; frontlight PWM on **PA01**; driver module named `st7789` | C / C-RE |
-| Display resolution | **528 × 792** (portrait), recovered from create-call | C-RE |
-| Display controller | unknown. `CO5300`/`TFT`/`st7789` strings = **upstream leftovers** — upstream solution = `SF32LB52_LCD_N16R8_TFT_CO5300`, driver `app/peripherals/st7789/`; hiveton swapped the panel to e-paper but kept the names. Real EPD controller still needs `lcd_rreg` on hardware. | ? / HW |
-| Touch | **CST816** (I²C) | C |
-| Charger | **AW32001** (I²C) | C |
-| Fuel gauge | **BQ27220** (I²C) | C |
-| Audio | amp **AW8155** + SoC internal codec/`audprc` + PDM mic; 3A AEC/AGC/ANS; Opus | C |
-| Radio (on-chip) | **BLE + BT-classic only, NO WiFi** (SiFli internal); internet via **BT-PAN tether** to a phone (lwIP-over-BNEP). Both fw v0422 & v0853: `net: BT/PAN only manager initialized` | C |
-| Cellular (board) | **Quectel EG800Q** — LTE **Cat 1 bis (4G)** modem (LGA; ~10/5 Mbps; variants EG800Q-NA / EG800K-EU 2G+4G). Reported on PCB (user, 2026-06-02). **NOT used by either firmware** — exhaustive bin scan found zero AT / SIM / Quectel / USB-modem-CDC code. So on the builds we have it is **unpopulated or fw-unused**; a 4G data path needs different firmware. **Confirm by PCB inspection** (LGA module + nano-SIM holder) | ?-HW |
-| Bus pins (recovered) | flash MPI2 `PA12/13/14/15/16/17`; console **UART1 RX=PA18 TX=PA19**; I²C1 `SCL=PA07`; I²C2 `SCL=PA31 SDA=PA32`; SPI1 `CLK=PA28 CS=PA29 DIO=PA24 DI=PA25` | C-RE |
-| I²C devices | **I²C1:** CST816 touch @0x15. **I²C2** (PA31/32): AW32001 charger @0x49 + BQ27220 gauge @0x55. AW8155 amp = not I²C (GPIO mode pin) | C-RE |
+| Display | **e-paper** (4-level gray, partial+full refresh, BUSY); **LCDC1 SPI: RST=PA00, BL_PWM=PA01, TE/BUSY=PA02, CS=PA03, CLK=PA04, DIO0=PA05, DC=PA06**; firmware driver module still named `st7789` (upstream leftover) | C-sch |
+| Display resolution | **528 × 792** (portrait); recovered from create-call + vendor filename `3.68_528X792` | C-RE / C-sch |
+| Display controller | **UltraChip UC8179C** (3.68″ 528×792). Reference code + decoded command set/LUTs in [`refs/epd/`](../refs/epd/). The `CO5300`/`TFT`/`st7789` strings are **upstream driver-module leftovers**, not the part. To settle on hardware: BUSY net (likely PA02/TE) + exact TRES (`792×528`) via `lcd_rreg`/`epd_test`. | C-sch |
+| Touch | **CST836U** (Hynitron CST8xx family; panel glass **C2283A**); I²C1 @0x15, **INT=PA42**. Firmware's `cst816` driver = the generic register-compatible CST8xx driver | C-sch |
+| Charger | **AW32001** (I²C2 @0x49); **INT=PA41** (`PWR_INT`). Datasheet `refs/datasheets/AW32001ECSR.pdf` | C / C-sch |
+| Fuel gauge | **BQ27220** (I²C2 @0x55). Datasheet `refs/datasheets/bq27220.pdf` | C |
+| Audio | amp **AW8155** (enable **PA11** = `PA_EN`) + SoC internal codec/`audprc` + PDM mic; 3A AEC/AGC/ANS; Opus | C / C-sch |
+| Radio (on-chip) | **BLE + BT-classic only, NO WiFi** (SiFli internal); stock internet via **BT-PAN tether** to a phone (lwIP-over-BNEP). Both fw v0422 & v0853: `net: BT/PAN only manager initialized` | C |
+| Cellular (board) | **4G Cat-1 modem** (Quectel; user-reported **EG800Q**). **Populated and wired** per schematic: USART = **UART2 (RX=PA26, TX=PA27)**, enables **CAT1_PWR_EN=PA09** + **CAT1EN=PA20**. **Unused by both firmwares** (no AT/SIM/Quectel code in the bins) — a custom build can drive it (AT manual: `refs/datasheets/Quectel_LTE_StandardA_AT_Commands_V1.3.pdf`) | C-sch (wiring) / C (fw-unused) |
+| NFC (board) | NFC front-end on **SPI2** (DIO=PA37, DI=PA38, CLK=PA39, CS=PA40). New from schematic; controller part not yet identified. **Unused by stock fw** (no NFC code in bins) | C-sch (bus) / ? (part) |
+| Buttons | **PWRKEY/KEY1 = PA34** (`LONGPRESS_RST`), **KEY2 = PA43**, **KEY3 = PA44** | C-sch |
+| Storage | **microSD (TF) on SPI1**: DIO=PA24, DI=PA25, CLK=PA28, CS=PA29; **card-detect TFDET=PA33** | C-sch |
+| Bus pins | flash MPI2 `PA12–17` (straps PA13/PA17); console **UART1 RX=PA18 TX=PA19**; touch **I²C1 SCL=PA07 SDA=PA08**; sensor **I²C2 SCL=PA31 SDA=PA32 INT=PA30**; **full map → [`refs/schematic/`](../refs/schematic/)** | C-sch |
+| I²C devices | **I²C1** (PA07/08): CST836U touch @0x15 (INT=PA42). **I²C2** (PA31/32, INT=PA30): AW32001 charger @0x49 (INT=PA41) + BQ27220 gauge @0x55. AW8155 amp = not I²C (GPIO enable PA11) | C-sch |
 
-> **Connectivity caveat (2026-06-02).** A `boot.network_mode=bt` setting exists on the SD card (the `config/device_config.cfg` key — there is **no** separate `network_mode.cfg`; earlier notes that named one were wrong) — the key *name* implies the product family is designed for **selectable** network modes, consistent with a 4G SKU. But **only `bt` is implemented** in fw v0422/v0853 (no `4g`/`cell` mode token found). If the EG800Q is populated, a custom framework could add **standalone 4G** (no phone tether): the modem attaches over UART (AT) or USB — find which SiFli UART is wired to it (only UART1=PA18/19 console is mapped so far; UART2=PA20/27 is a candidate).
+> **Connectivity caveat (2026-06-02).** A `boot.network_mode=bt` setting exists on the SD card (the `config/device_config.cfg` key — there is **no** separate `network_mode.cfg`; earlier notes that named one were wrong) — the key *name* implies the product family is designed for **selectable** network modes, consistent with a 4G SKU. But **only `bt` is implemented** in fw v0422/v0853 (no `4g`/`cell` mode token found). **The schematic now confirms the modem is populated and wired** — it attaches over **UART2 (RX=PA26, TX=PA27)** with enables `CAT1_PWR_EN=PA09` + `CAT1EN=PA20`. So a custom framework could add **standalone 4G** (no phone tether) by powering it up and talking AT (manual in `refs/datasheets/`). The earlier "UART2=PA20/27" guess was wrong — UART2 is **PA26/PA27** (PA20 is the modem *enable*, not a UART line).
 
 ## 4. Memory / flash layout
 
@@ -83,6 +93,11 @@ PSRAM1 @ `0x60000000` (8 MB): PSRAM_CODE 2 M + PSRAM_DATA 6 M.
 ## 7. References
 
 **Local**
+- **Official vendor dev package** `小豆子开发环境包20260530` → mirrored into `refs/`:
+  - [`refs/schematic/`](../refs/schematic/) — SoC pin-assignment schematic (sheet 1/2) **[C-sch]**
+  - [`refs/epd/`](../refs/epd/) — UC8179C / UC8279 driver reference + decoded commands **[C-sch]**
+  - `refs/datasheets/` (gitignored) — `AW32001ECSR.pdf`, `bq27220.pdf`,
+    `Quectel_LTE_StandardA_AT_Commands_V1.3.pdf`, `CZ_C2283A_CST836U_TP_test.zip` **[C]**
 - Firmware: `/Users/rocry/Downloads/firmware/{hcpu_app.bin, ezip_image.bin, font_data.bin, update.json}` **[C]**
 - SDK clone: `~/w/_tmp/SiFli-SDK` **[C, verified]**
   - Mem map / pin enums (our part): `drivers/cmsis/sf32lb52x/{mem_map.h, bf0_pin_const.c, bf0_pin_const.h}` **[C]**
@@ -92,6 +107,7 @@ PSRAM1 @ `0x60000000` (8 MB): PSRAM_CODE 2 M + PSRAM_DATA 6 M.
 
 **External**
 - OpenSiFli SDK: https://github.com/OpenSiFli/SiFli-SDK **[C]**
+- Reference app SDK (vendor's `参考sdk.txt`): https://github.com/OpenSiFli/xiaozhi-sf32 — **SiFli's official fork of [`78/xiaozhi-sf32`](https://github.com/78/xiaozhi-sf32)**, same `sf32lb52-lcd_n16r8` board **[C]**
 - OpenSiFli flash tool `sftool`: https://github.com/OpenSiFli/sftool **[? referenced by SDK docs]**
 - SiFli docs/wiki/downloads: https://wiki.sifli.com · https://docs.sifli.com · https://downloads.sifli.com **[C, reachable]**
 - Datasheet **DS0052 SF32LB52x** (EN V2.3 / 中文 V2.4). Local: `refs/datasheets/DS0052-SF32LB52x-Datasheet-V2p3.pdf` (+ zh). URL: https://downloads.sifli.com/silicon/DS0052-SF32LB52x-Datasheet%20V2p3.pdf **[C]**. SKUs: SF32LB520U36/523UB6/525UC6/527UD6, all QFN68L, **45 GPIO (PA00–PA44)**.
@@ -101,12 +117,18 @@ PSRAM1 @ `0x60000000` (8 MB): PSRAM_CODE 2 M + PSRAM_DATA 6 M.
 
 ## 8. Comments & suggestions — upcoming moves
 
-Only steps I'm confident about, in order. No architecture guesses yet.
+Only steps I'm confident about, in order.
 
-1. ~~Read the chip marking → settle 52x vs 56x.~~ **DONE — it's SF32LB525.** New PCB question instead: **is the Quectel EG800Q (4G) populated, and is there a nano-SIM holder?** If yes, trace which SiFli UART/USB feeds it → unlocks standalone-4G in a custom build. **[HW]**
-2. **Pin map — DONE (partial)**, see [`firmware-analysis.md`](firmware-analysis.md). To COMPLETE it (I²C1 SDA, the EPD/touch GPIO roles, the SPI1 device): attach USB-UART to **PA18(RX)/PA19(TX)** and run `pin` + `list_device` on the live finsh console. **[HW]**
+1. ~~Read the chip marking → settle 52x vs 56x.~~ **DONE — SF32LB525.**
+2. ~~Pin map / EPD controller / I²C addrs / modem-populated.~~ **DONE via the official package** —
+   schematic pin map (`refs/schematic/`), EPD = **UC8179C** (`refs/epd/`), touch = **CST836U**, modem
+   **wired to UART2**. The only items still needing hardware: the **EPD BUSY net** (likely PA02/TE) and
+   the exact **TRES** (`792×528`). **[HW]**
 3. **Keep a recovery microSD** with the stock files before touching anything (the tf_ota path is the un-brick).
-4. **Base the custom framework on the OpenSiFli SDK**, `sf32lb52-lcd_n16r8` board template; flash via `sftool -c SF32LB52`. Confirm the Mode strap pin location first.
-5. **Defer**: display controller/resolution and per-chip I²C addresses — resolve via `lcd_rreg` + `list_device`/`i2c` scan on the live console (step 2a), not by guessing.
+4. **Base the custom framework on the OpenSiFli SDK**, `sf32lb52-lcd_n16r8` board template; flash via
+   `sftool -c SF32LB52`. Boot straps are confirmed (`STRAP[1]=PA13`, `STRAP[0]=PA17`).
+5. **Write the UC8179C display driver** for LCDC1 SPI using the `refs/epd/` command set + LUTs; bring it
+   up against the live `lcd_rreg`/`epd_test` console to confirm BUSY + TRES.
 
-**Decisions still needed from you:** can you open the case + photograph the PCB; and do you have a USB-UART adapter and/or J-Link/DAPLink. The framework's shape is not decided yet — settle 1–2 first.
+**Optional later:** bring up the **4G modem** (Quectel AT over UART2) and probe **NFC** (SPI2) — both
+populated but unused by stock fw.
