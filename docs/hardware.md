@@ -99,7 +99,7 @@ PSRAM1 @ `0x60000000` (8 MB): PSRAM_CODE 2 M + PSRAM_DATA 6 M.
   - `refs/datasheets/` (gitignored) — `AW32001ECSR.pdf`, `bq27220.pdf`,
     `Quectel_LTE_StandardA_AT_Commands_V1.3.pdf`, `CZ_C2283A_CST836U_TP_test.zip` **[C]**
 - Firmware: `/Users/rocry/Downloads/firmware/{hcpu_app.bin, ezip_image.bin, font_data.bin, update.json}` **[C]**
-- SDK clone: `~/w/_tmp/SiFli-SDK` **[C, verified]**
+- SDK clone: `~/w/_hw/SiFli-SDK` **[C, verified]**
   - Mem map / pin enums (our part): `drivers/cmsis/sf32lb52x/{mem_map.h, bf0_pin_const.c, bf0_pin_const.h}` **[C]**
   - `HAL_PIN_Set` impl: `drivers/hal/bf0_hal_pinmux.c` **[C]**
   - Closest board base: `customer/boards/sf32lb52-lcd_n16r8/` (and `…_jdi/`) **[C]**

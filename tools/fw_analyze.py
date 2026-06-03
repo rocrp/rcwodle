@@ -20,7 +20,7 @@ import sys
 from capstone import CS_ARCH_ARM, CS_MODE_MCLASS, CS_MODE_THUMB, Cs
 
 FW = "/Users/rocry/Downloads/firmware/hcpu_app.bin"
-HDR = "/Users/rocry/w/_tmp/SiFli-SDK/drivers/cmsis/sf32lb52x/bf0_pin_const.h"
+HDR = "/Users/rocry/w/_hw/SiFli-SDK/drivers/cmsis/sf32lb52x/bf0_pin_const.h"
 BASE = 0x12218000
 
 

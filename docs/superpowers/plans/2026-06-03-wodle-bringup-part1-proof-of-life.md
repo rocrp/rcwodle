@@ -24,7 +24,7 @@
 
 **Environment prerequisite (run once per shell, not a task):**
 ```bash
-source ~/w/_tmp/SiFli-SDK/export.sh    # sets SIFLI_SDK + PATH to arm-none-eabi-gcc, sftool
+source ~/w/_hw/SiFli-SDK/export.sh    # sets SIFLI_SDK + PATH to arm-none-eabi-gcc, sftool
 ```
 Build dir for all firmware tasks: `firmware/hello_wodle/project/`. Build line: `scons --board=wodle -j8`.
 
@@ -53,7 +53,7 @@ Modified:
 | Path | Change |
 |---|---|
 | `board/wodle/hcpu/board.conf` | correct stale DevKit pins to schematic truth |
-| `~/w/_tmp/SiFli-SDK/customer/boards/wodle` | replace dir-copy with a symlink → repo `board/wodle` (single source of truth) |
+| `~/w/_hw/SiFli-SDK/customer/boards/wodle` | replace dir-copy with a symlink → repo `board/wodle` (single source of truth) |
 
 ---
 
@@ -211,17 +211,17 @@ The SDK copy of the board is currently a duplicate of the repo's; edits must not
 
 **Files:**
 - Modify: `board/wodle/hcpu/board.conf`
-- Modify (filesystem): `~/w/_tmp/SiFli-SDK/customer/boards/wodle` → symlink
+- Modify (filesystem): `~/w/_hw/SiFli-SDK/customer/boards/wodle` → symlink
 
 - [ ] **Step 1: Make the SDK board a symlink to the repo (one source of truth)**
 
 ```bash
-SDKB=~/w/_tmp/SiFli-SDK/customer/boards/wodle
+SDKB=~/w/_hw/SiFli-SDK/customer/boards/wodle
 # Safety: confirm the SDK copy has no unique edits vs the repo before replacing
 diff -rq "$SDKB" /Users/rocry/w/_hw/rcwodle/board/wodle || echo "REVIEW DIFFS ABOVE before replacing"
 rm -rf "$SDKB"
 ln -s /Users/rocry/w/_hw/rcwodle/board/wodle "$SDKB"
-ls -l ~/w/_tmp/SiFli-SDK/customer/boards/wodle
+ls -l ~/w/_hw/SiFli-SDK/customer/boards/wodle
 ```
 Expected: a symlink pointing at the repo `board/wodle`. (If `diff` showed unique SDK-side edits, reconcile them into the repo copy first.)
 
@@ -509,7 +509,7 @@ whether S2/S3 proceed or we pivot to SWD/signing. Record the outcome in `docs/fr
 
 - [ ] **Step 1: Write `firmware/hello_wodle/README.md`**
 
-Content: one-paragraph purpose (S1 proof-of-life), the env line (`source ~/w/_tmp/SiFli-SDK/export.sh`),
+Content: one-paragraph purpose (S1 proof-of-life), the env line (`source ~/w/_hw/SiFli-SDK/export.sh`),
 the build line (`cd project && scons --board=wodle -j8`), the link-check command, and the two flash
 recipes (SD `tf_ota` via `mk_update.py`; HVR1 via `wodle_flash.py`) with the restore-to-stock note.
 
