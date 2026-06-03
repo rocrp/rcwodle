@@ -7,17 +7,29 @@ Source: `/Users/rocry/Downloads/firmware254/`. Unlike the earlier OTA-only packa
 
 ## 1. Definitive boot chain & flash map (parsed from `ftab.bin`, magic `FCES`)
 
+**This map is the authoritative flash layout for the whole project** — confirmed by two independent
+sources: the `ftab.bin` parse below **and** upstream `78/xiaozhi-sf32`
+`app/project/sf32lb52-lcd_n16r8_hcpu/ptab.json` (byte-identical). Other docs cross-reference here.
+
 | Region | Flash addr | Size | Notes |
 |---|---|---|---|
 | **ftab** | `0x12000000` | 32 KB | the flash table itself |
-| **LCPU / DFU image** | `0x12008000` | ~2 MB | `dfu_pan.bin` (LCPU+BT core + DFU/recovery) |
-| **bootloader** | `0x12208000` | 128 KB | runs in SRAM `0x20020000` (`bootloader.bin`, 58 KB) |
-| **HCPU app** | `0x12218000` | ~3.4 MB region | XIP — matches our recovered ptab ✓ |
+| **LCPU / DFU image** | `0x12008000` | 2 MB | `dfu_pan.bin` (LCPU+BT core + DFU/recovery) |
+| **bootloader** | `0x12208000` | **64 KB** | runs in SRAM `0x20020000` (`bootloader.bin`, 58 KB fits) |
+| **HCPU app** | `0x12218000` | 0x240000 region | XIP — matches our recovered ptab ✓ |
+| KVDB_DFU / KVDB_BLE | `0x12458000` / `0x1245C000` | 16 KB each | OTA flag + BLE bond store |
+| EZIP_IMAGE / FONT_DATA | `0x12460000` / `0x12AE0000` | 0x680000 / 0x400000 | assets + fonts |
 | LCPU exec RAM | `0x20050000` | — | LPSYS RAM |
 
-Corrects the earlier guess: the bootloader sits at **`0x12208000`** (just before the app), not 0x12010000.
+Corrects two earlier guesses: the bootloader sits at **`0x12208000`** (just before the app), not
+0x12010000; and its region is **64 KB** (`0x12208000`→`0x12218000`), not 128 KB.
 
 ## 2. Three update / communication mechanisms (cracked)
+
+> **Upstream vs hiveton.** Upstream `78/xiaozhi-sf32` ships **only** mechanism (b), DFU-over-PAN. The
+> **microSD `tf_ota`** path (incl. whole-stack bootloader-transition, a) and the **USB-CDC "HVR1"
+> recovery** (c) are **hiveton additions** — they don't exist upstream. So (a) and (c) are the
+> vendor-specific levers worth owning; (b) is stock XiaoZhi.
 
 ### a) SD-card OTA can now flash the WHOLE stack (bootloader-transition)
 The OTA `hcpu_app.bin` (V0853, 1.1 MB) is a **transition updater**, not the real app. Its logic

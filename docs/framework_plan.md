@@ -1,7 +1,23 @@
 # wodle custom-framework — runbook & status
 
-Goal: build your own firmware for the wodle (SF32LB52x N16R8, 528×792 e-paper) and deploy it
+Goal: build your own firmware for the wodle (SF32LB525 N16R8, 528×792 e-paper) and deploy it
 **with no wires** via the microSD `tf_ota` loop.
+
+## Big lever: start from upstream source, not clean-room
+
+The stock app is a fork of **[`78/xiaozhi-sf32`](https://github.com/78/xiaozhi-sf32)** on board
+`sf32lb52-lcd_n16r8` (see [`README.md`](../README.md)). That repo is the **real XiaoZhi app source** —
+audio (Opus + 3A), BT-PAN networking, MCP server, LVGL UI, state machine, OTA. So a custom framework
+has two clean entry points:
+
+- **Reuse the upstream app**, re-targeted to `board/wodle/` (link @ `0x12218000`) — swap only the
+  hiveton-specific bits: the **e-paper display driver** (upstream is ST7789/CO5300; wodle is EPD) and
+  the **reader/books UI**. Everything else (BT-PAN, audio, cloud protocol) is already written.
+- **Clean board bring-up** (own RT-Thread app) using `board/wodle/` — more control, but you re-implement
+  the XiaoZhi stack.
+
+Either way the **gating unknown is the same**: the EPD controller part (to write the display driver)
+and a UART console for feedback. Get those first (below), then the upstream-reuse path is fastest.
 
 ## Proven so far (offline, this Mac)
 

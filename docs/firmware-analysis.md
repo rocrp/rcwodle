@@ -56,6 +56,14 @@ complete and cross-check it.
 
 ## Reference-board cross-check (`sf32lb52-lcd_n16r8`)
 
+> **Upstream note [2026-06-03].** The stock app forks **[`78/xiaozhi-sf32`](https://github.com/78/xiaozhi-sf32)**
+> for its `sf32lb52-lcd_n16r8` board. That repo confirms the **flash map, app architecture, and the
+> string origins** (`sf32lb563`@`xiaozhi_client_public.c:40`, solution `SF32LB52_LCD_N16R8_TFT_CO5300`,
+> `app/peripherals/st7789/`). **But for PINS, use the SDK `sf32lb52-lcd_base` template below, not the
+> upstream repo's bundled board** — the only fully-populated board in the upstream clone is `xty-ai`
+> (audio PA-ctrl=PA26, backlight=PA42), which **differs from wodle** (audio=PA10, backlight=PA01). wodle
+> matches the `lcd_n16r8`/`lcd_base` lineage, not `xty-ai`.
+
 wodle derives from the SiFli DevKit board `sf32lb52-lcd_n16r8`. Its `hcpu/board.conf` names pins;
 cross-referencing with wodle's *independently* recovered GPIO set corroborates:
 - **PA10 = AW8155 speaker-amp enable** (`AW8155_GPIO_PIN=10`; also GPIO in wodle) **[C-RE+ref]**
@@ -103,20 +111,24 @@ Each driver's init function references exactly one bus-name string → solid bus
 | I²C2 | (same bus) | BQ27220 fuel gauge | 0x55 (part default; not seen in scan) | C-RE bus / ? addr |
 | — | GPIO / I²S | AW8155 speaker amp | **not on I²C** (mode-pin controlled) | C-RE |
 
-## Flash / partition layout (refined)
+## Flash / partition layout
 
-flash2 = MPI2/QSPI2, base `0x12000000`, 16 MB. FAL magic `0x45503130` found only for dfu+ble
-(the rest of the layout lives in the ftab, not FAL):
+flash2 = MPI2/QSPI2, base `0x12000000`, 16 MB. The full table lives in the ftab (parsed in
+[`firmware254.md`](firmware254.md) §1) — **confirmed byte-identical to upstream `78/xiaozhi-sf32`
+`app/project/sf32lb52-lcd_n16r8_hcpu/ptab.json`**, so the boot-chain region between `0x12000000` and
+`0x12218000` (formerly `[?]`) is now named: ftab 32 K · DFU_PAN_LOADER (`dfu_pan.bin`, LCPU+BT+recovery)
+2 M · bootloader 64 K. FAL magic `0x45503130` appears only for the two KVDB regions:
 
 | Region | Offset | Addr | Size |
 |---|---|---|---|
-| ftab + bootloader (+?) | 0x000000 | 0x12000000 | → 0x218000 |
+| ftab | 0x000000 | 0x12000000 | 32 K |
+| DFU_PAN_LOADER (`dfu_pan.bin`) | 0x008000 | 0x12008000 | 2 M |
+| bootloader | 0x208000 | 0x12208000 | 64 K (runs SRAM 0x20020000) |
 | HCPU app | 0x218000 | 0x12218000 | 0x240000 |
-| dfu (FAL) | 0x458000 | 0x12458000 | 16 K |
-| ble NVDS (FAL) | 0x45c000 | 0x1245c000 | 16 K |
-| ezip assets | 0x460000 | 0x12460000 | 0x680000 |
-| font_data | 0xAE0000 | 0x12AE0000 | 0x400000 |
-| FS / KVDB | 0xEE0000 | 0x12EE0000 | ~1.1 M |
+| KVDB_DFU (FAL) | 0x458000 | 0x12458000 | 16 K |
+| KVDB_BLE (FAL) | 0x45c000 | 0x1245c000 | 16 K |
+| EZIP assets | 0x460000 | 0x12460000 | 0x680000 |
+| FONT_DATA | 0xAE0000 | 0x12AE0000 | 0x400000 |
 
 ## Audio
 
@@ -214,9 +226,11 @@ Investigated whether any no-wire debug entry exists. Findings:
   (`OTA websocket url present/empty…`), so it is **controllable**: stand up your own XiaoZhi server and
   redirect the device's OTA host (e.g. DNS on the tethering network) → then drive the OS via MCP tool calls.
   (Same self-hosting pattern as the picture-book / xiaozhi-esp32-server work.) **[C]**
-- **Config files** (`system.cfg`, `device_config.cfg`, `network_mode.cfg`, `reading_state.cfg`) = a
-  key/value settings store; **no debug-enable flag found**, and they live on an internal FS (not the
-  removable SD), so not editable without console/USB-disk. **[C-RE]**
+- **Config files** = a key/value settings store; **no debug-enable flag found**. Correction to an
+  earlier guess: they live on the **removable SD card** (`config/device_config.cfg` +
+  `config/reading_state.cfg` — verified in the card snapshot, see below), **not** an internal FS, and
+  there is **no** separate `network_mode.cfg` (the `boot.network_mode=bt` key is inside
+  `device_config.cfg`). So they **are** editable zero-wire by pulling the card. **[C]**
 - **Recovery-SD correction**: the OTA manifest is read from **`/firmware/update.json`** (a `firmware/`
   folder on the card), not the card root. **[C-RE]**
 

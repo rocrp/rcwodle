@@ -7,11 +7,13 @@ Confidence tags: **[C]** confirmed by direct evidence · **[C-RE]** decoded from
 
 > **Recovered pin map + 103-command finsh list → [`firmware-analysis.md`](firmware-analysis.md).** USB-connect test (2026-06-01): device does **not** enumerate — no serial, no disk volume. Charge-only port.
 
+> **Upstream lineage [C, 2026-06-03].** The stock app is a fork of **[`github.com/78/xiaozhi-sf32`](https://github.com/78/xiaozhi-sf32)** (canonical XiaoZhi reference fw; SDK = `OpenSiFli/SiFli-SDK`), built for its **`sf32lb52-lcd_n16r8`** board/solution. Confirmed by: flash map byte-identical to upstream `ptab.json`; the `sf32lb563`/`CO5300`/`st7789` strings all trace to upstream source lines (below). hiveton's deltas = e-paper panel (vs upstream CO5300 AMOLED) + reader UI + microSD `tf_ota` + USB-CDC HVR1 recovery (none upstream). See [`README.md`](../README.md) for the full delta table.
+
 ---
 
 ## 1. What it is
 
-- **[C]** SiFli SoC, **not** an ESP32. Evidence: firmware strings `SiFli Corporation`, `chip_model_name: sf32lb563`, `bf0_hal_*`, HCPU/LCPU IPC.
+- **[C]** SiFli SoC, **not** an ESP32. Evidence: firmware strings `SiFli Corporation`, `chip_model_name: sf32lb563`, `bf0_hal_*`, HCPU/LCPU IPC. (The `sf32lb563` string is a **hardcoded literal in upstream** `app/src/xiaozhi_client_public.c:40` — copied verbatim, not a real part ID; see §1 part-ID note.)
 - **[C]** Dual-core **Cortex-M33** (HCPU + LCPU).
 - **[C]** Stack: **RT-Thread** + **LVGL v9** + cherryusb/MUSB + lwIP 2.1.2 + FlashDB. Built with GCC arm-none-eabi.
 - **[C]** Silicon memory map is **SF32LB52x-style**: flash XIP base `0x12000000` = `QSPI2_MEM_BASE` (verified in SDK `drivers/cmsis/sf32lb52x/mem_map.h:102`). Also `dbguart2jlink` exists only `#if SF32LB52X`; `sftool` only supports `-c SF32LB52`; board macro `SF32LB52_LCD_N16R8_TFT_CO5300` embedded.
@@ -32,7 +34,7 @@ Confidence tags: **[C]** confirmed by direct evidence · **[C-RE]** decoded from
 | MCU | SF32LB52x N16R8, dual M33 | C / ? |
 | Display | **e-paper** (4-level gray, partial+full refresh, busy-pin); **LCDC1 dual-SPI: CS=PA03 CLK=PA04 D0=PA05 D1=PA06**; frontlight PWM on **PA01**; driver module named `st7789` | C / C-RE |
 | Display resolution | **528 × 792** (portrait), recovered from create-call | C-RE |
-| Display controller | unknown (`CO5300`/`TFT` = SDK-template leftovers) | ? / HW |
+| Display controller | unknown. `CO5300`/`TFT`/`st7789` strings = **upstream leftovers** — upstream solution = `SF32LB52_LCD_N16R8_TFT_CO5300`, driver `app/peripherals/st7789/`; hiveton swapped the panel to e-paper but kept the names. Real EPD controller still needs `lcd_rreg` on hardware. | ? / HW |
 | Touch | **CST816** (I²C) | C |
 | Charger | **AW32001** (I²C) | C |
 | Fuel gauge | **BQ27220** (I²C) | C |
@@ -42,20 +44,26 @@ Confidence tags: **[C]** confirmed by direct evidence · **[C-RE]** decoded from
 | Bus pins (recovered) | flash MPI2 `PA12/13/14/15/16/17`; console **UART1 RX=PA18 TX=PA19**; I²C1 `SCL=PA07`; I²C2 `SCL=PA31 SDA=PA32`; SPI1 `CLK=PA28 CS=PA29 DIO=PA24 DI=PA25` | C-RE |
 | I²C devices | **I²C1:** CST816 touch @0x15. **I²C2** (PA31/32): AW32001 charger @0x49 + BQ27220 gauge @0x55. AW8155 amp = not I²C (GPIO mode pin) | C-RE |
 
-> **Connectivity caveat (2026-06-02).** A `boot.network_mode=bt` setting exists on the SD card (`config/network_mode.cfg`) — the *name* implies the product family is designed for **selectable** network modes, consistent with a 4G SKU. But **only `bt` is implemented** in fw v0422/v0853 (no `4g`/`cell` mode token found). If the EG800Q is populated, a custom framework could add **standalone 4G** (no phone tether): the modem attaches over UART (AT) or USB — find which SiFli UART is wired to it (only UART1=PA18/19 console is mapped so far; UART2=PA20/27 is a candidate).
+> **Connectivity caveat (2026-06-02).** A `boot.network_mode=bt` setting exists on the SD card (the `config/device_config.cfg` key — there is **no** separate `network_mode.cfg`; earlier notes that named one were wrong) — the key *name* implies the product family is designed for **selectable** network modes, consistent with a 4G SKU. But **only `bt` is implemented** in fw v0422/v0853 (no `4g`/`cell` mode token found). If the EG800Q is populated, a custom framework could add **standalone 4G** (no phone tether): the modem attaches over UART (AT) or USB — find which SiFli UART is wired to it (only UART1=PA18/19 console is mapped so far; UART2=PA20/27 is a candidate).
 
 ## 4. Memory / flash layout
 
-NOR @ `0x12000000` (16 MB → `0x13000000`). Addresses below from `update.json`, CRC32-verified.
+NOR @ `0x12000000` (16 MB → `0x13000000`). **Authoritative map → [`firmware254.md`](firmware254.md) §1**
+(parsed from `ftab.bin`, magic `FCES`) — now **confirmed byte-identical to upstream
+`78/xiaozhi-sf32` `app/project/sf32lb52-lcd_n16r8_hcpu/ptab.json`**, so the formerly-`[?]` regions are
+named. Summary:
 
-| File | Flash addr | Region | Note |
+| Region | Flash addr | Size | Note |
 |---|---|---|---|
-| (ftab + bootloader + ?) | `0x12000000`–`0x12218000` | ~2.2 MB | contents **[?]** (likely ftab/bootloader/lcpu) |
-| `hcpu_app.bin` | `0x12218000` | `0x240000` | HCPU app, XIP |
-| dfu / ble NVDS (FAL) | `0x12458000` / `0x1245c000` | 16 K each | OTA flag + BLE bond store |
-| `ezip_image.bin` | `0x12460000` | `0x680000` | eZip sprite atlas (≤528×256) |
-| `font_data.bin` | `0x12AE0000` | `0x400000` | TTF (Ubuntu Mono Bold + CJK) |
-| (FS / KVDB) | `0x12EE0000`–`0x13000000` | ~1.1 MB | **[?]** |
+| ftab | `0x12000000` | 32 K | flash table |
+| DFU_PAN_LOADER (`dfu_pan.bin`) | `0x12008000` | 2 M | LCPU + BT core + DFU/recovery |
+| bootloader | `0x12208000` | **64 K** | runs in SRAM `0x20020000` |
+| `hcpu_app.bin` (HCPU app) | `0x12218000` | 0x240000 | XIP |
+| KVDB_DFU / KVDB_BLE (FAL) | `0x12458000` / `0x1245C000` | 16 K each | OTA flag + BLE bond store |
+| `ezip_image.bin` (EZIP_IMAGE) | `0x12460000` | 0x680000 | eZip sprite atlas (≤528×256) |
+| `font_data.bin` (FONT_DATA) | `0x12AE0000` | 0x400000 | TTF (Ubuntu Mono Bold + CJK) |
+
+PSRAM1 @ `0x60000000` (8 MB): PSRAM_CODE 2 M + PSRAM_DATA 6 M.
 
 ## 5. Flashing & low-level access
 
@@ -68,7 +76,7 @@ NOR @ `0x12000000` (16 MB → `0x13000000`). Addresses below from `update.json`,
 
 ## 6. Cloud / protocol (for reference, not needed for bring-up)
 
-- **[C]** XiaoZhi: `wss://api.tenclass.net/xiaozhi/v1/`, OTA `ota.sifli.com`, weather = Seniverse. In-firmware **MCP** server. Audio = Opus.
+- **[C]** XiaoZhi: `wss://api.tenclass.net/xiaozhi/v1/` (host+path from upstream `xiaozhi_mqtt.h:8`), OTA `ota.sifli.com` (`…/v2/xiaozhi/<solution>/<board>?chip_id=…&version=latest`), portal `xiaozhi.me`, weather = Seniverse. In-firmware **MCP** server (device-side: volume/light/motor/GPIO; cloud-side extends the LLM). Audio = **Opus**, 60 ms frames (mic 16 kHz, speaker 24 kHz). State machine Idle ↔ Listening ↔ Speaking. Keyword wake "小智小智" (upstream; wodle's enablement unconfirmed). Full app source = upstream `78/xiaozhi-sf32` `app/src/`.
 
 ---
 
