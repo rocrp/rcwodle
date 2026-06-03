@@ -1,5 +1,17 @@
 # wodle bring-up Part 1: build pipeline + proof-of-life — Implementation Plan
 
+> **Status: EXECUTED 2026-06-03** on branch `feat/wodle-eink-bringup`. All 5 tasks done; everything is
+> build-verified (links @ `0x12218000`, `mk_update` tests pass). The only deferred step is the
+> `[HARDWARE]` flash/observe in Task 4 (needs the device). **Deviations from the plan as written:**
+> - Build output is **`build_wodle_hcpu/output/main.bin`**, not `bf0_ap.bin` (plan guessed the name).
+> - A real blocker surfaced and was root-caused: the SDK board-walker double-linked `sf32lb52-lcd_base`
+>   because `wodle` reused the stock `BSP_USING_BOARD_SF32LB52_LCD_N16R8` symbol. Fixed by giving wodle a
+>   unique **`BSP_USING_BOARD_WODLE`** symbol + skipping the bootloader sub-build (Task 1/2).
+> - `BSP_USING_KEY3` is not a real SDK symbol → PA44=KEY3 left as a board.conf comment, handled in app code.
+> - `CO5300` kept enabled for S1 (panel probe is lazy → harmless); swap to UC8179C deferred to S3.
+> - S1 frontlight is driven as raw GPIO (re-muxes off the SDK's auto-init PA1 PWM) + a UART `rt_kprintf`
+>   heartbeat as a second channel.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Stand up our own minimal RT-Thread firmware that builds for `board/wodle`, links @ `0x12218000`, and — when flashed — proves a custom app boots past the stock bootloader (frontlight heartbeat), plus the host-side tooling to package it for the SD `tf_ota` flash path.
