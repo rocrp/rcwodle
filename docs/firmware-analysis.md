@@ -267,21 +267,18 @@ Investigated whether any no-wire debug entry exists. Findings:
 XiaoZhi WebSocket server + OTA-host redirect — full MCP/IoT remote control, no wires; (3) just pull the
 SD card and read its FS directly — trivial, no tap needed.
 
-## Reference build + symbol-match
+## Reference build (toolchain proven)
 
-Built OpenSiFli SDK v2.5.0 hello_world for board `sf32lb52-lcd_n16r8` to (a) prove the toolchain
-and (b) FLIRT-match symbols into the stock binary.
+OpenSiFli SDK v2.5.0 builds for board `sf32lb52-lcd_n16r8`:
 
 - **Toolchain PROVEN** ✅ : `install.sh` (China mirror) → `arm-none-eabi-gcc 14.2.1` + `sftool 0.1.16`
-  in `~/.sifli/`; `scons --board=sf32lb52-lcd_n16r8 -j8` → `main.elf` (2.84 MB, symboled). Build
-  fixes required: empty `UV_CONFIG_FILE` (override global uv `exclude-newer`); stub empty
-  `middleware/bluetooth/Kconfig` + comment 2 BT lines in `board.conf`; `git submodule update --init
-  tools/SiliconSchema` (ptab needs it).
-- **Symbol-match (`tools/fw_symmatch.py`) = limited yield.** Stock fw (v1.4.0.0422) was built on an
-  **older SDK**, so larger functions' bytes diverge from the v2.5.0 build → cross-version FLIRT is
-  unreliable. Only simple functions matched (e.g. `rt_i2c_transfer` UNIQUE @0x122f8228);
-  `HAL_PIN_Set` (already known behaviorally @0x1221e2c0) and `rt_pin_*` did **not**. The build's real
-  payoff was the `board.conf` cross-check (resolved PA10/PA44/PA34), not the byte-match.
+  in `~/.sifli/`; `scons --board=sf32lb52-lcd_n16r8 -j8` → a symboled `main.elf`. Build fixes required:
+  empty `UV_CONFIG_FILE` (override global uv `exclude-newer`); stub empty `middleware/bluetooth/Kconfig`
+  + comment 2 BT lines in `board.conf`; `git submodule update --init tools/SiliconSchema` (ptab needs it).
+
+> A cross-version FLIRT symbol-match against the stock bins was tried and abandoned (low yield — stock fw
+> was built on an older SDK) and is moot now that upstream is identified. The `board.conf` cross-check it
+> spun off has itself been **superseded by the schematic** (which corrected PA10/PA44 — see top banner).
 
 ## Reproduce
 

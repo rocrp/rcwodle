@@ -63,7 +63,7 @@ Upstream ⇒ a custom framework can start from the real XiaoZhi app source, not 
 - `wodle_ble.py` — bleak BLE CLI (`scan`/`info`/`listen`/`send`); proven, but device not advertising while bonded.
 - `wodle_spp.py` — classic-BT SPP probe (PyObjC, untested).
 - `fw_analyze.py` (pin map) · `fw_xref.py` (I²C) · `fw_res.py` (resolution) · `fw_usbrec.py` (HVR1 decoder) ·
-  `fw_strxref.py` / `fw_gpio.py` / `fw_gatt.py` / `fw_symmatch.py` — static analyzers over the stock bins.
+  `fw_strxref.py` / `fw_gpio.py` / `fw_gatt.py` — static analyzers over the stock bins.
 - `usb_recovery_qt/` — vendor's Hiveton USB Recovery GUI (Qt6) = ground-truth HVR1 reference impl.
 
 ## Status & next step
