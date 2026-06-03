@@ -42,12 +42,17 @@ the EPD BUSY line — but the upstream-reuse path is now unblocked.
 ## The no-wire dev cycle (once you have a bootable app)
 
 ```
-edit → scons --board=wodle → build_wodle_hcpu/<app>.bin
-  → bump "version" in update.json, set hcpu_app crc32+size
-  → copy bin + update.json into card /firmware/
-  → card into wodle, power on → it self-flashes
+edit → scons --board=wodle → build_wodle_hcpu/output/main.bin   (links @ 0x12218000)
+  → cp output/main.bin <dir>/hcpu_app.bin
+  → uv run tools/mk_update.py <dir> --version V1.4.0.900N      (regenerates update.json: crc32+size)
+  → copy <dir>/{hcpu_app.bin,update.json} into card /firmware/
+  → card into wodle, power on → it self-flashes (only if version is newer — bump N each time)
 recover if it doesn't boot: restore refs/card_snapshot_0246/firmware/ (or Downloads 0422) to card /firmware/
 ```
+
+> Our own validation firmware lives in [`firmware/hello_wodle/`](../firmware/hello_wodle/) — start there,
+> not a clean-room rewrite of the xiaozhi app. `tools/mk_update.py` regenerates `update.json` from the
+> built `.bin` (crc32+size verified against the stock manifest), so no manual CRC.
 
 ## Blockers before a *custom* app can work on hardware
 
