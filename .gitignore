@@ -8,3 +8,12 @@ __pycache__/
 
 # CMake / C++ out-of-source builds (e.g. tools/usb_recovery_qt/build)
 build/
+
+# SiFli firmware build artifacts (scons --board=wodle)
+firmware/**/build_*/
+firmware/**/.config
+firmware/**/rtconfig.h
+firmware/**/Kconfig.tmp
+firmware/**/*.map
+firmware/**/.sconsign.dblite
+firmware/**/download.bat

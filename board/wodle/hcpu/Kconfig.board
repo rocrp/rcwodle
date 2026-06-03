@@ -1,4 +1,10 @@
-config BSP_USING_BOARD_SF32LB52_LCD_N16R8
+# Own board symbol (NOT the stock n16r8 one). The SDK's customer/boards/SConscript walks
+# EVERY board's SConscript; the stock sf32lb52-lcd_n16r8 board gates its sf32lb52-lcd_base
+# include on BSP_USING_BOARD_SF32LB52_LCD_N16R8. wodle was copied from it and wrongly kept
+# that symbol, so the base bsp_*.c got compiled+linked twice (multiple-definition). A unique
+# symbol keeps the stock board's include OFF when building wodle (only the active board's
+# Kconfig.board is sourced — building.py:2895).
+config BSP_USING_BOARD_WODLE
     bool
     select SOC_SF32LB52X
     select BF0_HCPU
