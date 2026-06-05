@@ -8,6 +8,7 @@
 #include <rtthread.h>
 
 #include "bf0_hal.h"
+#include "WodleFrontlight.h"
 
 HalGPIO gpio;
 
@@ -154,11 +155,25 @@ unsigned long HalGPIO::getPowerButtonHeldTime() const
 
 void HalGPIO::startDeepSleep()
 {
-    /* TODO(HIL): SF32 hibernate via PMU + PA34 wake. Blind-safe placeholder:
-     * spin in low-priority sleep — power draw unoptimized but deterministic. */
-    rt_kprintf("[HalGPIO] startDeepSleep (placeholder spin)\n");
+    /* SF32LB52x hibernate per SDK example/pm/classical (52x branch): PA34
+     * (power key) -> wake_pin0. NEG_EDGE wake is polarity-robust: a full
+     * press-release cycle produces both edges regardless of active level.
+     * Wake = chip reset -> normal boot. */
+    rt_kprintf("[HalGPIO] entering hibernate (wake: PA34 edge)\n");
+    WodleFrontlight::set(0);
+    rt_thread_mdelay(20); /* let the log out */
+
+    HAL_PMU_SelectWakeupPin(0, HAL_HPAON_QueryWakeupPin(hwp_gpio1, PIN_PWR));
+    HAL_PMU_EnablePinWakeup(0, AON_PIN_MODE_NEG_EDGE);
+    hwp_pmuc->WKUP_CNT = 0x50005; /* debounce counts for wake pins 0/1 */
+    rt_hw_interrupt_disable();
+    /* SDK example is C; the enum needs explicit casts under C++ */
+    HAL_PMU_ConfigPeriLdo((PMU_PeriLdoTypeDef)PMUC_PERI_LDO_EN_VDD33_LDO3_Pos, false, false);
+    HAL_PMU_ConfigPeriLdo((PMU_PeriLdoTypeDef)PMUC_PERI_LDO_EN_VDD33_LDO2_Pos, false, false);
+    HAL_PMU_ConfigPeriLdo(PMU_PERI_LDO_1V8, false, false);
+    HAL_PMU_EnterHibernate();
     while (1)
-        rt_thread_mdelay(1000);
+        ;
 }
 
 void HalGPIO::verifyPowerButtonWakeup(uint16_t, bool)

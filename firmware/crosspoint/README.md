@@ -63,9 +63,12 @@ Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/
   (WODLE_OMIT_18PT in src/main.cpp). XL size falls back; SD `.cpfont` can
   supply it later. ptab is now the V656 layout (board/wodle/ptab.yaml) —
   device must run the V656 bootloader/ftab (it does since 2026-06-05).
-- **Sleep**: deep sleep = placeholder spin loop (HalGPIO::startDeepSleep).
-  Real SF32 hibernate + PA34 wake = separate task.
-- **Battery**: fixed 100% (BQ27220 on I2C2 @0x55 is the known upgrade).
+- **Sleep**: real SF32 hibernate (PMU, per SDK example/pm/classical 52x
+  recipe) with PA34 edge wake (polarity-robust). Wake = chip reset → normal
+  boot (quick-resume restores the frame from SD). HIL: verify it actually
+  wakes; if not, USB recovery still works.
+- **Battery**: live BQ27220 SOC over I2C2 (PA31/32); falls back to 100% if
+  the gauge doesn't respond.
 - **Clock**: none (status bar clock hidden).
 - **USB detect / tilt / grayscale / images-in-epub dithering**: stubbed or
   best-effort; JPEGDEC/PNGdec are linked but image rendering is untested.
