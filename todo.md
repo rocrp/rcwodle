@@ -2,7 +2,7 @@
 
 Status snapshot 2026-06-06. Two firmwares: `firmware/hello_wodle/` (validation
 instrument, EPD console) + `firmware/crosspoint/` (the e-reader, blind-ported,
-compiles + 117/117 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
+compiles + 125/125 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
 Flash: 3,405,116 of 3,538,944 B — ~131KB headroom (I18n --strip-unused
 reclaimed 82KB; UI-font compression tried + rejected, came out larger).
 Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
@@ -60,8 +60,10 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       translations → no-tofu host test for every language; also fixed
       upstream's Hebrew U+05F4 tofu). Flash 3,436,812B of 3,538,944B
       (~100KB headroom). Default stays EN; switch in Settings. HIL = 7c.
-- [ ] Host test: Epub container/opf parsers over fixture (needs host HalDisplay
-      stub — deps balloon; revisit after HIL proves the pipeline anyway)
+- [x] Host test: Epub container/opf parsers — DONE 2026-06-06 (`test/epub/`,
+      9 tests: full Epub::load over fixture — opf metadata/spine/toc, item
+      streaming, CSS discovery, metadata-cache reload; converter stubs keep
+      JPEGDEC/PNGdec out — "deps balloon" concern was obsolete)
 - [ ] PSRAM (8MB) heap region for big-EPUB headroom (only if HIL shows pressure)
 - [ ] BT/BLE assessment (task #6): LCPU stack feasibility; book transfer over BT
       (replaces upstream's WiFi transfer; needs design vs effort call)
