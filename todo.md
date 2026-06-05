@@ -2,8 +2,8 @@
 
 Status snapshot 2026-06-06. Two firmwares: `firmware/hello_wodle/` (validation
 instrument, EPD console) + `firmware/crosspoint/` (the e-reader, blind-ported,
-compiles + 125/125 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
-Flash: 3,405,116 of 3,538,944 B — ~131KB headroom (I18n --strip-unused
+compiles + 134/134 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
+Flash: 3,410,508 of 3,538,944 B — ~125KB headroom (I18n --strip-unused
 reclaimed 82KB; UI-font compression tried + rejected, came out larger).
 Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
@@ -37,6 +37,9 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
         to cache (console: "Transcoding ... (GBK) to UTF-8 cache") → correct
         text, reopen skips transcode. Also try a UTF-16LE (Windows Notepad
         "Unicode") txt.
+7e. [ ] **TXT chapters**: in a 第X章-style txt, press Confirm → chapter list
+        (reader font, so CJK titles render) → select → jumps; reopen uses
+        chapters.bin cache.
 8. [ ] **DU fast refresh**: page turns use DU LUT (auto-GC every 10th) — judge
        ghosting/quality; tune `FAST_REFRESHES_PER_GC` in `HalDisplay.cpp`.
 9. [ ] **Battery**: boot log `[WodleBattery] gauge OK (voltage=...)`; status bar %
@@ -69,6 +72,12 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       (replaces upstream's WiFi transfer; needs design vs effort call)
 
 ## Post-HIL backlog
+
+- [ ] CJK filenames/titles in file browser + home recents render with UI fonts
+      → tofu for chars outside the translation subset. Chapter list solved
+      this by drawing items with the reader font (SD CJK font); apply the
+      same to browser/recents lists (needs prewarm batching like
+      TxtReaderChapterSelectionActivity::render).
 
 - [ ] X4-style partial window refresh (`displayWindow`) for status-bar updates
 - [ ] 4-gray grayscale (refs/epd UC8279_4gray_reference.c) for images/AA text

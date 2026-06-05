@@ -6,7 +6,10 @@
 #include <HalStorage.h>
 #include <I18n.h>
 #include <Serialization.h>
+#include <TxtChapters.h>  // WODLE-PORT: chapter detection
 #include <Utf8.h>
+
+#include "TxtReaderChapterSelectionActivity.h"  // WODLE-PORT
 
 #include "CrossPointSettings.h"
 #include "CrossPointState.h"
@@ -52,6 +55,7 @@ void TxtReaderActivity::onExit() {
   renderer.setOrientation(GfxRenderer::Orientation::Portrait);
 
   pageOffsets.clear();
+  chapters.clear();  // WODLE-PORT
   currentPageLines.clear();
   APP_STATE.readerActivityLoadCount = 0;
   APP_STATE.saveToFile();
@@ -59,6 +63,24 @@ void TxtReaderActivity::onExit() {
 }
 
 void TxtReaderActivity::loop() {
+  // WODLE-PORT: Confirm opens chapter selection (mirrors XtcReaderActivity)
+  if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
+    if (initialized && !chapters.empty()) {
+      startActivityForResult(std::make_unique<TxtReaderChapterSelectionActivity>(renderer, mappedInput, chapters,
+                                                                                 pageOffsets, currentPage),
+                             [this](const ActivityResult& result) {
+                               if (!result.isCancelled) {
+                                 const auto page = static_cast<int>(std::get<PageResult>(result.data).page);
+                                 if (page >= 0 && page < totalPages) {
+                                   currentPage = page;
+                                   saveProgress();
+                                 }
+                               }
+                             });
+      return;
+    }
+  }
+
   // Long press BACK (1s+) goes to file selection
   if (mappedInput.isPressed(MappedInputManager::Button::Back) && mappedInput.getHeldTime() >= ReaderUtils::GO_HOME_MS) {
     activityManager.goToFileBrowser(txt ? txt->getPath() : "");
@@ -125,6 +147,9 @@ void TxtReaderActivity::initializeReader() {
     // Save to cache for next time
     savePageIndexCache();
   }
+
+  // WODLE-PORT: chapter headings (cached after first scan)
+  chapters = TxtChapters::loadOrScan(*txt);
 
   // Load saved progress
   loadProgress();

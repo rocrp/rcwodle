@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Txt.h>
+#include <TxtChapterScanner.h>
 
 #include <vector>
 
@@ -16,6 +17,8 @@ class TxtReaderActivity final : public Activity {
 
   // Streaming text reader - stores file offsets for each page
   std::vector<size_t> pageOffsets;  // File offset for start of each page
+  // WODLE-PORT: detected chapter headings (第X章 / Chapter N …) for navigation
+  std::vector<TxtChapter> chapters;
   std::vector<std::string> currentPageLines;
   int linesPerPage = 0;
   int viewportWidth = 0;
