@@ -36,6 +36,7 @@
 #include "components/UITheme.h"
 #include "fontIds.h"
 #include "images/LoadingIcon.h"
+#include "WodleFrontlight.h"  // WODLE-PORT
 #include "util/ButtonNavigator.h"
 #include "util/ScreenshotUtil.h"
 
@@ -335,6 +336,10 @@ void setup() {
   silentRebootTarget = 0;
 
   gpio.begin();
+  // WODLE-PORT: frontlight boot pulse = earliest proof-of-life (before any
+  // EPD traffic). Boost is VBAT-fed — silent without a battery.
+  WodleFrontlight::init();
+  WodleFrontlight::pulse(300);
   powerManager.begin();
   halTiltSensor.begin();
   halClock.begin();

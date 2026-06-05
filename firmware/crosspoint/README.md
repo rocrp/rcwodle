@@ -40,10 +40,10 @@ Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/
 
 ## HIL checklist (in order)
 
-1. **Boot**: splash (BootActivity) renders within ~15s of reset. E-ink GC
-   refresh = slow + flashy (every update is a full refresh for now).
-   - If nothing: UART boot fingerprint; check SD inserted (SD fail → "SD card
-     error" screen should still render).
+1. **Boot**: ~0.3s frontlight pulse almost immediately (proof-of-life;
+   battery must be connected — boost is VBAT-fed), then splash (BootActivity).
+   - If no pulse and no splash: UART boot fingerprint; check SD inserted (SD
+     fail → "SD card error" screen should still render).
 2. **SD mount**: home shows file browser/recents. `msd_init`/`dfs_mount` logs
    on console. SPI1 @ default speed; if mount flaky, drop spi_msd max_hz.
 3. **Keys**: navigation per the table above.
@@ -54,9 +54,10 @@ Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/
 
 ## Known gaps / stubs (by design, blind phase)
 
-- **Refresh**: GC full refresh only (~3-4s/update incl. data write over
-  bit-bang GPIO SPI). Next big win = port upstream X3 fast LUT path +
-  hardware SPI/LCDC for the data write.
+- **Refresh**: DU fast-refresh (vendor LUT) for FAST_REFRESH with auto-GC
+  every 10th update; GC for FULL/HALF. Data write = direct-register bit-bang
+  (DOSR/DOCR). HIL checkpoint: DU quality/ghosting on this panel; LCDC/hw-SPI
+  data path is the remaining speed upgrade.
 - **Fonts**: 12/14/16 NotoSerif+NotoSans (all styles) + UI fonts in flash;
   the 18pt (XL) tier alone is ~550KB and overflows the 3.5MB region — omitted
   (WODLE_OMIT_18PT in src/main.cpp). XL size falls back; SD `.cpfont` can

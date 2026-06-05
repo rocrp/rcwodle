@@ -62,32 +62,72 @@ static const uint8_t LUT_GC[245] = {
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 
+/* Direct DOSR/DOCR stores: the 52KB frame write runs ~52K x 8 clock edges;
+ * rt_pin_write's device-framework overhead makes that seconds. All EPD pins
+ * live in GPIO1 bank 0 (pads 0..6), so single-store set/clear is safe. */
+#define EPD_MASK(pin) (1u << (pin))
+static inline void pinHigh(int pin) { hwp_gpio1->DOSR = EPD_MASK(pin); }
+static inline void pinLow(int pin) { hwp_gpio1->DOCR = EPD_MASK(pin); }
+
+/* DU (fast/differential) waveform LUT — vendor reference. Guidance from the
+ * same file: ~every 10 DU refreshes run 1 GC; use GC for big tonal areas. */
+static const uint8_t LUT_DU[245] = {
+    /* VCOM */
+    0x01,0x06,0x01,0x06,0x06,0x01,0x01, 0x01,0x04,0x01,0x01,0x00,0x01,0x01,
+    0x01,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    /* WW */
+    0x01,0x06,0x81,0x06,0x06,0x01,0x01, 0x01,0x04,0x01,0x01,0x00,0x01,0x01,
+    0x01,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    /* BW */
+    0x01,0x86,0x81,0x86,0x86,0x01,0x01, 0x01,0x84,0x81,0x01,0x00,0x01,0x01,
+    0x01,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    /* WB */
+    0x01,0x46,0x41,0x46,0x46,0x01,0x01, 0x01,0x44,0x41,0x01,0x00,0x01,0x01,
+    0x01,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    /* BB */
+    0x01,0x06,0x01,0x06,0x06,0x01,0x01, 0x01,0x04,0x01,0x41,0x00,0x01,0x01,
+    0x01,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+
 static void epdSpiByte(uint8_t b)
 {
     for (int i = 0; i < 8; i++)
     {
-        rt_pin_write(PIN_EPD_CLK, PIN_LOW);
-        rt_pin_write(PIN_EPD_SDA, (b & 0x80) ? PIN_HIGH : PIN_LOW);
+        pinLow(PIN_EPD_CLK);
+        if (b & 0x80)
+            pinHigh(PIN_EPD_SDA);
+        else
+            pinLow(PIN_EPD_SDA);
         b <<= 1;
-        rt_pin_write(PIN_EPD_CLK, PIN_HIGH);
+        pinHigh(PIN_EPD_CLK); /* sample on rising edge */
     }
-    rt_pin_write(PIN_EPD_CLK, PIN_LOW);
+    pinLow(PIN_EPD_CLK);
 }
 
 static void epdCmd(uint8_t c)
 {
-    rt_pin_write(PIN_EPD_DC, PIN_LOW);
-    rt_pin_write(PIN_EPD_CS, PIN_LOW);
+    pinLow(PIN_EPD_DC);
+    pinLow(PIN_EPD_CS);
     epdSpiByte(c);
-    rt_pin_write(PIN_EPD_CS, PIN_HIGH);
+    pinHigh(PIN_EPD_CS);
 }
 
 static void epdData(uint8_t d)
 {
-    rt_pin_write(PIN_EPD_DC, PIN_HIGH);
-    rt_pin_write(PIN_EPD_CS, PIN_LOW);
+    pinHigh(PIN_EPD_DC);
+    pinLow(PIN_EPD_CS);
     epdSpiByte(d);
-    rt_pin_write(PIN_EPD_CS, PIN_HIGH);
+    pinHigh(PIN_EPD_CS);
 }
 
 static void epdWaitBusy(int maxMs)
@@ -144,16 +184,26 @@ static void epdPanelInit()
     rt_thread_mdelay(50);
 }
 
-static void epdLoadLutGc()
+enum class Lut : uint8_t { None, GC, DU };
+static Lut s_lutLoaded = Lut::None;
+static int s_fastSinceGc = 0;
+#define FAST_REFRESHES_PER_GC 10 /* vendor guidance */
+
+static void epdLoadLut(Lut which)
 {
-    epdCmd(0x50); epdData(0x97);
+    if (s_lutLoaded == which) return;
+    const uint8_t *lut = (which == Lut::DU) ? LUT_DU : LUT_GC;
+    epdCmd(0x50); epdData(which == Lut::DU ? 0xD7 : 0x97); /* VCOM/data interval */
     static const uint8_t bankCmd[5] = {0x20, 0x21, 0x22, 0x23, 0x24};
     for (int bank = 0; bank < 5; bank++)
     {
         epdCmd(bankCmd[bank]);
-        for (int i = 0; i < 49; i++) epdData(LUT_GC[bank * 49 + i]);
+        for (int i = 0; i < 49; i++) epdData(lut[bank * 49 + i]);
     }
+    s_lutLoaded = which;
 }
+
+static void epdLoadLutGc() { epdLoadLut(Lut::GC); }
 
 /* ----------------------------------------------------------------- HalDisplay */
 HalDisplay::HalDisplay() = default;
@@ -236,15 +286,29 @@ void HalDisplay::displayBuffer(RefreshMode mode, bool turnOffScreen)
     refreshDisplay(mode, turnOffScreen);
 }
 
-void HalDisplay::refreshDisplay(RefreshMode, bool)
+void HalDisplay::refreshDisplay(RefreshMode mode, bool)
 {
-    /* GC full refresh for every mode (fast LUTs = future upgrade). */
+    /* FAST -> DU differential (vs old RAM); FULL/HALF -> GC. Auto-promote to
+     * GC every FAST_REFRESHES_PER_GC fast updates (ghosting management). */
+    bool wantFast = (mode == FAST_REFRESH) && (s_fastSinceGc < FAST_REFRESHES_PER_GC);
+    if (wantFast)
+    {
+        epdLoadLut(Lut::DU);
+        s_fastSinceGc++;
+    }
+    else
+    {
+        epdLoadLut(Lut::GC);
+        s_fastSinceGc = 0;
+    }
+
     epdCmd(0x13);
     for (uint32_t i = 0; i < BUFFER_SIZE; i++) epdData(s_frameBuffer[i]);
     epdCmd(0x12);
     epdWaitBusy(8000);
-    rt_thread_mdelay(3000);
-    epdCmd(0x10); /* sync old RAM for next differential */
+    if (!wantFast)
+        rt_thread_mdelay(500); /* GC settle margin (BUSY already waited) */
+    epdCmd(0x10); /* sync old RAM = differential base for the next DU */
     for (uint32_t i = 0; i < BUFFER_SIZE; i++) epdData(s_frameBuffer[i]);
 }
 
@@ -255,6 +319,7 @@ void HalDisplay::deepSleep()
     epdCmd(0x07);
     epdData(0xA5); /* deep sleep */
     s_panelInitialized = false;
+    s_lutLoaded = Lut::None;
 }
 
 /* Grayscale: not supported yet on the wodle backend. */
