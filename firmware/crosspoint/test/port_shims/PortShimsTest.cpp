@@ -4,6 +4,8 @@
 
 #include <gtest/gtest.h>
 
+#include <vector>
+
 #include "MD5Builder.h"
 #include "WString.h"
 #include "base64.h"
@@ -277,4 +279,87 @@ TEST(FrontlightLevel, StepUpDownClampAndGrid)
     EXPECT_EQ(clamp(150), 100);
     EXPECT_EQ(up(47), 60);
     EXPECT_EQ(down(47), 20);
+}
+
+/* --------------------------------------------------------------- FrameBlit */
+#include "../../port/hal/FrameBlit.h"
+
+namespace
+{
+struct Fb
+{
+    std::vector<uint8_t> buf;
+    Fb() : buf((size_t)FrameBlit::FB_ROW_BYTES * FrameBlit::FB_H, 0xFF) {}
+    uint8_t *data() { return buf.data(); }
+    bool px(int x, int y) { return FrameBlit::getPixel(buf.data(), x, y); }
+};
+} // namespace
+
+TEST(FrameBlit, AlignedBlitCopiesExactRect)
+{
+    Fb fb;
+    /* 16x2 image: all black */
+    uint8_t img[4] = {0x00, 0x00, 0x00, 0x00};
+    FrameBlit::blit(fb.data(), img, 8, 10, 16, 2);
+    EXPECT_FALSE(fb.px(8, 10));
+    EXPECT_FALSE(fb.px(23, 11));
+    EXPECT_TRUE(fb.px(7, 10));  /* left neighbor untouched */
+    EXPECT_TRUE(fb.px(24, 10)); /* right neighbor untouched */
+    EXPECT_TRUE(fb.px(8, 9));   /* above untouched */
+    EXPECT_TRUE(fb.px(8, 12));  /* below untouched */
+}
+
+TEST(FrameBlit, UnalignedBlitMatchesAligned)
+{
+    /* checker pattern 16x4 */
+    uint8_t img[8];
+    for (int i = 0; i < 8; i++) img[i] = (i % 2) ? 0xAA : 0x55;
+
+    Fb a, b;
+    FrameBlit::blit(a.data(), img, 8, 0, 16, 4);  /* aligned   */
+    FrameBlit::blit(b.data(), img, 11, 0, 16, 4); /* unaligned (+3) */
+    for (int y = 0; y < 4; y++)
+        for (int col = 0; col < 16; col++)
+            EXPECT_EQ(a.px(8 + col, y), b.px(11 + col, y)) << "col " << col << " y " << y;
+}
+
+TEST(FrameBlit, OddWidthUsesBytePaddedStride)
+{
+    /* 9px-wide image, 2 rows: row0 all black (9 bits), row1 all white.
+     * With a (w+7)/8=2-byte stride, row1 starts at img[2]. */
+    uint8_t img[4] = {0x00, 0x00, 0xFF, 0xFF};
+    Fb fb;
+    FrameBlit::blit(fb.data(), img, 0, 0, 9, 2);
+    EXPECT_FALSE(fb.px(0, 0));
+    EXPECT_FALSE(fb.px(8, 0));
+    EXPECT_TRUE(fb.px(9, 0)); /* beyond width: untouched */
+    EXPECT_TRUE(fb.px(0, 1)); /* row 1 white */
+}
+
+TEST(FrameBlit, ClipsAtEdges)
+{
+    Fb fb;
+    uint8_t img[2] = {0x00, 0x00}; /* 16x1 black */
+    /* off right edge */
+    FrameBlit::blit(fb.data(), img, FrameBlit::FB_W - 8, 0, 16, 1);
+    EXPECT_FALSE(fb.px(FrameBlit::FB_W - 1, 0));
+    /* off bottom edge: must not crash or write row 0 */
+    FrameBlit::blit(fb.data(), img, 0, FrameBlit::FB_H - 1, 16, 4);
+    EXPECT_FALSE(fb.px(0, FrameBlit::FB_H - 1));
+    EXPECT_TRUE(fb.px(20, 0));
+}
+
+TEST(FrameBlit, TransparentOnlyDarkens)
+{
+    Fb fb;
+    /* paint a black region first */
+    uint8_t black[2] = {0x00, 0x00};
+    FrameBlit::blit(fb.data(), black, 0, 0, 16, 1);
+    /* transparent-blit an all-white image over it: nothing changes */
+    uint8_t white[2] = {0xFF, 0xFF};
+    FrameBlit::blitTransparent(fb.data(), white, 0, 0, 16, 1);
+    EXPECT_FALSE(fb.px(0, 0));
+    /* black pixels in the image DO land on white background */
+    FrameBlit::blitTransparent(fb.data(), black, 32, 0, 16, 1);
+    EXPECT_FALSE(fb.px(32, 0));
 }

@@ -19,6 +19,7 @@
 #include <rtdevice.h>
 #include <rtthread.h>
 
+#include "FrameBlit.h"
 #include "bf0_hal.h"
 
 #define PIN_EPD_RST 0
@@ -223,7 +224,7 @@ void HalDisplay::begin(bool seamless)
 
 void HalDisplay::clearScreen(uint8_t color) const
 {
-    memset(s_frameBuffer, color, sizeof(s_frameBuffer));
+    FrameBlit::fill(s_frameBuffer, color);
 }
 
 uint8_t *HalDisplay::getFrameBuffer() const { return s_frameBuffer; }
@@ -231,54 +232,13 @@ uint8_t *HalDisplay::getFrameBuffer() const { return s_frameBuffer; }
 void HalDisplay::drawImage(const uint8_t *imageData, uint16_t x, uint16_t y, uint16_t w,
                            uint16_t h, bool) const
 {
-    /* byte-aligned 1bpp blit (x and w in pixels; x must be byte-aligned for
-     * the fast path, else fall back to bitwise) */
-    const uint16_t wBytes = w / 8;
-    for (uint16_t row = 0; row < h; row++)
-    {
-        uint32_t dy = y + row;
-        if (dy >= DISPLAY_HEIGHT) break;
-        if ((x % 8) == 0)
-        {
-            uint32_t dst = dy * DISPLAY_WIDTH_BYTES + x / 8;
-            uint32_t n = wBytes;
-            if (x / 8 + n > DISPLAY_WIDTH_BYTES) n = DISPLAY_WIDTH_BYTES - x / 8;
-            memcpy(&s_frameBuffer[dst], &imageData[(uint32_t)row * wBytes], n);
-        }
-        else
-        {
-            for (uint16_t col = 0; col < w; col++)
-            {
-                uint32_t dx = x + col;
-                if (dx >= DISPLAY_WIDTH) break;
-                bool white = imageData[(uint32_t)row * wBytes + col / 8] & (0x80 >> (col % 8));
-                uint32_t idx = dy * DISPLAY_WIDTH_BYTES + dx / 8;
-                uint8_t mask = 0x80 >> (dx % 8);
-                if (white) s_frameBuffer[idx] |= mask;
-                else s_frameBuffer[idx] &= ~mask;
-            }
-        }
-    }
+    FrameBlit::blit(s_frameBuffer, imageData, x, y, w, h);
 }
 
 void HalDisplay::drawImageTransparent(const uint8_t *imageData, uint16_t x, uint16_t y,
                                       uint16_t w, uint16_t h, bool) const
 {
-    /* black pixels only (white = transparent) */
-    const uint16_t wBytes = w / 8;
-    for (uint16_t row = 0; row < h; row++)
-    {
-        uint32_t dy = y + row;
-        if (dy >= DISPLAY_HEIGHT) break;
-        for (uint16_t col = 0; col < w; col++)
-        {
-            uint32_t dx = x + col;
-            if (dx >= DISPLAY_WIDTH) break;
-            bool white = imageData[(uint32_t)row * wBytes + col / 8] & (0x80 >> (col % 8));
-            if (!white)
-                s_frameBuffer[dy * DISPLAY_WIDTH_BYTES + dx / 8] &= ~(0x80 >> (dx % 8));
-        }
-    }
+    FrameBlit::blitTransparent(s_frameBuffer, imageData, x, y, w, h);
 }
 
 void HalDisplay::displayBuffer(RefreshMode mode, bool turnOffScreen)
