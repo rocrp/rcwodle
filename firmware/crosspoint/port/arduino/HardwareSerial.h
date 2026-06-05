@@ -12,6 +12,7 @@ class HWCDC : public Stream
 public:
     void begin(unsigned long = 0) {}
     void end() {}
+    void setTxTimeoutMs(unsigned) {}
 
     size_t write(uint8_t b) override
     {

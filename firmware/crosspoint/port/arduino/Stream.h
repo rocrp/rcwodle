@@ -26,6 +26,15 @@ public:
     }
     size_t readBytes(char *buf, size_t length) { return readBytes((uint8_t *)buf, length); }
 
+    String readStringUntil(char terminator)
+    {
+        std::string out;
+        int c;
+        while ((c = read()) >= 0 && (char)c != terminator)
+            out += (char)c;
+        return String(std::move(out));
+    }
+
 protected:
     unsigned long _timeoutMs = 1000;
 };

@@ -67,6 +67,19 @@ public:
         rt_memory_info(&total, &used, &max_used);
         return (uint32_t)(total - used);
     }
+    uint32_t getHeapSize()
+    {
+        rt_size_t total = 0, used = 0, max_used = 0;
+        rt_memory_info(&total, &used, &max_used);
+        return (uint32_t)total;
+    }
+    uint32_t getMinFreeHeap()
+    {
+        rt_size_t total = 0, used = 0, max_used = 0;
+        rt_memory_info(&total, &used, &max_used);
+        return (uint32_t)(total - max_used);
+    }
+    uint32_t getMaxAllocHeap() { return getFreeHeap() / 2; } /* coarse */
     void restart();
 };
 extern EspClass ESP;
