@@ -5,10 +5,11 @@ Port of [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-read
 UC8179C 528x792 EPD). Vendor snapshot + deltas: `vendor/VENDOR.md`. Plan:
 `docs/superpowers/plans/2026-06-05-crosspoint-port-plan.md` (repo root docs/).
 
-**Status: blind-port, compiles + links (3.49MB image, ~51KB headroom), zero
+**Status: blind-port, compiles + links (3.41MB image, ~131KB headroom), zero
 HIL.** Built entirely while the device was away — expect bring-up iterations.
-Flash budget is tight: the next flash-hungry feature should reclaim first
-(e.g. `--compress` the UI fonts, or move the GBK table to SD).
+Reclaim options if flash gets tight again: move the GBK table to SD, or drop
+the 8pt/10pt-bold CJK UI subsets. (Tried and rejected: 2bit+DEFLATE UI fonts
+came out larger than 1-bit raw; I18n --strip-unused already applied, −82KB.)
 
 ## Verify (blind-development loop)
 

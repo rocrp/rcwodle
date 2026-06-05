@@ -92,6 +92,9 @@ def main() -> None:
 
     for name, size, latin_stack, cjk_style in UI_FONTS:
         stack = [str(UPSTREAM_SRC / f) for f in latin_stack] + [str(CJK[cjk_style])]
+        # 1-bit uncompressed like upstream: --compress requires --2bit, and
+        # measured 2bit+DEFLATE came out ~7.5KB LARGER than 1-bit raw at these
+        # small UI sizes (tiny glyphs don't amortize the group framing).
         cmd = [
             sys.executable,
             str(SCRIPTS / "fontconvert.py"),

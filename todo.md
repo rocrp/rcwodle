@@ -3,8 +3,9 @@
 Status snapshot 2026-06-06. Two firmwares: `firmware/hello_wodle/` (validation
 instrument, EPD console) + `firmware/crosspoint/` (the e-reader, blind-ported,
 compiles + 117/117 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
-Flash: 3,486,868 of 3,538,944 B — ~51KB headroom; reclaim before adding more
-(--compress UI fonts ≈ ? KB, or GBK table → SD).
+Flash: 3,405,116 of 3,538,944 B — ~131KB headroom (I18n --strip-unused
+reclaimed 82KB; UI-font compression tried + rejected, came out larger).
+Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## HIL checklist — first session with the device (in order)
 
