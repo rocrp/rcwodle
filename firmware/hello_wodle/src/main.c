@@ -86,6 +86,19 @@ static void epd_wait_busy(int max_ms)
 
 static void epd_gpio_init(void)
 {
+    /* CRITICAL: the linked sf32lb52-lcd_base bsp_pinmux muxes PA01 to
+     * GPTIM1_CH4 and PA02-PA08 to LCDC1_* — rt_pin_mode/rt_pin_write only talk
+     * to the GPIO block and do NOT change the pad mux, so without HAL_PIN_Set
+     * every bit-banged write here would be physically disconnected. */
+    HAL_PIN_Set(PAD_PA00, GPIO_A0,  PIN_NOPULL, 1);  /* EPD RST  */
+    HAL_PIN_Set(PAD_PA01, GPIO_A1,  PIN_NOPULL, 1);  /* frontlight (sw PWM) */
+    HAL_PIN_Set(PAD_PA02, GPIO_A2,  PIN_PULLUP, 1);  /* EPD BUSY (input) */
+    HAL_PIN_Set(PAD_PA03, GPIO_A3,  PIN_NOPULL, 1);  /* EPD CS   */
+    HAL_PIN_Set(PAD_PA04, GPIO_A4,  PIN_NOPULL, 1);  /* EPD CLK  */
+    HAL_PIN_Set(PAD_PA05, GPIO_A5,  PIN_NOPULL, 1);  /* EPD SDA  */
+    HAL_PIN_Set(PAD_PA06, GPIO_A6,  PIN_NOPULL, 1);  /* EPD DC   */
+    HAL_PIN_Set(PAD_PA10, GPIO_A10, PIN_NOPULL, 1);  /* PWR_EN   */
+
     const int outs[] = {PIN_EPD_RST, PIN_EPD_CS, PIN_EPD_CLK, PIN_EPD_SDA, PIN_EPD_DC, PIN_BL};
     for (unsigned i = 0; i < sizeof(outs) / sizeof(outs[0]); i++)
         rt_pin_mode(outs[i], PIN_MODE_OUTPUT);
@@ -154,6 +167,22 @@ static void epd_refresh(void)
     rt_thread_mdelay(3000); /* GC full refresh ~2-3s; covers a wrong BUSY pin */
 }
 
+/* Frontlight burst: software PWM for `ms` (the boost driver needs switching,
+ * not a DC level), then off. Wrap-safe tick comparison. */
+static void bl_pwm_ms(int ms)
+{
+    rt_tick_t start = rt_tick_get();
+    rt_tick_t ticks = rt_tick_from_millisecond(ms);
+    while ((rt_tick_t)(rt_tick_get() - start) < ticks)
+    {
+        rt_pin_write(PIN_BL, PIN_HIGH);
+        for (volatile int d = 0; d < 80; d++) { __NOP(); }
+        rt_pin_write(PIN_BL, PIN_LOW);
+        for (volatile int d = 0; d < 80; d++) { __NOP(); }
+    }
+    rt_pin_write(PIN_BL, PIN_LOW);
+}
+
 int main(void)
 {
     rt_kprintf("\n[hello_wodle] EPD test boot: %s %s\n", __DATE__, __TIME__);
@@ -162,6 +191,16 @@ int main(void)
     rt_pin_write(PIN_PWR_EN, PIN_HIGH);
 
     epd_gpio_init();
+
+    /* Observable 1 — proof-of-boot: 3 quick blinks BEFORE touching the EPD,
+     * so a hung EPD sequence can't mask a successful boot. */
+    for (int i = 0; i < 3; i++)
+    {
+        bl_pwm_ms(250);
+        rt_thread_mdelay(250);
+    }
+
+    /* Observable 2 — EPD: full GC refresh flashing, then top-white/bottom-black. */
     epd_reset();
     epd_init();
     epd_load_lut_gc();
@@ -169,13 +208,11 @@ int main(void)
     epd_refresh();
     rt_kprintf("[hello_wodle] EPD refresh done\n");
 
-    /* Backlight: software PWM (the boost driver needs switching, not a DC level). */
+    /* Observable 3 — proof-of-completion: slow steady blink forever. */
     while (1)
     {
-        rt_pin_write(PIN_BL, PIN_HIGH);
-        for (volatile int d = 0; d < 80; d++) { __NOP(); }
-        rt_pin_write(PIN_BL, PIN_LOW);
-        for (volatile int d = 0; d < 80; d++) { __NOP(); }
+        bl_pwm_ms(400);
+        rt_thread_mdelay(600);
     }
     return 0;
 }
