@@ -19,12 +19,15 @@ static rt_sem_t notifySemFor(rt_thread_t t)
     return RT_NULL;
 }
 
-BaseType_t xTaskCreate(TaskFunction_t fn, const char *name, uint32_t stackWords,
+BaseType_t xTaskCreate(TaskFunction_t fn, const char *name, uint32_t stackDepth,
                        void *param, UBaseType_t prio, TaskHandle_t *handle)
 {
     (void)prio;
+    /* CrossPoint is written against ESP-IDF, whose xTaskCreate stack arg is
+     * BYTES (not vanilla-FreeRTOS words). x2 = blind-phase headroom; a render-
+     * thread stack overflow would be a brutal HIL debug session. */
     rt_thread_t t = rt_thread_create(name ? name : "cptask", fn, param,
-                                     stackWords * 4, SHIM_TASK_PRIO, 10);
+                                     stackDepth * 2, SHIM_TASK_PRIO, 10);
     if (!t) return pdFAIL;
 
     for (auto &slot : s_tasks)

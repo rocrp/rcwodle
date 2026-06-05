@@ -20,7 +20,7 @@ typedef enum
     eSetValueWithoutOverwrite
 } eNotifyAction;
 
-BaseType_t xTaskCreate(TaskFunction_t fn, const char *name, uint32_t stackWords,
+BaseType_t xTaskCreate(TaskFunction_t fn, const char *name, uint32_t stackDepth, /* ESP-IDF: bytes */
                        void *param, UBaseType_t prio, TaskHandle_t *handle);
 void vTaskDelete(TaskHandle_t task);
 BaseType_t xTaskNotify(TaskHandle_t task, uint32_t value, eNotifyAction action);
