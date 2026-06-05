@@ -112,7 +112,10 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       + 4-level preview test. HIL knobs: no-op banks → all-zero variant if
       untouched pixels shift; AA quality vs 2×52KB heap cost.
 - [ ] LCDC / hardware-SPI EPD data path (bit-bang is the remaining refresh cost)
-- [ ] 18pt/XL font tier via SD `.cpfont` (cut from flash: 550KB over budget)
+- [x] 18pt/XL font tier via SD `.cpfont` — COVERED 2026-06-06: LXGWWenKai SD
+      set ships 12/14/16/18 (XL works once an SD font is selected); Latin
+      sets buildable with upstream `build-sd-fonts.py` (16 families in
+      sd-fonts.yaml). Builtin-only XL still falls back to 16pt by design.
 - [ ] USB detect (VBUS via PMIC/PA41 PWR_INT?) → charging UI + wake reason
 - [ ] SF32 on-chip RTC → HalClock (status-bar clock; 32.768kHz crystal on PA22
       per schematic). Gated on TWO HIL facts: does the RTC domain survive our
@@ -131,7 +134,8 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 - [x] Frontlight settings UI entry — DONE 2026-06-06 (Settings → Display,
       ENUM 0-100% via WodleFrontlight::setPersisted; STR_FRONTLIGHT added to
       en/zh yamls — gen_i18n parser rejects yaml comments, keep them out)
-- [ ] hello_wodle parity: DU LUT + direct-register IO (low value — it's a probe fw)
+- [x] hello_wodle parity — WON'T DO: it's a validation probe, not a product;
+      crosspoint's driver is the maintained one.
 - [x] Frontlight circuit doc — CLOSED 2026-06-06: sheet 2 (power tree) was
       never in the vendor package; "VBAT-fed boost, battery required" (proven
       empirically, noted in README/HalDisplay) is all that's documentable.
