@@ -54,6 +54,8 @@ extern const char STRINGS_CAV_DATA[];
 extern const uint16_t OFFSETS_CAV[];
 extern const char STRINGS_HE_DATA[];
 extern const uint16_t OFFSETS_HE[];
+extern const char STRINGS_ZH_DATA[];
+extern const uint16_t OFFSETS_ZH[];
 }  // namespace i18n_strings
 
 // Language enum
@@ -82,6 +84,7 @@ enum class Language : uint8_t {
   SI = 21,
   CAV = 22,
   HE = 23,
+  ZH = 24,
   _COUNT
 };
 
@@ -531,6 +534,8 @@ inline LangStrings getLanguageStrings(Language lang) {
       return {i18n_strings::STRINGS_CAV_DATA, i18n_strings::OFFSETS_CAV};
     case Language::HE:
       return {i18n_strings::STRINGS_HE_DATA, i18n_strings::OFFSETS_HE};
+    case Language::ZH:
+      return {i18n_strings::STRINGS_ZH_DATA, i18n_strings::OFFSETS_ZH};
     default:
       return {i18n_strings::STRINGS_EN_DATA, i18n_strings::OFFSETS_EN};
   }
@@ -564,7 +569,8 @@ constexpr uint8_t getLanguageCount() { return static_cast<uint8_t>(Language::_CO
 //   21: SV   Svenska
 //   22: TR   Türkçe
 //   23: UK   Українська
-constexpr uint8_t SORTED_LANGUAGE_INDICES[] = {0, 11, 9, 22, 4, 15, 3, 1, 14, 2, 23, 19, 12, 18, 20, 16, 13, 5, 8, 6, 21, 7, 17, 10};
+//   24: ZH   简体中文
+constexpr uint8_t SORTED_LANGUAGE_INDICES[] = {0, 11, 9, 22, 4, 15, 3, 1, 14, 2, 23, 19, 12, 18, 20, 16, 13, 5, 8, 6, 21, 7, 17, 10, 24};
 
 static_assert(sizeof(SORTED_LANGUAGE_INDICES) / sizeof(SORTED_LANGUAGE_INDICES[0]) == getLanguageCount(),
               "SORTED_LANGUAGE_INDICES size mismatch");

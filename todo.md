@@ -2,7 +2,7 @@
 
 Status snapshot 2026-06-06. Two firmwares: `firmware/hello_wodle/` (validation
 instrument, EPD console) + `firmware/crosspoint/` (the e-reader, blind-ported,
-compiles + 102/102 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
+compiles + 106/106 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
 
 ## HIL checklist — first session with the device (in order)
 
@@ -26,6 +26,10 @@ compiles + 102/102 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_
         (regen: `uv run tools/build_cjk_font.py`) → Settings → Font → LXGWWenKai
         → open a Chinese book → renders incl. “”《》……—， punct; bold = Medium;
         watch prewarm latency on page turns (SDCF stats on console).
+7c. [ ] **zh-CN UI**: Settings → Language → 简体中文 → menus/settings/status
+        bar render in Chinese (UI fonts carry a CJK subset; host no-tofu test
+        passed). Judge 10/12pt hanzi legibility at 1-bit — if strokes too thin,
+        try --force-autohint on the CJK stack entry in tools/build_ui_cjk_fonts.py.
 8. [ ] **DU fast refresh**: page turns use DU LUT (auto-GC every 10th) — judge
        ghosting/quality; tune `FAST_REFRESHES_PER_GC` in `HalDisplay.cpp`.
 9. [ ] **Battery**: boot log `[WodleBattery] gauge OK (voltage=...)`; status bar %
@@ -43,12 +47,12 @@ compiles + 102/102 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_
       → `dist/sd-fonts/`; `test/sdcardfont/` host suite (12 tests) proves
       converter↔loader compat over committed CJK fixture; all 4 production
       files validated through the firmware loader. HIL = checklist 7b.
-- [ ] **zh-CN UI** — bigger than assumed: upstream has NO Chinese translation
-      (24 langs, no zh) and UI strings render with builtin Latin-only fonts.
-      Needs: chinese.yaml (~all I18n keys) + gen_i18n.py regen + a builtin
-      UI-font CJK subset covering exactly the translation's unique chars
-      (~few hundred glyphs ≈ 100-200KB flash; budget is tight — measure first).
-      Book text already works via SD fonts; UI stays English meanwhile.
+- [x] **zh-CN UI** — DONE 2026-06-06: chinese.yaml (374/374 keys) + I18n regen
+      (25 langs, ZH=24) + UI fonts regenerated with CJK subset via
+      `tools/build_ui_cjk_fonts.py` (union of non-ASCII chars across ALL
+      translations → no-tofu host test for every language; also fixed
+      upstream's Hebrew U+05F4 tofu). Flash 3,436,812B of 3,538,944B
+      (~100KB headroom). Default stays EN; switch in Settings. HIL = 7c.
 - [ ] Host test: Epub container/opf parsers over fixture (needs host HalDisplay
       stub — deps balloon; revisit after HIL proves the pipeline anyway)
 - [ ] PSRAM (8MB) heap region for big-EPUB headroom (only if HIL shows pressure)

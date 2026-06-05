@@ -54,5 +54,7 @@ extern const char STRINGS_CAV_DATA[];
 extern const uint16_t OFFSETS_CAV[];
 extern const char STRINGS_HE_DATA[];
 extern const uint16_t OFFSETS_HE[];
+extern const char STRINGS_ZH_DATA[];
+extern const uint16_t OFFSETS_ZH[];
 
 }  // namespace i18n_strings

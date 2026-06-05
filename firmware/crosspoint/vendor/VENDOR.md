@@ -5,3 +5,12 @@
 - Excluded at copy time: lib/KOReaderSync, lib/OpdsParser, lib/EpdFont/builtinFonts
   (subset re-added at font slice), src/network/, Wifi/Opds stores.
 - Local modifications are marked with `// WODLE-PORT:` comments.
+- I18n: lib/I18n/translations/chinese.yaml is a wodle addition (not upstream);
+  I18nKeys.h/I18nStrings.{h,cpp} regenerated locally via upstream
+  scripts/gen_i18n.py (25 langs, ZH=24). Re-run after any yaml change:
+  `uv run ~/w/_hw/crosspoint-reader/scripts/gen_i18n.py vendor/lib/I18n/translations vendor/lib/I18n --src-dirs vendor/src vendor/lib`
+- Builtin UI fonts (ubuntu_10/12 reg+bold, notosans_8_regular .h) regenerated
+  locally with a CJK fallback + per-translation charset intervals via
+  `uv run tools/build_ui_cjk_fonts.py` (also fixes upstream Hebrew U+05F4
+  tofu). On upstream sync, re-run BOTH scripts instead of taking upstream's
+  generated files.
