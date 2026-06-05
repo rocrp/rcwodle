@@ -34,7 +34,10 @@ FAT32 card. Books anywhere (e.g. `/books/*.epub`, `.txt`). App state lands in
 | KEY3 (PA44) | UP / page back |
 | KEY2+KEY3 chord | BACK |
 | PWR short (<0.8s) | CONFIRM |
-| PWR hold (>~2s) | POWER → sleep (placeholder spin, not real hibernate) |
+| PWR hold (>~2s) | POWER → hibernate |
+| tap left/right third | page back / page forward |
+| tap center | CONFIRM |
+| tap top strip | BACK |
 
 Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/inverted.**
 

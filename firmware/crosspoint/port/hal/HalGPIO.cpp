@@ -9,6 +9,7 @@
 
 #include "bf0_hal.h"
 #include "WodleFrontlight.h"
+#include "WodleTouch.h"
 
 HalGPIO gpio;
 
@@ -73,6 +74,8 @@ void HalGPIO::begin()
     rt_pin_mode(PIN_PWR, PIN_MODE_INPUT_PULLUP);
     rt_pin_mode(PIN_KEY2, PIN_MODE_INPUT_PULLUP);
     rt_pin_mode(PIN_KEY3, PIN_MODE_INPUT_PULLUP);
+
+    WodleTouch::init();
 }
 
 void HalGPIO::update()
@@ -119,6 +122,15 @@ void HalGPIO::update()
     }
     if (pwrChanged && s_pwr.stable)
         s_wasPressed[BTN_POWER] = true;
+
+    /* touch taps synthesize one-frame button edges (zones -> UP/DOWN/
+     * CONFIRM/BACK); physical keys always win if pressed simultaneously */
+    int tapBtn = WodleTouch::pollTapButton();
+    if (tapBtn >= 0 && tapBtn < NUM_BTNS)
+    {
+        s_wasPressed[tapBtn] = true;
+        s_wasReleased[tapBtn] = true; /* tap = press+release in one frame */
+    }
 
     bool anyHeld = s_key2.stable || s_key3.stable || s_pwr.stable;
     if (anyHeld && s_heldStartMs == 0) s_heldStartMs = now;
