@@ -14,7 +14,7 @@ came out larger than 1-bit raw; I18n --strip-unused already applied, −82KB.)
 ## Verify (blind-development loop)
 
 ```sh
-firmware/crosspoint/run_checks.sh        # target build + 140 host tests
+firmware/crosspoint/run_checks.sh        # target build + 146 host tests
 ```
 
 Host tests (gtest, `test/`): port shims with known-answer vectors (MD5/base64/
