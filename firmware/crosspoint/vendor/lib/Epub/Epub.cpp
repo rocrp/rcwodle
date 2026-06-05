@@ -1,3 +1,4 @@
+#include <Arduino.h>  // WODLE-PORT: millis/ESP/delay
 #include "Epub.h"
 
 #include <FsHelpers.h>

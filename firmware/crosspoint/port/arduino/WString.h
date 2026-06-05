@@ -14,8 +14,11 @@ public:
     String() = default;
     String(const char *s) : _s(s ? s : "") {}
     String(const char *s, size_t n) : _s(s ? std::string(s, n) : std::string()) {}
-    String(const std::string &s) : _s(s) {}
-    String(std::string &&s) : _s(std::move(s)) {}
+    /* explicit: upstream Arduino String has no std::string ctor; an implicit
+     * one makes calls like hasJpgExtension(std::string) ambiguous between the
+     * string_view and const String& overloads. */
+    explicit String(const std::string &s) : _s(s) {}
+    explicit String(std::string &&s) : _s(std::move(s)) {}
     String(char c) : _s(1, c) {}
     explicit String(int v, int base = 10) { fromLong(v, base); }
     explicit String(unsigned int v, int base = 10) { fromULong(v, base); }
