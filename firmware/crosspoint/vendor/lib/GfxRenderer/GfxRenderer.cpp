@@ -1,3 +1,5 @@
+#include <cassert>  // WODLE-PORT: assert/floor were transitive upstream
+#include <cmath>
 #include "GfxRenderer.h"
 
 #include <BidiUtils.h>

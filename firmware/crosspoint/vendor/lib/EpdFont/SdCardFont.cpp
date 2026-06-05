@@ -1,3 +1,4 @@
+#include <Arduino.h>  // WODLE-PORT: millis
 #include "SdCardFont.h"
 
 #include <HalStorage.h>

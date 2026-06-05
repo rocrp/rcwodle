@@ -50,6 +50,10 @@ CPPPATH += [cwd + '/lib/' + d for d in [
 ]]
 CPPPATH += [cwd + '/extlib/JPEGDEC/src', cwd + '/extlib/PNGdec/src']
 
+# --- batch 3: fonts + renderer ----------------------------------------------
+src += Glob('lib/EpdFont/*.cpp')
+src += Glob('lib/GfxRenderer/*.cpp')
+
 group = DefineGroup('CrossPointVendor', src, depend=[''],
                     CPPPATH=CPPPATH, CPPDEFINES=CPPDEFINES)
 
