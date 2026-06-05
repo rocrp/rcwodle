@@ -203,7 +203,12 @@ class RecoveryLink:
         buf = bytearray()
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
-            chunk = self.ser.read(256)
+            # Read only what's actually buffered (replies are 24 B). Reading a fixed 256 here
+            # makes pyserial block the full port timeout every chunk waiting for bytes that
+            # never come -> minutes over thousands of WRITE chunks. read(1) returns the instant
+            # the reply starts, then in_waiting drains the rest.
+            waiting = getattr(self.ser, "in_waiting", 0) or 0
+            chunk = self.ser.read(waiting or 1)
             if chunk:
                 buf += chunk
             while True:
