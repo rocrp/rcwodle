@@ -30,6 +30,7 @@ CPPDEFINES = [
 
 # --- batch 2: book pipeline (LIGHT libs over the shims + port/hal) ----------
 src += Glob('lib/ZipFile/*.cpp')
+src += Glob('lib/TextEncoding/*.cpp')  # WODLE-PORT addition: GBK/UTF-16 txt transcoding
 src += Glob('lib/Txt/*.cpp')
 src += Glob('lib/Xtc/*.cpp') + Glob('lib/Xtc/Xtc/*.cpp')
 src += Glob('lib/MiniBidi/*.cpp') + Glob('lib/MiniBidi/*.c')
@@ -48,7 +49,7 @@ src += Glob('extlib/PNGdec/src/*.c') + Glob('extlib/PNGdec/src/*.cpp')
 src += Glob('extlib/QRCode/src/*.c')
 
 CPPPATH += [cwd + '/lib/' + d for d in [
-    'ZipFile', 'Txt', 'Xtc', 'MiniBidi', 'Serialization', 'Epub', 'KOReaderSync',
+    'ZipFile', 'TextEncoding', 'Txt', 'Xtc', 'MiniBidi', 'Serialization', 'Epub', 'KOReaderSync',
     'JpegToBmpConverter', 'PngToBmpConverter', 'GfxRenderer', 'EpdFont',
 ]]
 CPPPATH += [cwd + '/extlib/JPEGDEC/src', cwd + '/extlib/PNGdec/src', cwd + '/extlib/ArduinoJson/src', cwd + '/extlib/QRCode/src']

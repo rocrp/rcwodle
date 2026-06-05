@@ -3,6 +3,8 @@
 #include <FsHelpers.h>
 #include <JpegToBmpConverter.h>
 #include <Logging.h>
+#include <Serialization.h>
+#include <TextEncoding.h>  // WODLE-PORT: GBK/UTF-16 → UTF-8 transcoding
 
 Txt::Txt(std::string path, std::string cacheBasePath)
     : filepath(std::move(path)), cacheBasePath(std::move(cacheBasePath)) {
@@ -21,9 +23,16 @@ bool Txt::load() {
     return false;
   }
 
+  // WODLE-PORT: the pipeline is strictly UTF-8 — Chinese .txt is commonly
+  // GBK or UTF-16. Detect and (once) transcode into the cache dir; all reads
+  // then go through readPath.
+  if (!ensureUtf8ReadPath()) {
+    return false;
+  }
+
   HalFile file;
-  if (!Storage.openFileForRead("TXT", filepath, file)) {
-    LOG_ERR("TXT", "Failed to open file: %s", filepath.c_str());
+  if (!Storage.openFileForRead("TXT", readPath, file)) {
+    LOG_ERR("TXT", "Failed to open file: %s", readPath.c_str());
     return false;
   }
 
@@ -31,7 +40,72 @@ bool Txt::load() {
   file.close();
 
   loaded = true;
-  LOG_DBG("TXT", "Loaded TXT file: %s (%zu bytes)", filepath.c_str(), fileSize);
+  LOG_DBG("TXT", "Loaded TXT file: %s (%zu bytes)", readPath.c_str(), fileSize);
+  return true;
+}
+
+// WODLE-PORT: sniff the source encoding; for non-UTF-8, transcode once to
+// <cachePath>/utf8.txt (with a sidecar recording source size + head hash for
+// invalidation) and point readPath at the copy.
+bool Txt::ensureUtf8ReadPath() {
+  readPath = filepath;
+
+  HalFile src;
+  if (!Storage.openFileForRead("TXT", filepath, src)) {
+    LOG_ERR("TXT", "Failed to open file: %s", filepath.c_str());
+    return false;
+  }
+  const size_t srcSize = src.size();
+  uint8_t sniff[4096];
+  const size_t sniffLen = src.read(sniff, sizeof(sniff));
+  src.close();
+
+  const TextFileEncoding enc = TextEncoding::detect(sniff, sniffLen);
+  if (!TextEncoding::needsTranscode(enc)) {
+    if (enc == TextFileEncoding::Unknown) {
+      LOG_ERR("TXT", "Unknown encoding, reading as UTF-8 (lossy): %s", filepath.c_str());
+    }
+    return true;
+  }
+
+  setupCacheDir();
+  const std::string utf8Path = cachePath + "/utf8.txt";
+  const std::string metaPath = cachePath + "/utf8.meta";
+
+  // FNV-1a over the sniff window: cheap content fingerprint for invalidation.
+  uint32_t headHash = 2166136261u;
+  for (size_t i = 0; i < sniffLen; i++) {
+    headHash = (headHash ^ sniff[i]) * 16777619u;
+  }
+
+  HalFile meta;
+  if (Storage.exists(utf8Path.c_str()) && Storage.openFileForRead("TXT", metaPath, meta)) {
+    uint32_t storedSize = 0, storedHash = 0;
+    if (meta.size() >= sizeof(storedSize) + sizeof(storedHash)) {
+      serialization::readPod(meta, storedSize);
+      serialization::readPod(meta, storedHash);
+    }
+    meta.close();
+    if (storedSize == static_cast<uint32_t>(srcSize) && storedHash == headHash) {
+      readPath = utf8Path;
+      return true;
+    }
+  }
+
+  LOG_DBG("TXT", "Transcoding %s (%s) to UTF-8 cache", filepath.c_str(), TextEncoding::name(enc));
+  if (!TextEncoding::transcodeToUtf8(filepath.c_str(), utf8Path.c_str(), enc)) {
+    LOG_ERR("TXT", "Transcode failed, reading original (mojibake likely)");
+    return true;  // degrade gracefully rather than refusing to open
+  }
+
+  HalFile metaOut;
+  if (Storage.openFileForWrite("TXT", metaPath, metaOut)) {
+    serialization::writePod(metaOut, static_cast<uint32_t>(srcSize));
+    serialization::writePod(metaOut, headHash);
+    metaOut.close();
+  }
+
+  readPath = utf8Path;
   return true;
 }
 
@@ -176,7 +250,8 @@ bool Txt::readContent(uint8_t* buffer, size_t offset, size_t length) const {
   }
 
   HalFile file;
-  if (!Storage.openFileForRead("TXT", filepath, file)) {
+  // WODLE-PORT: read the (possibly transcoded) UTF-8 copy.
+  if (!Storage.openFileForRead("TXT", readPath, file)) {
     return false;
   }
 

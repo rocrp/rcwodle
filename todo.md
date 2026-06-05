@@ -2,7 +2,9 @@
 
 Status snapshot 2026-06-06. Two firmwares: `firmware/hello_wodle/` (validation
 instrument, EPD console) + `firmware/crosspoint/` (the e-reader, blind-ported,
-compiles + 106/106 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
+compiles + 117/117 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
+Flash: 3,486,868 of 3,538,944 B — ~51KB headroom; reclaim before adding more
+(--compress UI fonts ≈ ? KB, or GBK table → SD).
 
 ## HIL checklist — first session with the device (in order)
 
@@ -30,6 +32,10 @@ compiles + 106/106 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_
         bar render in Chinese (UI fonts carry a CJK subset; host no-tofu test
         passed). Judge 10/12pt hanzi legibility at 1-bit — if strokes too thin,
         try --force-autohint on the CJK stack entry in tools/build_ui_cjk_fonts.py.
+7d. [ ] **GBK txt**: open a GBK-encoded Chinese .txt → first open transcodes
+        to cache (console: "Transcoding ... (GBK) to UTF-8 cache") → correct
+        text, reopen skips transcode. Also try a UTF-16LE (Windows Notepad
+        "Unicode") txt.
 8. [ ] **DU fast refresh**: page turns use DU LUT (auto-GC every 10th) — judge
        ghosting/quality; tune `FAST_REFRESHES_PER_GC` in `HalDisplay.cpp`.
 9. [ ] **Battery**: boot log `[WodleBattery] gauge OK (voltage=...)`; status bar %
