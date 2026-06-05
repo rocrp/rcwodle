@@ -10,6 +10,9 @@ WHAT="${1:-all}"
 
 if [[ "$WHAT" == "all" || "$WHAT" == "target" ]]; then
     echo "== target build (scons --board=wodle) =="
+    # export.sh parses the sourcing shell's positional args — clear them so
+    # `./run_checks.sh target` doesn't leak "target" into sdk_env.py.
+    set --
     # shellcheck disable=SC1090
     source ~/w/_hw/SiFli-SDK/export.sh >/dev/null
     (cd "$HERE/project" && scons --board=wodle -j8 | grep -E "Binary size|error" || true)
