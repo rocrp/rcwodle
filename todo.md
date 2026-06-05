@@ -2,7 +2,7 @@
 
 Status snapshot 2026-06-06. Two firmwares: `firmware/hello_wodle/` (validation
 instrument, EPD console) + `firmware/crosspoint/` (the e-reader, blind-ported,
-compiles + 90/90 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
+compiles + 102/102 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
 
 ## HIL checklist — first session with the device (in order)
 
@@ -22,6 +22,10 @@ compiles + 90/90 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_ch
        (`/.crosspoint/frontlight`).
 7. [ ] **TXT then EPUB**: open → paginate (first open slow, caches to SD) → page
        turns → progress resumes after reboot.
+7b. [ ] **CJK SD font**: copy `dist/sd-fonts/LXGWWenKai/` → SD `/fonts/LXGWWenKai/`
+        (regen: `uv run tools/build_cjk_font.py`) → Settings → Font → LXGWWenKai
+        → open a Chinese book → renders incl. “”《》……—， punct; bold = Medium;
+        watch prewarm latency on page turns (SDCF stats on console).
 8. [ ] **DU fast refresh**: page turns use DU LUT (auto-GC every 10th) — judge
        ghosting/quality; tune `FAST_REFRESHES_PER_GC` in `HalDisplay.cpp`.
 9. [ ] **Battery**: boot log `[WodleBattery] gauge OK (voltage=...)`; status bar %
@@ -34,11 +38,17 @@ compiles + 90/90 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_ch
 
 ## Blind-able next (no device needed)
 
-- [ ] **CJK reading fonts** — builtin set is Latin-only; Chinese books won't render.
-      Build a CJK `.cpfont` (upstream `lib/EpdFont/scripts/` tooling, v4 format)
-      from e.g. LXGW WenKai → load from SD (`/fonts/`), wire into SdCardFontSystem.
-      Likely THE most important reader gap for real use.
-- [ ] zh-CN UI default? (24 langs compiled in; pick via SETTINGS.language)
+- [x] **CJK reading fonts** — DONE 2026-06-06: `tools/build_cjk_font.py` builds
+      LXGWWenKai_{12,14,16,18}.cpfont (latin-ext+cjk, regular+Medium-as-bold)
+      → `dist/sd-fonts/`; `test/sdcardfont/` host suite (12 tests) proves
+      converter↔loader compat over committed CJK fixture; all 4 production
+      files validated through the firmware loader. HIL = checklist 7b.
+- [ ] **zh-CN UI** — bigger than assumed: upstream has NO Chinese translation
+      (24 langs, no zh) and UI strings render with builtin Latin-only fonts.
+      Needs: chinese.yaml (~all I18n keys) + gen_i18n.py regen + a builtin
+      UI-font CJK subset covering exactly the translation's unique chars
+      (~few hundred glyphs ≈ 100-200KB flash; budget is tight — measure first).
+      Book text already works via SD fonts; UI stays English meanwhile.
 - [ ] Host test: Epub container/opf parsers over fixture (needs host HalDisplay
       stub — deps balloon; revisit after HIL proves the pipeline anyway)
 - [ ] PSRAM (8MB) heap region for big-EPUB headroom (only if HIL shows pressure)

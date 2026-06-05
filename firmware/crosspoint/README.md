@@ -11,12 +11,13 @@ while the device was away — expect bring-up iterations.
 ## Verify (blind-development loop)
 
 ```sh
-firmware/crosspoint/run_checks.sh        # target build + 82 host tests
+firmware/crosspoint/run_checks.sh        # target build + 102 host tests
 ```
 
 Host tests (gtest, `test/`): port shims with known-answer vectors (MD5/base64/
 String/TapClassifier) + upstream JSON parser suites + ZipFile/inflate over a
-real EPUB fixture via POSIX host shims.
+real EPUB fixture + SdCardFont over a real `.cpfont` CJK fixture, all via
+POSIX host shims.
 
 ## Build + flash
 
@@ -34,7 +35,27 @@ Restore stock: flash `~/Downloads/firmware_656/hcpu_app.bin` the same way.
 ## SD card prep
 
 FAT32 card. Books anywhere (e.g. `/books/*.epub`, `.txt`). App state lands in
-`/.crosspoint/`. EPUB pagination caches under `/.crosspoint/cache/`.
+`/.crosspoint/`. EPUB pagination caches under `/.crosspoint/cache/`. Extra
+reading fonts go in `/fonts/<Family>/<Family>_<size>.cpfont` (see below).
+
+## CJK reading fonts (LXGW WenKai)
+
+Builtin fonts are Latin-only — Chinese books need an SD font:
+
+```sh
+uv run tools/build_cjk_font.py     # → dist/sd-fonts/LXGWWenKai/ (4 sizes, ~40MB)
+# copy dist/sd-fonts/LXGWWenKai/ to the card as /fonts/LXGWWenKai/
+# on device: Settings → Font → LXGWWenKai
+```
+
+Regular + Medium-as-bold (LXGW WenKai has no italic; firmware style fallback
+covers it), `latin-ext,cjk` intervals = 22.7k glyphs incl. fullwidth punct,
+CJK quotes/brackets, ellipsis, em-dash. Font sources cached in
+`tools/.font-cache/` via `gh release download`. The `sdcardfont` host suite
+proves converter↔loader format compat over `test/fixtures/TestCJK_14.cpfont`
+(regen: `uv run tools/build_cjk_font.py --fixture`); validate any generated
+file with the firmware loader via
+`CPFONT_EXTRA=/path/to/X.cpfont /tmp/cp_test/sdcardfont/SdCardFontTest`.
 
 ## Input mapping (port/hal/HalGPIO)
 
@@ -76,8 +97,11 @@ Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/
 - **Fonts**: 12/14/16 NotoSerif+NotoSans (all styles) + UI fonts in flash;
   the 18pt (XL) tier alone is ~550KB and overflows the 3.5MB region — omitted
   (WODLE_OMIT_18PT in src/main.cpp). XL size falls back; SD `.cpfont` can
-  supply it later. ptab is now the V656 layout (board/wodle/ptab.yaml) —
-  device must run the V656 bootloader/ftab (it does since 2026-06-05).
+  supply it later (LXGWWenKai set ships all 4 sizes incl. 18). ptab is now the
+  V656 layout (board/wodle/ptab.yaml) — device must run the V656
+  bootloader/ftab (it does since 2026-06-05). UI strings render with builtin
+  (Latin-only) fonts — zh-CN *UI* would need a CJK subset font in flash +
+  a chinese.yaml (upstream has neither); book text is covered via SD fonts.
 - **Sleep**: real SF32 hibernate (PMU, per SDK example/pm/classical 52x
   recipe) with PA34 edge wake (polarity-robust). Wake = chip reset → normal
   boot (quick-resume restores the frame from SD). HIL: verify it actually

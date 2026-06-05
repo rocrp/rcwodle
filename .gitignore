@@ -9,6 +9,9 @@ __pycache__/
 # CMake / C++ out-of-source builds (e.g. tools/usb_recovery_qt/build)
 build/
 
+# Downloaded font sources for tools/build_cjk_font.py (re-fetch via gh)
+tools/.font-cache/
+
 # SiFli firmware build artifacts (scons --board=wodle)
 firmware/**/build_*/
 firmware/**/.config
