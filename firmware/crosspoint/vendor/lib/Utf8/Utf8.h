@@ -42,3 +42,46 @@ inline bool utf8IsCombiningMark(const uint32_t cp) {
          || (cp >= 0x20D0 && cp <= 0x20FF)   // Combining Diacritical Marks for Symbols
          || (cp >= 0xFE20 && cp <= 0xFE2F);  // Combining Half Marks
 }
+
+// WODLE-PORT: CJK kinsoku (行首禁则) — closing punctuation that must not start
+// a line. U+2019 ’ is deliberately absent: it doubles as the Latin apostrophe.
+inline bool utf8IsCjkClosingPunct(const uint32_t cp) {
+  switch (cp) {
+    case 0x3001:  // 、
+    case 0x3002:  // 。
+    case 0xFF0C:  // ，
+    case 0xFF01:  // ！
+    case 0xFF1F:  // ？
+    case 0xFF1B:  // ；
+    case 0xFF1A:  // ：
+    case 0xFF09:  // ）
+    case 0x300B:  // 》
+    case 0x300D:  // 」
+    case 0x300F:  // 』
+    case 0x3011:  // 】
+    case 0x3009:  // 〉
+    case 0x2026:  // …
+    case 0x201D:  // ”
+    case 0xFF0E:  // ．
+    case 0xFF05:  // ％
+      return true;
+    default:
+      return false;
+  }
+}
+
+// WODLE-PORT: CJK kinsoku (行尾禁则) — opening punctuation that must not end a line.
+inline bool utf8IsCjkOpeningPunct(const uint32_t cp) {
+  switch (cp) {
+    case 0xFF08:  // （
+    case 0x300A:  // 《
+    case 0x300C:  // 「
+    case 0x300E:  // 『
+    case 0x3010:  // 【
+    case 0x3008:  // 〈
+    case 0x201C:  // “
+      return true;
+    default:
+      return false;
+  }
+}

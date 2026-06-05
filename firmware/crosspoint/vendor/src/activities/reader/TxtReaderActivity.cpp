@@ -23,7 +23,8 @@ namespace {
 constexpr size_t CHUNK_SIZE = 8 * 1024;  // 8KB chunk for reading
 // Cache file magic and version
 constexpr uint32_t CACHE_MAGIC = 0x54585449;  // "TXTI"
-constexpr uint8_t CACHE_VERSION = 3;          // Increment when cache format changes
+constexpr uint8_t CACHE_VERSION = 4;          // Increment when cache format changes
+                                              // (4: WODLE-PORT kinsoku changes page offsets)
 }  // namespace
 
 void TxtReaderActivity::onEnter() {
@@ -292,6 +293,30 @@ bool TxtReaderActivity::loadPageAtOffset(size_t offset, std::vector<std::string>
           while (breakPos > 0 && (line[breakPos] & 0xC0) == 0x80) {
             breakPos--;
           }
+        }
+      }
+
+      // WODLE-PORT: kinsoku for CJK .txt — the next visual line must not
+      // start with closing punctuation (，。！？…) and this one must not end
+      // with opening punctuation (（《「). Step the break back a character;
+      // width only shrinks. Bounded so pathological punctuation runs can't
+      // spin (worst case the rule is abandoned, matching upstream behavior).
+      const auto prevCharStart = [&line](size_t pos) {
+        do {
+          pos--;
+        } while (pos > 0 && (static_cast<unsigned char>(line[pos]) & 0xC0) == 0x80);
+        return pos;
+      };
+      const auto cpStartingAt = [&line](size_t pos) -> uint32_t {
+        const auto* p = reinterpret_cast<const unsigned char*>(line.c_str()) + pos;
+        return utf8NextCodepoint(&p);
+      };
+      for (int guard = 0; guard < 4 && breakPos > 1 && breakPos < line.length(); guard++) {
+        if (utf8IsCjkClosingPunct(cpStartingAt(breakPos)) ||
+            utf8IsCjkOpeningPunct(cpStartingAt(prevCharStart(breakPos)))) {
+          breakPos = prevCharStart(breakPos);
+        } else {
+          break;
         }
       }
 

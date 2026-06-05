@@ -170,51 +170,6 @@ void sortAndDedupeBreakInfos(std::vector<Hyphenator::BreakInfo>& infos) {
               infos.end());
 }
 
-// WODLE-PORT: CJK typography rules, applied to every break path.
-// 行首禁则: a line must not start with closing punctuation (，。！？、…”等).
-// (U+2019 ’ is deliberately absent — it doubles as the Latin apostrophe and
-// apostrophe contraction breaks land after it, not before.)
-bool isCjkClosingPunct(const uint32_t cp) {
-  switch (cp) {
-    case 0x3001:  // 、
-    case 0x3002:  // 。
-    case 0xFF0C:  // ，
-    case 0xFF01:  // ！
-    case 0xFF1F:  // ？
-    case 0xFF1B:  // ；
-    case 0xFF1A:  // ：
-    case 0xFF09:  // ）
-    case 0x300B:  // 》
-    case 0x300D:  // 」
-    case 0x300F:  // 』
-    case 0x3011:  // 】
-    case 0x3009:  // 〉
-    case 0x2026:  // …
-    case 0x201D:  // ”
-    case 0xFF0E:  // ．
-    case 0xFF05:  // ％
-      return true;
-    default:
-      return false;
-  }
-}
-
-// 行尾禁则: a line must not end with opening punctuation (（《「『【〈“).
-bool isCjkOpeningPunct(const uint32_t cp) {
-  switch (cp) {
-    case 0xFF08:  // （
-    case 0x300A:  // 《
-    case 0x300C:  // 「
-    case 0x300E:  // 『
-    case 0x3010:  // 【
-    case 0x3008:  // 〈
-    case 0x201C:  // “
-      return true;
-    default:
-      return false;
-  }
-}
-
 // WODLE-PORT: CJK boundaries are always legal break points (no hyphen),
 // regardless of which break path produced the word's other breaks. Without
 // this, a word like "Wi-Fi信号不太好" takes the explicit-hyphen path, which
@@ -250,10 +205,10 @@ void applyCjkTypography(const std::vector<CodepointInfo>& cps, std::vector<Hyphe
       kept.push_back(b);  // break not at a codepoint boundary we know — keep untouched
       continue;
     }
-    if (isCjkClosingPunct(cps[idx].value)) {
+    if (utf8IsCjkClosingPunct(cps[idx].value)) {
       continue;
     }
-    if (idx > 0 && isCjkOpeningPunct(cps[idx - 1].value)) {
+    if (idx > 0 && utf8IsCjkOpeningPunct(cps[idx - 1].value)) {
       continue;
     }
     if (utf8IsCjkBreakable(cps[idx].value) || (idx > 0 && utf8IsCjkBreakable(cps[idx - 1].value))) {
