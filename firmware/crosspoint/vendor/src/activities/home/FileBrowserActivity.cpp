@@ -383,21 +383,23 @@ void FileBrowserActivity::render(RenderLock&&) {
     const char* pathStr = basepath.c_str();
     const char* pathDisplay = pathStr;
     char leftTruncBuf[256];
-    if (renderer.getTextWidth(SMALL_FONT_ID, pathStr) > pathMaxWidth) {
+    // WODLE-PORT: CJK directory names fall back to the SD reading font
+    const auto pathFont = renderer.uiFontFor(SMALL_FONT_ID, pathStr);
+    if (renderer.getTextWidth(pathFont, pathStr) > pathMaxWidth) {
       const char ellipsis[] = "\xe2\x80\xa6";  // UTF-8 ellipsis (…)
-      const int ellipsisWidth = renderer.getTextWidth(SMALL_FONT_ID, ellipsis);
+      const int ellipsisWidth = renderer.getTextWidth(pathFont, ellipsis);
       const int available = pathMaxWidth - ellipsisWidth;
       // Walk forward from the start until the suffix fits, skipping UTF-8 continuation bytes
       const char* p = pathStr;
       while (*p) {
-        if (renderer.getTextWidth(SMALL_FONT_ID, p) <= available) break;
+        if (renderer.getTextWidth(pathFont, p) <= available) break;
         ++p;
         while (*p && (static_cast<unsigned char>(*p) & 0xC0) == 0x80) ++p;
       }
       snprintf(leftTruncBuf, sizeof(leftTruncBuf), "%s%s", ellipsis, p);
       pathDisplay = leftTruncBuf;
     }
-    renderer.drawText(SMALL_FONT_ID, metrics.contentSidePadding, pathY, pathDisplay);
+    renderer.drawText(pathFont, metrics.contentSidePadding, pathY, pathDisplay);
   }
 
   // Help text

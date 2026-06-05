@@ -85,11 +85,13 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## Post-HIL backlog
 
-- [ ] CJK filenames/titles in file browser + home recents render with UI fonts
-      → tofu for chars outside the translation subset. Chapter list solved
-      this by drawing items with the reader font (SD CJK font); apply the
-      same to browser/recents lists (needs prewarm batching like
-      TxtReaderChapterSelectionActivity::render).
+- [x] CJK filenames/titles tofu in browser/recents — DONE 2026-06-06 via
+      GfxRenderer::uiFontFor (per-string SD-reading-font fallback when the UI
+      font lacks glyphs) applied at BaseTheme/Lyra/Lyra3Covers/RoundedRaff
+      list+title sites + browser path bar; verified VISUALLY via the new host
+      render harness (test/render/ dumps screens to /tmp/cp_render/*.pgm).
+      Caveat for HIL: needs an SD font selected; SD-font rows may look large
+      next to UI rows (reader size drives glyph size).
 
 - [ ] X4-style partial window refresh (`displayWindow`) for status-bar updates
 - [ ] 4-gray grayscale (refs/epd UC8279_4gray_reference.c) for images/AA text

@@ -294,7 +294,9 @@ void BaseTheme::drawList(const GfxRenderer& renderer, Rect rect, int itemCount, 
     }
 
     auto itemName = rowTitle(i);
-    auto font = UI_10_FONT_ID;
+    // WODLE-PORT: CJK filenames/titles fall back to the loaded SD reading
+    // font — the builtin UI fonts only carry the translations' charset.
+    auto font = renderer.uiFontFor(UI_10_FONT_ID, itemName.c_str());
     auto item = renderer.truncatedText(font, itemName.c_str(), rowTextWidth);
     renderer.drawText(font, rect.x + BaseMetrics::values.contentSidePadding, itemY, item.c_str(), i != selectedIndex);
 
@@ -311,8 +313,9 @@ void BaseTheme::drawList(const GfxRenderer& renderer, Rect rect, int itemCount, 
     if (rowSubtitle != nullptr) {
       std::string subtitleText = rowSubtitle(i);
       if (!subtitleText.empty()) {
-        auto subtitle = renderer.truncatedText(SMALL_FONT_ID, subtitleText.c_str(), rowTextWidth);
-        renderer.drawText(SMALL_FONT_ID, rect.x + BaseMetrics::values.contentSidePadding, itemY + 22, subtitle.c_str(),
+        const auto subFont = renderer.uiFontFor(SMALL_FONT_ID, subtitleText.c_str());  // WODLE-PORT
+        auto subtitle = renderer.truncatedText(subFont, subtitleText.c_str(), rowTextWidth);
+        renderer.drawText(subFont, rect.x + BaseMetrics::values.contentSidePadding, itemY + 22, subtitle.c_str(),
                           i != selectedIndex);
       }
     }
@@ -556,16 +559,20 @@ void BaseTheme::drawRecentBookCover(GfxRenderer& renderer, Rect rect, const std:
     const std::string& lastBookTitle = recentBooks[0].title;
     const std::string& lastBookAuthor = recentBooks[0].author;
 
+    // WODLE-PORT: CJK titles/authors fall back to the SD reading font.
+    const auto titleFont = renderer.uiFontFor(UI_12_FONT_ID, lastBookTitle.c_str());
+    const auto authorFont = renderer.uiFontFor(UI_10_FONT_ID, lastBookAuthor.c_str());
+
     // Invert text colors based on selection state:
     // - With cover: selected = white text on black box, unselected = black text on white box
     // - Without cover: selected = white text on black card, unselected = black text on white card
 
-    auto lines = renderer.wrappedText(UI_12_FONT_ID, lastBookTitle.c_str(), bookWidth - 40, 3);
+    auto lines = renderer.wrappedText(titleFont, lastBookTitle.c_str(), bookWidth - 40, 3);
 
     // Book title text
-    int totalTextHeight = renderer.getLineHeight(UI_12_FONT_ID) * static_cast<int>(lines.size());
+    int totalTextHeight = renderer.getLineHeight(titleFont) * static_cast<int>(lines.size());
     if (!lastBookAuthor.empty()) {
-      totalTextHeight += renderer.getLineHeight(UI_10_FONT_ID) * 3 / 2;
+      totalTextHeight += renderer.getLineHeight(authorFont) * 3 / 2;
     }
 
     // Vertically center the title block within the card
@@ -573,7 +580,7 @@ void BaseTheme::drawRecentBookCover(GfxRenderer& renderer, Rect rect, const std:
 
     const auto truncatedAuthor = lastBookAuthor.empty()
                                      ? std::string{}
-                                     : renderer.truncatedText(UI_10_FONT_ID, lastBookAuthor.c_str(), bookWidth - 40);
+                                     : renderer.truncatedText(authorFont, lastBookAuthor.c_str(), bookWidth - 40);
 
     // If cover image was rendered, draw box behind title and author
     if (coverRendered) {
@@ -581,13 +588,13 @@ void BaseTheme::drawRecentBookCover(GfxRenderer& renderer, Rect rect, const std:
       // Calculate the max text width for the box
       int maxTextWidth = 0;
       for (const auto& line : lines) {
-        const int lineWidth = renderer.getTextWidth(UI_12_FONT_ID, line.c_str());
+        const int lineWidth = renderer.getTextWidth(titleFont, line.c_str());
         if (lineWidth > maxTextWidth) {
           maxTextWidth = lineWidth;
         }
       }
       if (!truncatedAuthor.empty()) {
-        const int authorWidth = renderer.getTextWidth(UI_10_FONT_ID, truncatedAuthor.c_str());
+        const int authorWidth = renderer.getTextWidth(authorFont, truncatedAuthor.c_str());
         if (authorWidth > maxTextWidth) {
           maxTextWidth = authorWidth;
         }
@@ -605,13 +612,13 @@ void BaseTheme::drawRecentBookCover(GfxRenderer& renderer, Rect rect, const std:
     }
 
     for (const auto& line : lines) {
-      renderer.drawCenteredText(UI_12_FONT_ID, titleYStart, line.c_str(), !bookSelected);
-      titleYStart += renderer.getLineHeight(UI_12_FONT_ID);
+      renderer.drawCenteredText(titleFont, titleYStart, line.c_str(), !bookSelected);
+      titleYStart += renderer.getLineHeight(titleFont);
     }
 
     if (!truncatedAuthor.empty()) {
-      titleYStart += renderer.getLineHeight(UI_10_FONT_ID) / 2;
-      renderer.drawCenteredText(UI_10_FONT_ID, titleYStart, truncatedAuthor.c_str(), !bookSelected);
+      titleYStart += renderer.getLineHeight(authorFont) / 2;
+      renderer.drawCenteredText(authorFont, titleYStart, truncatedAuthor.c_str(), !bookSelected);
     }
 
     // "Continue Reading" label at the bottom

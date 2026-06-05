@@ -14,13 +14,15 @@ came out larger than 1-bit raw; I18n --strip-unused already applied, −82KB.)
 ## Verify (blind-development loop)
 
 ```sh
-firmware/crosspoint/run_checks.sh        # target build + 134 host tests
+firmware/crosspoint/run_checks.sh        # target build + 140 host tests
 ```
 
 Host tests (gtest, `test/`): port shims with known-answer vectors (MD5/base64/
 String/TapClassifier) + upstream JSON parser suites + ZipFile/inflate over a
-real EPUB fixture + SdCardFont over a real `.cpfont` CJK fixture, all via
-POSIX host shims.
+real EPUB fixture + SdCardFont over a real `.cpfont` CJK fixture + full
+Epub::load + TXT encoding/chapters, all via POSIX host shims. `test/render/`
+runs GfxRenderer + real fonts on host and dumps screens to
+`/tmp/cp_render/*.pgm` — UI changes can be *looked at* without the device.
 
 ## Build + flash
 

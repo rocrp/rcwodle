@@ -66,6 +66,35 @@ void GfxRenderer::ensureSdCardFontReady(int fontId, const char* utf8Text, uint8_
   }
 }
 
+// WODLE-PORT: see header. UI fonts carry Latin/Hebrew + the translations'
+// CJK subset; arbitrary book titles/filenames need the loaded SD reading font.
+int GfxRenderer::uiFontFor(const int uiFontId, const char* utf8Text) const {
+  if (!utf8Text || sdCardFonts_.empty()) return uiFontId;
+  const auto fontIt = fontMap.find(uiFontId);
+  if (fontIt == fontMap.end()) return uiFontId;
+
+  const EpdGlyph* replacement = fontIt->second.getGlyph(0xFFFD);
+  const auto* p = reinterpret_cast<const unsigned char*>(utf8Text);
+  bool needsFallback = false;
+  while (*p) {
+    const uint32_t cp = utf8NextCodepoint(&p);
+    if (cp == 0) break;
+    if (cp < 0x80 || cp == 0xFFFD) continue;
+    const EpdGlyph* glyph = fontIt->second.getGlyph(cp);
+    if (glyph == nullptr || glyph == replacement) {
+      needsFallback = true;
+      break;
+    }
+  }
+  if (!needsFallback) return uiFontId;
+
+  // Exactly one SD family is loaded at a time (SdCardFontManager); its glyph
+  // bitmaps stream on demand, metrics come from the advance table.
+  const int sdFontId = sdCardFonts_.begin()->first;
+  ensureSdCardFontReady(sdFontId, utf8Text, /*styleMask=*/0x03);
+  return sdFontId;
+}
+
 void GfxRenderer::ensureSdCardFontReady(int fontId, const std::vector<std::string>& words, bool includeHyphen,
                                         uint8_t styleMask) const {
   auto it = sdCardFonts_.find(fontId);

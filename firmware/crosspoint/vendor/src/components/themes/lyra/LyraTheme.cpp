@@ -271,8 +271,10 @@ void LyraTheme::drawList(const GfxRenderer& renderer, Rect rect, int itemCount, 
     }
 
     auto itemName = rowTitle(i);
-    auto item = renderer.truncatedText(UI_10_FONT_ID, itemName.c_str(), rowTextWidth);
-    renderer.drawText(UI_10_FONT_ID, textX, itemY + 7, item.c_str(), true);
+    // WODLE-PORT: CJK filenames/titles fall back to the loaded SD reading font
+    const auto itemFont = renderer.uiFontFor(UI_10_FONT_ID, itemName.c_str());
+    auto item = renderer.truncatedText(itemFont, itemName.c_str(), rowTextWidth);
+    renderer.drawText(itemFont, textX, itemY + 7, item.c_str(), true);
 
     // Apply checkerboard dither to create gray text effect for dimmed items
     if (rowDimmed && rowDimmed(i) && i != selectedIndex) {
@@ -479,22 +481,25 @@ void LyraTheme::drawRecentBookCover(GfxRenderer& renderer, Rect rect, const std:
                                hPaddingInSelection, cornerRadius, false, false, true, true, Color::LightGray);
     }
 
-    auto titleLines = renderer.wrappedText(UI_12_FONT_ID, book.title.c_str(), textWidth, 3, EpdFontFamily::BOLD);
+    // WODLE-PORT: CJK titles/authors fall back to the SD reading font
+    const auto titleFont = renderer.uiFontFor(UI_12_FONT_ID, book.title.c_str());
+    const auto authorFont = renderer.uiFontFor(UI_10_FONT_ID, book.author.c_str());
+    auto titleLines = renderer.wrappedText(titleFont, book.title.c_str(), textWidth, 3, EpdFontFamily::BOLD);
 
-    auto author = renderer.truncatedText(UI_10_FONT_ID, book.author.c_str(), textWidth);
-    const int titleLineHeight = renderer.getLineHeight(UI_12_FONT_ID);
+    auto author = renderer.truncatedText(authorFont, book.author.c_str(), textWidth);
+    const int titleLineHeight = renderer.getLineHeight(titleFont);
     const int titleBlockHeight = titleLineHeight * static_cast<int>(titleLines.size());
-    const int authorHeight = book.author.empty() ? 0 : (renderer.getLineHeight(UI_10_FONT_ID) * 3 / 2);
+    const int authorHeight = book.author.empty() ? 0 : (renderer.getLineHeight(authorFont) * 3 / 2);
     const int totalBlockHeight = titleBlockHeight + authorHeight;
     int titleY = tileY + tileHeight / 2 - totalBlockHeight / 2;
     const int textX = tileX + hPaddingInSelection + coverWidth + LyraMetrics::values.verticalSpacing;
     for (const auto& line : titleLines) {
-      renderer.drawText(UI_12_FONT_ID, textX, titleY, line.c_str(), true, EpdFontFamily::BOLD);
+      renderer.drawText(titleFont, textX, titleY, line.c_str(), true, EpdFontFamily::BOLD);
       titleY += titleLineHeight;
     }
     if (!book.author.empty()) {
-      titleY += renderer.getLineHeight(UI_10_FONT_ID) / 2;
-      renderer.drawText(UI_10_FONT_ID, textX, titleY, author.c_str(), true);
+      titleY += renderer.getLineHeight(authorFont) / 2;
+      renderer.drawText(authorFont, textX, titleY, author.c_str(), true);
     }
   } else {
     drawEmptyRecents(renderer, rect);

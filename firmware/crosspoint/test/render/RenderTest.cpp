@@ -57,8 +57,14 @@ class RenderEnv : public ::testing::Environment {
     renderer.insertFont(UI_12_FONT_ID, EpdFontFamily(&ui12Regular, &ui12Bold));
     renderer.insertFont(SMALL_FONT_ID, EpdFontFamily(&small8));
 
-    // SD CJK font (same fixture as the sdcardfont suite).
-    ASSERT_TRUE(sdFont.load(FIXTURE_CPFONT));
+    // SD CJK font: prefer the locally built production LXGWWenKai (full CJK,
+    // truthful visual dumps); fall back to the committed fixture (covers the
+    // codepoints the assertions use) when dist/ hasn't been built.
+    const std::string prodPath =
+        std::string(FIXTURE_DIR) + "/../../../../dist/sd-fonts/LXGWWenKai/LXGWWenKai_14.cpfont";
+    if (!sdFont.load(prodPath.c_str())) {
+      ASSERT_TRUE(sdFont.load(FIXTURE_CPFONT));
+    }
     renderer.registerSdCardFont(SD_FONT_ID, &sdFont);
     renderer.insertFont(SD_FONT_ID,
                         EpdFontFamily(sdFont.getEpdFont(0), sdFont.getEpdFont(1), nullptr, nullptr));
@@ -135,6 +141,37 @@ TEST(Render, SdCardFontRendersCjkParagraph) {
   const size_t ink = inkPixels();
   EXPECT_GT(ink, 300u) << "SD-font CJK text drew almost nothing";
   dumpPgm("sd_cjk_text");
+}
+
+// uiFontFor: UI font for ASCII and translation-subset CJK; SD fallback for
+// arbitrary hanzi the UI subset lacks.
+TEST(Render, UiFontForFallsBackForUncoveredCjk) {
+  EXPECT_EQ(renderer.uiFontFor(UI_10_FONT_ID, "mybook.epub"), UI_10_FONT_ID);
+  EXPECT_EQ(renderer.uiFontFor(UI_12_FONT_ID, "设置"), UI_12_FONT_ID) << "translation subset covers 设置";
+  // 镕 is not in any translation — needs the SD font.
+  EXPECT_EQ(renderer.uiFontFor(UI_10_FONT_ID, "朱镕基传.txt"), SD_FONT_ID);
+  EXPECT_EQ(renderer.uiFontFor(UI_10_FONT_ID, nullptr), UI_10_FONT_ID);
+}
+
+// File-browser-style list rows with Chinese filenames: rows that the UI
+// subset can't cover must come out in the SD reading font, not tofu.
+TEST(Render, BrowserListMockupWithChineseFilenames) {
+  const char* names[] = {"水浒传.txt", "围城.epub", "mybook.epub", "三体：死神永生.epub"};
+
+  renderer.clearScreen();
+  int y = 40;
+  for (size_t i = 0; i < 4; i++) {
+    const int font = renderer.uiFontFor(UI_10_FONT_ID, names[i]);
+    if (renderer.isSdCardFont(font)) {
+      // Fixture font lacks most of these glyphs; production font covers all.
+      renderer.ensureSdCardFontReady(font, names[i], 0x01);
+    }
+    if (i == 1) renderer.fillRect(10, y - 4, 480, 34);  // selection bar (themes draw it first)
+    renderer.drawText(font, 20, y, names[i], i != 1);
+    y += 36;
+  }
+  EXPECT_GT(inkPixels(), 500u);
+  dumpPgm("browser_list_mock");
 }
 
 // Mock of the TXT chapter-selection screen — title row + list rows with CJK

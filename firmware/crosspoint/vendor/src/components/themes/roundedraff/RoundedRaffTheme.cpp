@@ -351,29 +351,31 @@ void RoundedRaffTheme::drawList(const GfxRenderer& renderer, Rect rect, int item
       }
     }
 
+    // WODLE-PORT: CJK filenames/titles fall back to the loaded SD reading font
+    const auto titleFont = renderer.uiFontFor(kTitleFontId, rowTitle(i).c_str());
     if (hasSubtitle) {
       const std::string subtitleRaw = rowSubtitle(i);
-      auto title = renderer.truncatedText(kTitleFontId, rowTitle(i).c_str(), textAreaWidth, EpdFontFamily::BOLD);
+      auto title = renderer.truncatedText(titleFont, rowTitle(i).c_str(), textAreaWidth, EpdFontFamily::BOLD);
 
       if (subtitleRaw.empty()) {
         // If there is no subtitle/author, center title vertically in the full row.
         const int centeredTitleY = rowY + (rowHeight - titleLineHeight) / 2;
-        renderer.drawText(kTitleFontId, rowX + kInteractiveInsetX, centeredTitleY, title.c_str(), !isSelected,
+        renderer.drawText(titleFont, rowX + kInteractiveInsetX, centeredTitleY, title.c_str(), !isSelected,
                           EpdFontFamily::BOLD);
       } else {
         const int titleY = rowY + subtitleTopPadding;
         const int subtitleY = titleY + titleLineHeight + subtitleInterLineGap;
-        auto subtitle =
-            renderer.truncatedText(kSubtitleFontId, subtitleRaw.c_str(), textAreaWidth, EpdFontFamily::REGULAR);
-        renderer.drawText(kTitleFontId, rowX + kInteractiveInsetX, titleY, title.c_str(), !isSelected,
+        const auto subFont = renderer.uiFontFor(kSubtitleFontId, subtitleRaw.c_str());  // WODLE-PORT
+        auto subtitle = renderer.truncatedText(subFont, subtitleRaw.c_str(), textAreaWidth, EpdFontFamily::REGULAR);
+        renderer.drawText(titleFont, rowX + kInteractiveInsetX, titleY, title.c_str(), !isSelected,
                           EpdFontFamily::BOLD);
-        renderer.drawText(kSubtitleFontId, rowX + kInteractiveInsetX, subtitleY, subtitle.c_str(), !isSelected,
+        renderer.drawText(subFont, rowX + kInteractiveInsetX, subtitleY, subtitle.c_str(), !isSelected,
                           EpdFontFamily::REGULAR);
       }
     } else {
-      auto title = renderer.truncatedText(kTitleFontId, rowTitle(i).c_str(), textAreaWidth, EpdFontFamily::BOLD);
-      renderer.drawText(kTitleFontId, rowX + kInteractiveInsetX,
-                        rowY + (rowHeight - renderer.getLineHeight(kTitleFontId)) / 2, title.c_str(), !isSelected,
+      auto title = renderer.truncatedText(titleFont, rowTitle(i).c_str(), textAreaWidth, EpdFontFamily::BOLD);
+      renderer.drawText(titleFont, rowX + kInteractiveInsetX,
+                        rowY + (rowHeight - renderer.getLineHeight(titleFont)) / 2, title.c_str(), !isSelected,
                         EpdFontFamily::BOLD);
     }
   }

@@ -117,6 +117,13 @@ class GfxRenderer {
   void ensureSdCardFontReady(int fontId, const std::vector<std::string>& words, bool includeHyphen,
                              uint8_t styleMask = 0x0F) const;
 
+  // WODLE-PORT: UI font for arbitrary user text (filenames, book/chapter
+  // titles). Builtin UI fonts only carry the translations' charset — when
+  // `utf8Text` needs glyphs the UI font lacks AND an SD card font is loaded,
+  // returns the SD font id (metrics prewarmed) so e.g. Chinese book names
+  // render instead of tofu. Otherwise returns uiFontId unchanged.
+  int uiFontFor(int uiFontId, const char* utf8Text) const;
+
   // Orientation control (affects logical width/height and coordinate transforms)
   void setOrientation(const Orientation o) { orientation = o; }
   Orientation getOrientation() const { return orientation; }
