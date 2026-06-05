@@ -74,6 +74,12 @@ void pulse(int ms)
 
 int level() { return s_level; }
 
+void setPersisted(uint8_t pct)
+{
+    set((uint8_t)FrontlightLevel::clamp(pct));
+    persist();
+}
+
 void stepUp()
 {
     set((uint8_t)FrontlightLevel::up(s_level));

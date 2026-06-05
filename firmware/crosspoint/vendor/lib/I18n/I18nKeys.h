@@ -335,6 +335,7 @@ enum class StrId : uint16_t {
   STR_KB_HINT_URL_SNIPPETS,
   STR_SELECT_FIRMWARE_FILE,
   STR_NO_BIN_FILES,
+  STR_FRONTLIGHT,
   // Sentinel - must be last
   _COUNT
 };

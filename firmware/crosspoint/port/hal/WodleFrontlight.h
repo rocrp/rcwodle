@@ -16,8 +16,9 @@ void init();               /* prepare GPTIM1 ch4 (pad stays on GPTIM1_CH4 mux) *
 void set(uint8_t percent); /* 0 = off, 1..100 = duty (no persistence) */
 void pulse(int ms);        /* blocking on/off pulse (boot proof-of-life) */
 
-int level();               /* current percent */
-void stepUp();             /* +1 step, persists */
-void stepDown();           /* -1 step, persists */
-void restorePersisted();   /* call once Storage is ready */
+int level();                    /* current percent */
+void setPersisted(uint8_t pct); /* set + persist (Settings UI) */
+void stepUp();                  /* +1 step, persists */
+void stepDown();                /* -1 step, persists */
+void restorePersisted();        /* call once Storage is ready */
 } // namespace WodleFrontlight

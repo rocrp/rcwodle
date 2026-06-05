@@ -3,7 +3,7 @@
 Status snapshot 2026-06-06. Two firmwares: `firmware/hello_wodle/` (validation
 instrument, EPD console) + `firmware/crosspoint/` (the e-reader, blind-ported,
 compiles + 134/134 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
-Flash: 3,410,508 of 3,538,944 B — ~125KB headroom (I18n --strip-unused
+Flash: 3,413,068 of 3,538,944 B — ~123KB headroom (I18n --strip-unused
 reclaimed 82KB; UI-font compression tried + rejected, came out larger).
 Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
@@ -22,7 +22,8 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
        center = confirm, top strip = back). If zones land wrong → `TOUCH_SWAP_XY/
        MIRROR_*` flags in `WodleTouch.cpp`.
 6. [ ] **Swipes**: L/R = page turns; U/D = frontlight ±20%, survives reboot
-       (`/.crosspoint/frontlight`).
+       (`/.crosspoint/frontlight`). Also Settings → Display → Frontlight/阅读灯
+       (0-100% in 20% steps, same persisted level).
 7. [ ] **TXT then EPUB**: open → paginate (first open slow, caches to SD) → page
        turns → progress resumes after reboot.
 7b. [ ] **CJK SD font**: copy `dist/sd-fonts/LXGWWenKai/` → SD `/fonts/LXGWWenKai/`
@@ -99,7 +100,9 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 - [ ] Real wakeup-reason (PMU boot cause register) → PowerButton/AfterFlash routing
       + `verifyPowerButtonWakeup` semantics
 - [ ] esp_mac shim → real SF32 chip UID read (settings obfuscation key)
-- [ ] Frontlight settings UI entry (beyond swipe gestures)
+- [x] Frontlight settings UI entry — DONE 2026-06-06 (Settings → Display,
+      ENUM 0-100% via WodleFrontlight::setPersisted; STR_FRONTLIGHT added to
+      en/zh yamls — gen_i18n parser rejects yaml comments, keep them out)
 - [ ] hello_wodle parity: DU LUT + direct-register IO (low value — it's a probe fw)
 - [ ] Frontlight circuit doc: confirm boost part on schematic sheet 2 (VBAT-fed,
       proven empirically)

@@ -8,6 +8,8 @@
 #include <cstring>
 
 // WODLE-PORT: network/OTA/font-download settings pruned (no WiFi)
+#include <WodleFrontlight.h>  // WODLE-PORT: frontlight setting backend
+
 #include "ButtonRemapActivity.h"
 #include "ClearCacheActivity.h"
 #include "CrossPointSettings.h"
@@ -45,6 +47,20 @@ void SettingsActivity::rebuildSettingsLists() {
     } else if (setting.category == StrId::STR_CAT_SYSTEM) {
       systemSettings.push_back(setting);
     }
+  }
+
+  // WODLE-PORT: frontlight level — device-only, backed by WodleFrontlight
+  // (PA1 PWM, persists to /.crosspoint/frontlight), not CrossPointSettings.
+  // Same 20% grid the brightness swipes step through.
+  {
+    SettingInfo frontlight;
+    frontlight.nameId = StrId::STR_FRONTLIGHT;
+    frontlight.type = SettingType::ENUM;
+    frontlight.enumStringValues = {"0%", "20%", "40%", "60%", "80%", "100%"};
+    frontlight.category = StrId::STR_CAT_DISPLAY;
+    frontlight.valueGetter = []() -> uint8_t { return static_cast<uint8_t>((WodleFrontlight::level() + 10) / 20); };
+    frontlight.valueSetter = [](uint8_t v) { WodleFrontlight::setPersisted(static_cast<uint8_t>(v * 20)); };
+    displaySettings.insert(displaySettings.begin(), std::move(frontlight));
   }
 
   // Append device-only ACTION items
