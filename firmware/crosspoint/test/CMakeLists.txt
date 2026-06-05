@@ -7,7 +7,7 @@
 #   ctest --test-dir /tmp/cp_test --output-on-failure
 
 cmake_minimum_required(VERSION 3.16)
-project(crosspoint_wodle_tests CXX)
+project(crosspoint_wodle_tests C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -45,3 +45,4 @@ include(GoogleTest)
 add_subdirectory(port_shims)
 add_subdirectory(streaming_json_parser)
 add_subdirectory(release_json_parser)
+add_subdirectory(zipfile)
