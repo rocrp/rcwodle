@@ -5,7 +5,7 @@ Port of [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-read
 UC8179C 528x792 EPD). Vendor snapshot + deltas: `vendor/VENDOR.md`. Plan:
 `docs/superpowers/plans/2026-06-05-crosspoint-port-plan.md` (repo root docs/).
 
-**Status: blind-port, compiles + links (1.95MB), zero HIL.** Built entirely
+**Status: blind-port, compiles + links (3.2MB image), zero HIL.** Built entirely
 while the device was away — expect bring-up iterations.
 
 ## Build + flash
@@ -57,9 +57,11 @@ Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/
 - **Refresh**: GC full refresh only (~3-4s/update incl. data write over
   bit-bang GPIO SPI). Next big win = port upstream X3 fast LUT path +
   hardware SPI/LCDC for the data write.
-- **Fonts**: OMIT_FONTS → NotoSerif 14 + UI fonts only. Font-size/family
-  settings menu entries beyond these are no-ops/fallbacks. Fix = ptab V656
-  bump (3.5MB region) or SD `.cpfont` fonts (supported, untested).
+- **Fonts**: 12/14/16 NotoSerif+NotoSans (all styles) + UI fonts in flash;
+  the 18pt (XL) tier alone is ~550KB and overflows the 3.5MB region — omitted
+  (WODLE_OMIT_18PT in src/main.cpp). XL size falls back; SD `.cpfont` can
+  supply it later. ptab is now the V656 layout (board/wodle/ptab.yaml) —
+  device must run the V656 bootloader/ftab (it does since 2026-06-05).
 - **Sleep**: deep sleep = placeholder spin loop (HalGPIO::startDeepSleep).
   Real SF32 hibernate + PA34 wake = separate task.
 - **Battery**: fixed 100% (BQ27220 on I2C2 @0x55 is the known upgrade).

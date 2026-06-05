@@ -2,9 +2,10 @@
 # Board: wodle (custom) — mirrors STOCK "AI Dou" flash layout recovered from firmware
 # Chip: SF32LB525UC6 (SF32LB52x N16R8: 16MB NOR + 8MB PSRAM)
 #
-# Stock addresses (from /firmware/update.json, mpi2 base 0x12000000):
-#   hcpu_app @ 0x12218000 (offset 0x218000), ezip @ 0x12460000, font @ 0x12AE0000,
-#   dfu/ble FAL KV @ 0x12458000 / 0x1245c000.
+# Layout = V1.4.0.0656 (verified against the on-device ftab via HVR1 2026-06-05):
+#   hcpu_app @ 0x12218000 region 0x360000 (3.5MB), ezip @ 0x12580000, font @ 0x12C00000.
+#   (Older V0246 had app 0x240000 / ezip 0x12460000 / font 0x12AE0000.)
+#   dfu/ble FAL KV moved to the 32KB gap before ezip (0x578000/0x57C000).
 # The vendor bootloader+ftab occupy 0x0..0x218000. We place the HCPU app at 0x218000
 # so a custom app links to the same XIP address the stock bootloader jumps to.
 
@@ -22,47 +23,39 @@ partitions:
     subtype: factory
     region: mpi2
     offset: 0x218000      # -> XIP 0x12218000 (matches stock)
-    size: 0x240000        # 2.25MB (stock region_size)
+    size: 0x360000        # 3.5MB (V656 region_size)
     core: HCPU
 
-  # eZip graphics assets (stock 0x12460000)
+  # eZip graphics assets (V656 0x12580000)
   - name: ezip_region
     type: data
     subtype: raw
     region: mpi2
-    offset: 0x460000
+    offset: 0x580000
     size: 0x680000
 
-  # Font data (stock 0x12AE0000)
+  # Font data (V656 0x12C00000, runs to end of 16MB NOR)
   - name: font_region
     type: data
     subtype: raw
     region: mpi2
-    offset: 0xAE0000
+    offset: 0xC00000
     size: 0x400000
 
-  # Filesystem region (after font)
-  - name: fs_region
-    type: data
-    subtype: filesystem
-    region: mpi2
-    offset: 0xEE0000
-    size: 0x100000        # 1MB up to 16MB end
-
-  # KVDB for DFU (stock FAL "dfu" @ 0x12458000)
+  # KVDB for DFU (gap between app and ezip)
   - name: dfu
     type: data
     subtype: flashdb_kv
     region: mpi2
-    offset: 0x458000
+    offset: 0x578000
     size: 16KB
 
-  # KVDB for BLE (stock FAL "ble" @ 0x1245c000)
+  # KVDB for BLE
   - name: ble
     type: data
     subtype: flashdb_kv
     region: mpi2
-    offset: 0x45c000
+    offset: 0x57c000
     size: 16KB
 
   # PSRAM data region (on SiP mpi1)

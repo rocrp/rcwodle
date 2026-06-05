@@ -2,10 +2,10 @@
  * Deltas: WiFi/OTA/SD-firmware-recovery removed; Arduino setup()/loop()
  * driven from RT-Thread main(). Everything else kept verbatim.
  *
- * OMIT_FONTS: full builtin set is ~3.3MB; the wodle app flash region is
- * 2.25MB (old ptab; 3.5MB after the V656 ptab update). Keeps NotoSerif 14
- * (the default reader font) + UI fonts. More sizes => SD fonts or ptab bump. */
-#define OMIT_FONTS 1
+ * Fonts: 12/14/16 serif+sans + UI fonts. The 18pt tier alone is ~550KB and
+ * pushes the image past the 3.5MB V656 app region — omitted (XL reading size
+ * falls back; SD .cpfont can supply it later). */
+#define WODLE_OMIT_18PT 1
 #include <Arduino.h>
 #include <Epub.h>
 #include <FontCacheManager.h>
@@ -67,12 +67,14 @@ EpdFont notoserif16ItalicFont(&notoserif_16_italic);
 EpdFont notoserif16BoldItalicFont(&notoserif_16_bolditalic);
 EpdFontFamily notoserif16FontFamily(&notoserif16RegularFont, &notoserif16BoldFont, &notoserif16ItalicFont,
                                     &notoserif16BoldItalicFont);
+#ifndef WODLE_OMIT_18PT
 EpdFont notoserif18RegularFont(&notoserif_18_regular);
 EpdFont notoserif18BoldFont(&notoserif_18_bold);
 EpdFont notoserif18ItalicFont(&notoserif_18_italic);
 EpdFont notoserif18BoldItalicFont(&notoserif_18_bolditalic);
 EpdFontFamily notoserif18FontFamily(&notoserif18RegularFont, &notoserif18BoldFont, &notoserif18ItalicFont,
                                     &notoserif18BoldItalicFont);
+#endif
 
 EpdFont notosans12RegularFont(&notosans_12_regular);
 EpdFont notosans12BoldFont(&notosans_12_bold);
@@ -92,12 +94,14 @@ EpdFont notosans16ItalicFont(&notosans_16_italic);
 EpdFont notosans16BoldItalicFont(&notosans_16_bolditalic);
 EpdFontFamily notosans16FontFamily(&notosans16RegularFont, &notosans16BoldFont, &notosans16ItalicFont,
                                    &notosans16BoldItalicFont);
+#ifndef WODLE_OMIT_18PT
 EpdFont notosans18RegularFont(&notosans_18_regular);
 EpdFont notosans18BoldFont(&notosans_18_bold);
 EpdFont notosans18ItalicFont(&notosans_18_italic);
 EpdFont notosans18BoldItalicFont(&notosans_18_bolditalic);
 EpdFontFamily notosans18FontFamily(&notosans18RegularFont, &notosans18BoldFont, &notosans18ItalicFont,
                                    &notosans18BoldItalicFont);
+#endif
 
 #endif  // OMIT_FONTS
 
@@ -285,12 +289,16 @@ void setupDisplayAndFonts(bool seamless = false) {
 #ifndef OMIT_FONTS
   renderer.insertFont(NOTOSERIF_12_FONT_ID, notoserif12FontFamily);
   renderer.insertFont(NOTOSERIF_16_FONT_ID, notoserif16FontFamily);
+#ifndef WODLE_OMIT_18PT
   renderer.insertFont(NOTOSERIF_18_FONT_ID, notoserif18FontFamily);
+#endif
 
   renderer.insertFont(NOTOSANS_12_FONT_ID, notosans12FontFamily);
   renderer.insertFont(NOTOSANS_14_FONT_ID, notosans14FontFamily);
   renderer.insertFont(NOTOSANS_16_FONT_ID, notosans16FontFamily);
+#ifndef WODLE_OMIT_18PT
   renderer.insertFont(NOTOSANS_18_FONT_ID, notosans18FontFamily);
+#endif
 #endif  // OMIT_FONTS
   renderer.insertFont(UI_10_FONT_ID, ui10FontFamily);
   renderer.insertFont(UI_12_FONT_ID, ui12FontFamily);
