@@ -37,12 +37,11 @@ class ZipFileFixture : public ::testing::Test
 protected:
     void SetUp() override
     {
-        /* ZipFile stores a const std::string& — the path must outlive it
-         * (upstream callers pass a long-lived member; a temporary dangles) */
-        zip = std::make_unique<ZipFile>(path);
+        /* Constructed from a temporary on purpose: ZipFile must own its path
+         * (it stored a dangling const& before the WODLE-PORT fix). */
+        zip = std::make_unique<ZipFile>(std::string(FIXTURE_EPUB));
         ASSERT_TRUE(zip->open());
     }
-    std::string path = FIXTURE_EPUB; /* declared before zip: outlives it */
     std::unique_ptr<ZipFile> zip;
 };
 

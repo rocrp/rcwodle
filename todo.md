@@ -79,8 +79,8 @@ compiles + 106/106 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_
 
 - rt_pwm framework `set()` fails through ROM-linked RT layer (direct HAL works;
   cause never found — moot but curious)
-- `ZipFile` holds `const std::string&` path — dangling-temporary hazard (documented
-  in test; consider upstreaming a fix)
+- ~~`ZipFile` dangling `const std::string&` path~~ — fixed 2026-06-06 (by-value
+  + WODLE-PORT marker; test constructs from a temporary); worth upstreaming
 - Upstream sync: vendor snapshot = b12839d1 (2026-06-01); `// WODLE-PORT:` marks
   every local edit; I18n regenerated via gen_i18n.py (upstream committed files stale)
 - Repo unpushed (no remote) — decide hosting if/when open-sourcing
