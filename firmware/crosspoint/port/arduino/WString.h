@@ -3,6 +3,7 @@
  * demands rather than chasing full Arduino fidelity. */
 #pragma once
 
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -48,6 +49,10 @@ public:
     bool concat(const String &o) { _s += o._s; return true; }
     bool concat(const char *o) { if (o) _s += o; return true; }
     bool concat(char c) { _s += c; return true; }
+
+    /* ArduinoJson's Writer<::String> appends via write() */
+    size_t write(uint8_t c) { _s += (char)c; return 1; }
+    size_t write(const uint8_t *buf, size_t n) { _s.append((const char *)buf, n); return n; }
 
     friend String operator+(String a, const String &b) { a += b; return a; }
     friend String operator+(String a, const char *b) { a += b; return a; }

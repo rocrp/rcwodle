@@ -1,3 +1,4 @@
+#include <algorithm>  // WODLE-PORT: std::clamp
 #include "CrossPointSettings.h"
 
 #include <HalStorage.h>

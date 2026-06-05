@@ -8,7 +8,7 @@
 #include <memory>
 
 #include "ClockOffsetActivity.h"
-#include "ClockSyncActivity.h"
+// WODLE-PORT: ClockSync pruned (NTP needs WiFi)
 #include "CrossPointSettings.h"
 #include "MappedInputManager.h"
 #include "components/UITheme.h"
@@ -186,7 +186,7 @@ void StatusBarSettingsActivity::handleSelection() {
       startActivityForResult(std::make_unique<ClockOffsetActivity>(renderer, mappedInput), nullptr);
       return;
     case ITEM_CLOCK_SYNC:
-      startActivityForResult(std::make_unique<ClockSyncActivity>(renderer, mappedInput), nullptr);
+      /* WODLE-PORT: clock sync unavailable (no WiFi/RTC yet) */
       return;
     default:
       return;

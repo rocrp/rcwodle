@@ -26,7 +26,7 @@
 #include "EpubReaderPercentSelectionActivity.h"
 #include "EpubReaderUtils.h"
 #include "KOReaderCredentialStore.h"
-#include "KOReaderSyncActivity.h"
+// WODLE-PORT: KOReaderSyncActivity pruned (WiFi)
 #include "MappedInputManager.h"
 #include "ProgressMapper.h"
 #include "QrDisplayActivity.h"
@@ -582,9 +582,9 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
         }
         LOG_DBG("KOSync", "Epub released (heap after: %u)", (unsigned)ESP.getFreeHeap());
 
-        activityManager.replaceActivity(std::make_unique<KOReaderSyncActivity>(
-            renderer, mappedInput, savedEpubPath, currentSpineIndex, currentPage, totalPages, std::move(localKoPos),
-            std::move(localChapterName), paragraphIndex));
+        // WODLE-PORT: no WiFi — KOReader progress sync unavailable
+        activityManager.goToFullScreenMessage("KOReader sync requires WiFi\n(not available on this device)",
+                                              EpdFontFamily::Style::REGULAR);
       }
       break;
     }

@@ -28,11 +28,28 @@ inline void yield() { rt_thread_yield(); }
 using std::max;
 using std::min;
 
+/* ---- random ---------------------------------------------------------------- */
+inline long random(long maxExclusive)
+{
+    return maxExclusive > 0 ? (long)(rand() % maxExclusive) : 0;
+}
+inline long random(long minInclusive, long maxExclusive)
+{
+    return minInclusive + random(maxExclusive - minInclusive);
+}
+inline void randomSeed(unsigned long seed) { srand((unsigned)seed); }
+
 /* ---- misc Arduino-isms ----------------------------------------------------- */
 #define F(x) (x)
 #define PSTR(x) (x)
 typedef bool boolean;
 typedef uint8_t byte;
+
+/* upstream gets this from platformio.ini; SDK's GenCppdefineFiles chokes on
+ * tuple CPPDEFINES, so it lives here */
+#ifndef CROSSPOINT_VERSION
+#define CROSSPOINT_VERSION "1.3.0-wodle"
+#endif
 
 /* ESP32 RTC-noinit data survives deep sleep/reboot on ESP32; the wodle port
  * has no .noinit segment wired up, so these become ordinary statics (crash

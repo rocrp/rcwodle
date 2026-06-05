@@ -1,3 +1,4 @@
+#include <cmath>  // WODLE-PORT: std::round
 #include "BmpViewerActivity.h"
 
 #include <Bitmap.h>

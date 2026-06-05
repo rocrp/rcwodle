@@ -31,3 +31,8 @@ BaseType_t xTaskNotifyWait(uint32_t bitsClearEntry, uint32_t bitsClearExit,
 
 static inline void vTaskDelay(TickType_t ticks) { rt_thread_delay((rt_int32_t)ticks); }
 static inline TaskHandle_t xTaskGetCurrentTaskHandle(void) { return rt_thread_self(); }
+
+/* critical sections: upstream passes a portMUX pointer; RT-Thread scheduler
+ * lock is global, argument ignored */
+#define taskENTER_CRITICAL(mux) rt_enter_critical()
+#define taskEXIT_CRITICAL(mux) rt_exit_critical()

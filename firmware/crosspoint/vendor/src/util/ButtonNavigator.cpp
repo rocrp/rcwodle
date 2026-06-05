@@ -1,3 +1,4 @@
+#include <algorithm>  // WODLE-PORT: std::any_of
 #include "ButtonNavigator.h"
 
 const MappedInputManager* ButtonNavigator::mappedInput = nullptr;

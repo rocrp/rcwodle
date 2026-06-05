@@ -32,7 +32,9 @@ CPPDEFINES = [
 src += Glob('lib/ZipFile/*.cpp')
 src += Glob('lib/Txt/*.cpp')
 src += Glob('lib/Xtc/*.cpp') + Glob('lib/Xtc/Xtc/*.cpp')
-src += Glob('lib/MiniBidi/*.cpp')
+src += Glob('lib/MiniBidi/*.cpp') + Glob('lib/MiniBidi/*.c')
+# KOReaderSync minus the HTTP client (KOReaderSyncClient is WiFi-bound)
+src += [f for f in Glob('lib/KOReaderSync/*.cpp') if 'SyncClient' not in f.name]
 src += Glob('lib/Serialization/*.cpp')
 src += Glob('lib/Epub/*.cpp') + Glob('lib/Epub/Epub/*.cpp')      + Glob('lib/Epub/Epub/css/*.cpp') + Glob('lib/Epub/Epub/parsers/*.cpp') \
      + Glob('lib/Epub/Epub/blocks/*.cpp') + Glob('lib/Epub/Epub/converters/*.cpp') \
@@ -43,16 +45,33 @@ src += Glob('lib/PngToBmpConverter/*.cpp')
 # bitbank2 decoders (vendored from upstream .pio/libdeps); exclude ESP32-S3 .S
 src += Glob('extlib/JPEGDEC/src/*.cpp')
 src += Glob('extlib/PNGdec/src/*.c') + Glob('extlib/PNGdec/src/*.cpp')
+src += Glob('extlib/QRCode/src/*.c')
 
 CPPPATH += [cwd + '/lib/' + d for d in [
-    'ZipFile', 'Txt', 'Xtc', 'MiniBidi', 'Serialization', 'Epub',
+    'ZipFile', 'Txt', 'Xtc', 'MiniBidi', 'Serialization', 'Epub', 'KOReaderSync',
     'JpegToBmpConverter', 'PngToBmpConverter', 'GfxRenderer', 'EpdFont',
 ]]
-CPPPATH += [cwd + '/extlib/JPEGDEC/src', cwd + '/extlib/PNGdec/src']
+CPPPATH += [cwd + '/extlib/JPEGDEC/src', cwd + '/extlib/PNGdec/src', cwd + '/extlib/ArduinoJson/src', cwd + '/extlib/QRCode/src']
 
 # --- batch 3: fonts + renderer ----------------------------------------------
 src += Glob('lib/EpdFont/*.cpp')
 src += Glob('lib/GfxRenderer/*.cpp')
+
+# --- batch 4: application (activities, components, stores) -------------------
+# main.cpp is ported separately in ../src/main.cpp (RT-Thread entry + pruning)
+src += [f for f in Glob('src/*.cpp') if f.name != 'main.cpp']
+src += Glob('src/activities/*.cpp')
+src += Glob('src/activities/boot_sleep/*.cpp')
+src += Glob('src/activities/browser/*.cpp')
+src += Glob('src/activities/home/*.cpp')
+src += Glob('src/activities/reader/*.cpp')
+src += Glob('src/activities/settings/*.cpp')
+src += Glob('src/activities/util/*.cpp')
+src += Glob('src/components/*.cpp') + Glob('src/components/themes/*.cpp') \
+     + Glob('src/components/themes/lyra/*.cpp') + Glob('src/components/themes/roundedraff/*.cpp')
+src += Glob('src/util/*.cpp')
+
+CPPPATH += [cwd + '/src']
 
 group = DefineGroup('CrossPointVendor', src, depend=[''],
                     CPPPATH=CPPPATH, CPPDEFINES=CPPDEFINES)

@@ -40,3 +40,9 @@ static inline void *xSemaphoreGetMutexHolder(SemaphoreHandle_t m)
 {
     return m ? (void *)m->owner : RT_NULL;
 }
+
+/* upstream peeks the mutex-as-queue to test availability without taking */
+static inline BaseType_t xQueuePeek(SemaphoreHandle_t m, void *, TickType_t)
+{
+    return (m && m->owner == RT_NULL) ? pdTRUE : pdFALSE;
+}
