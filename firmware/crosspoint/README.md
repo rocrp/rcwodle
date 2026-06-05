@@ -48,6 +48,8 @@ FAT32 card. Books anywhere (e.g. `/books/*.epub`, `.txt`). App state lands in
 | tap left/right third | page back / page forward |
 | tap center | CONFIRM |
 | tap top strip | BACK |
+| swipe left / right | page forward / back |
+| swipe up / down | frontlight brighter / dimmer (20% steps, persisted) |
 
 Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/inverted.**
 

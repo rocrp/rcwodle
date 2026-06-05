@@ -6,6 +6,7 @@
 
 #include "HalGPIO.h"
 #include "TapClassifier.h"
+#include "WodleFrontlight.h"
 #include "bf0_hal.h"
 
 #define TOUCH_ADDR 0x15
@@ -132,11 +133,25 @@ int pollTapButton()
     if (!s_touching) return -1;
     s_touching = false;
 
-    /* finger lifted: tap = short + little movement */
-    if (!TapClassifier::isTap(now - s_downAtMs, s_lastX - s_downX, s_lastY - s_downY))
+    /* finger lifted: classify the full gesture */
+    using TapClassifier::Gesture;
+    Gesture g = TapClassifier::classify(now - s_downAtMs, s_lastX - s_downX, s_lastY - s_downY);
+    switch (g)
+    {
+    case Gesture::Tap:
+        return TapClassifier::zoneButton(s_downX, s_downY);
+    case Gesture::SwipeLeft:
+    case Gesture::SwipeRight:
+        return TapClassifier::swipeButton(g); /* page turns */
+    case Gesture::SwipeUp:
+        WodleFrontlight::stepUp();
         return -1;
-
-    return TapClassifier::zoneButton(s_downX, s_downY);
+    case Gesture::SwipeDown:
+        WodleFrontlight::stepDown();
+        return -1;
+    default:
+        return -1;
+    }
 }
 
 } // namespace WodleTouch

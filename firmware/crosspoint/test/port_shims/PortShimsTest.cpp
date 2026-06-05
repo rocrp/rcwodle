@@ -228,3 +228,53 @@ TEST(TapClassifier, ZoneMap)
     EXPECT_EQ(zoneButton(2 * SCREEN_W / 3 + 1, 400), BTN_DOWN);
     EXPECT_EQ(zoneButton(SCREEN_W - 1, SCREEN_H - 1), BTN_DOWN);
 }
+
+TEST(TapClassifier, GestureClassification)
+{
+    using namespace TapClassifier;
+    /* taps */
+    EXPECT_EQ(classify(100, 5, -5), Gesture::Tap);
+    /* clean swipes */
+    EXPECT_EQ(classify(300, -200, 10), Gesture::SwipeLeft);
+    EXPECT_EQ(classify(300, 200, -30), Gesture::SwipeRight);
+    EXPECT_EQ(classify(300, 10, -200), Gesture::SwipeUp);
+    EXPECT_EQ(classify(300, -30, 200), Gesture::SwipeDown);
+    /* boundary: exactly minimum travel, dominant enough */
+    EXPECT_EQ(classify(300, -SWIPE_MIN_TRAVEL, SWIPE_MIN_TRAVEL / SWIPE_AXIS_RATIO),
+              Gesture::SwipeLeft);
+    /* too slow -> none */
+    EXPECT_EQ(classify(SWIPE_MAX_MS + 1, -200, 0), Gesture::None);
+    /* diagonal (no dominant axis) -> none */
+    EXPECT_EQ(classify(300, 150, 140), Gesture::None);
+    /* movement too small for swipe, too big for tap -> none */
+    EXPECT_EQ(classify(300, 80, 0), Gesture::None);
+}
+
+TEST(TapClassifier, SwipeButtonsFollowReadingFlow)
+{
+    using namespace TapClassifier;
+    EXPECT_EQ(swipeButton(Gesture::SwipeLeft), BTN_DOWN); /* flip forward */
+    EXPECT_EQ(swipeButton(Gesture::SwipeRight), BTN_UP);  /* flip back */
+    EXPECT_EQ(swipeButton(Gesture::SwipeUp), -1);
+    EXPECT_EQ(swipeButton(Gesture::Tap), -1);
+}
+
+/* --------------------------------------------------------- FrontlightLevel */
+#include "../../port/hal/FrontlightLevel.h"
+
+TEST(FrontlightLevel, StepUpDownClampAndGrid)
+{
+    using namespace FrontlightLevel;
+    EXPECT_EQ(up(0), STEP);
+    EXPECT_EQ(up(80), 100);
+    EXPECT_EQ(up(100), 100);    /* ceiling */
+    EXPECT_EQ(down(100), 80);
+    EXPECT_EQ(down(STEP), 0);
+    EXPECT_EQ(down(0), 0);      /* floor */
+    /* off-grid values snap to the step grid */
+    EXPECT_EQ(clamp(47), 40);
+    EXPECT_EQ(clamp(-5), 0);
+    EXPECT_EQ(clamp(150), 100);
+    EXPECT_EQ(up(47), 60);
+    EXPECT_EQ(down(47), 20);
+}

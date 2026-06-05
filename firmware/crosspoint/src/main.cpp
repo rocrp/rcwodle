@@ -357,6 +357,8 @@ void setup() {
 
   HalSystem::checkPanic();
 
+  WodleFrontlight::restorePersisted();  // WODLE-PORT: brightness survives reboot
+
   SETTINGS.loadFromFile();
   APP_STATE.loadFromFile();
   RECENT_BOOKS.loadFromFile();
