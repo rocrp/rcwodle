@@ -68,8 +68,19 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       streaming, CSS discovery, metadata-cache reload; converter stubs keep
       JPEGDEC/PNGdec out — "deps balloon" concern was obsolete)
 - [ ] PSRAM (8MB) heap region for big-EPUB headroom (only if HIL shows pressure)
-- [ ] BT/BLE assessment (task #6): LCPU stack feasibility; book transfer over BT
-      (replaces upstream's WiFi transfer; needs design vs effort call)
+- [x] BT/BLE assessment — ASSESSED 2026-06-06, verdict: **skip BLE transfer for
+      v1; assess USB-MSC post-HIL instead.**
+      - Feasible in principle: 52x BLE host stack (sibles) + LCPU boot are SDK
+        components; radio HW proven by stock fw (A2DP/PAN). Custom GATT file
+        service + bleak Mac script (tools/wodle_ble.py exists) would work.
+      - Costs: BLE stack ~100-200KB flash (headroom 125KB → needs reclaim
+        first) + LCPU RAM carve-out + pairing UX + power while advertising;
+        throughput ~5-20KB/s → 1MB book = minutes.
+      - SD-card swap already covers transfer with zero effort. The superior
+        upgrade is **USB MSC** (expose SD over the existing USB-C: instant,
+        fast, no pairing) — check SDK usbd MSC + sdmmc backing post-HIL.
+      - docs/bluetooth.md (stock-era "no BLE control path") is about the stock
+        fw; doesn't constrain custom fw.
 
 ## Post-HIL backlog
 
