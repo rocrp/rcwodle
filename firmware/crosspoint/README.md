@@ -8,6 +8,16 @@ UC8179C 528x792 EPD). Vendor snapshot + deltas: `vendor/VENDOR.md`. Plan:
 **Status: blind-port, compiles + links (3.2MB image), zero HIL.** Built entirely
 while the device was away — expect bring-up iterations.
 
+## Verify (blind-development loop)
+
+```sh
+firmware/crosspoint/run_checks.sh        # target build + 82 host tests
+```
+
+Host tests (gtest, `test/`): port shims with known-answer vectors (MD5/base64/
+String/TapClassifier) + upstream JSON parser suites + ZipFile/inflate over a
+real EPUB fixture via POSIX host shims.
+
 ## Build + flash
 
 ```sh
