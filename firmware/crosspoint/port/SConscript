@@ -1,0 +1,10 @@
+from building import *
+
+cwd = GetCurrentDir()
+
+src = Glob('arduino/*.cpp') + Glob('freertos/*.cpp')
+CPPPATH = [cwd + '/arduino', cwd + '/freertos']
+
+group = DefineGroup('CrossPointPort', src, depend=[''], CPPPATH=CPPPATH)
+
+Return('group')

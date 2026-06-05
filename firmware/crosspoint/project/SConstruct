@@ -1,0 +1,40 @@
+import os
+import rtconfig
+
+# Check SDK
+SIFLI_SDK = os.getenv('SIFLI_SDK')
+if not SIFLI_SDK:
+    print("Please run export.sh in root folder of SIFLI SDK to set environment.")
+    exit()
+from building import *
+
+# Prepare environment.
+PrepareEnv()
+
+# NOTE: AddBootLoader() is intentionally skipped. Building the bootloader sub-project
+# hits the SDK's duplicate-symbol link quirk (sf32lb52-lcd_base bsp_*.o linked twice)
+# documented in docs/framework_plan.md. We flash via tf_ota / HVR1, which replace ONLY
+# the app region — the stock bootloader+ftab stay in flash — so we need just the HCPU app.
+# AddBootLoader(SIFLI_SDK, rtconfig.CHIP)
+
+# Set default compile options
+SifliEnv()
+
+# CrossPoint sources are C++20 (upstream: -std=gnu++2a). The SDK copies CFLAGS
+# into CXXFLAGS with no -std, so gcc14 would default to gnu++17. Match upstream
+# -fno-exceptions; RTTI off saves flash (no dynamic_cast/typeid upstream).
+rtconfig.CXXFLAGS += ' -std=gnu++20 -fno-exceptions -fno-rtti'
+
+TARGET = rtconfig.OUTPUT_DIR + rtconfig.TARGET_NAME + '.' + rtconfig.TARGET_EXT
+# Prepare building environment
+objs = PrepareBuilding(None)
+env = GetCurrentEnv()
+
+# Build application.
+DoBuilding(TARGET, objs)
+
+# Add flash table build.
+AddFTAB(SIFLI_SDK, rtconfig.CHIP)
+
+# Generate download script
+GenDownloadScript(env)
