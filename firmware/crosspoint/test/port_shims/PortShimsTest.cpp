@@ -200,3 +200,31 @@ TEST(WString, WriteAppendsForArduinoJson)
     s.write((const uint8_t *)"ey", 2);
     EXPECT_EQ(std::string(s.c_str()), "hey");
 }
+
+/* ------------------------------------------------------------ TapClassifier */
+#include "../../port/hal/TapClassifier.h"
+
+TEST(TapClassifier, TapVsSwipeVsLongPress)
+{
+    using namespace TapClassifier;
+    EXPECT_TRUE(isTap(100, 5, -5));
+    EXPECT_TRUE(isTap(TAP_MAX_MS, TAP_MAX_MOVE, TAP_MAX_MOVE));
+    EXPECT_FALSE(isTap(TAP_MAX_MS + 1, 0, 0));   /* long press */
+    EXPECT_FALSE(isTap(100, TAP_MAX_MOVE + 1, 0)); /* horizontal swipe */
+    EXPECT_FALSE(isTap(100, 0, -(TAP_MAX_MOVE + 1))); /* vertical swipe */
+}
+
+TEST(TapClassifier, ZoneMap)
+{
+    using namespace TapClassifier;
+    /* top strip wins over horizontal thirds */
+    EXPECT_EQ(zoneButton(10, 10), BTN_BACK);
+    EXPECT_EQ(zoneButton(SCREEN_W - 10, TOP_STRIP_PX - 1), BTN_BACK);
+    /* thirds below the strip */
+    EXPECT_EQ(zoneButton(0, TOP_STRIP_PX), BTN_UP);
+    EXPECT_EQ(zoneButton(SCREEN_W / 3 - 1, 400), BTN_UP);
+    EXPECT_EQ(zoneButton(SCREEN_W / 3, 400), BTN_CONFIRM);
+    EXPECT_EQ(zoneButton(2 * SCREEN_W / 3, 400), BTN_CONFIRM);
+    EXPECT_EQ(zoneButton(2 * SCREEN_W / 3 + 1, 400), BTN_DOWN);
+    EXPECT_EQ(zoneButton(SCREEN_W - 1, SCREEN_H - 1), BTN_DOWN);
+}

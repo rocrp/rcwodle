@@ -5,6 +5,7 @@
 #include <rtthread.h>
 
 #include "HalGPIO.h"
+#include "TapClassifier.h"
 #include "bf0_hal.h"
 
 #define TOUCH_ADDR 0x15
@@ -17,11 +18,14 @@
 #define TOUCH_MIRROR_X 0
 #define TOUCH_MIRROR_Y 0
 
-#define SCREEN_W 528
-#define SCREEN_H 792
-#define TOP_STRIP_PX 96
-#define TAP_MAX_MS 400
-#define TAP_MAX_MOVE 40
+/* keep the pure header's button ids honest */
+static_assert(TapClassifier::BTN_BACK == HalGPIO::BTN_BACK);
+static_assert(TapClassifier::BTN_CONFIRM == HalGPIO::BTN_CONFIRM);
+static_assert(TapClassifier::BTN_UP == HalGPIO::BTN_UP);
+static_assert(TapClassifier::BTN_DOWN == HalGPIO::BTN_DOWN);
+
+#define SCREEN_W TapClassifier::SCREEN_W
+#define SCREEN_H TapClassifier::SCREEN_H
 
 namespace
 {
@@ -69,13 +73,6 @@ bool readTouch(bool &touching, int &x, int &y)
     return true;
 }
 
-int zoneButton(int x, int y)
-{
-    if (y < TOP_STRIP_PX) return HalGPIO::BTN_BACK;
-    if (x < SCREEN_W / 3) return HalGPIO::BTN_UP;
-    if (x > 2 * SCREEN_W / 3) return HalGPIO::BTN_DOWN;
-    return HalGPIO::BTN_CONFIRM;
-}
 } // namespace
 
 namespace WodleTouch
@@ -136,13 +133,10 @@ int pollTapButton()
     s_touching = false;
 
     /* finger lifted: tap = short + little movement */
-    unsigned long held = now - s_downAtMs;
-    int dx = s_lastX - s_downX, dy = s_lastY - s_downY;
-    if (dx < 0) dx = -dx;
-    if (dy < 0) dy = -dy;
-    if (held > TAP_MAX_MS || dx > TAP_MAX_MOVE || dy > TAP_MAX_MOVE) return -1;
+    if (!TapClassifier::isTap(now - s_downAtMs, s_lastX - s_downX, s_lastY - s_downY))
+        return -1;
 
-    return zoneButton(s_downX, s_downY);
+    return TapClassifier::zoneButton(s_downX, s_downY);
 }
 
 } // namespace WodleTouch
