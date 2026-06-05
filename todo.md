@@ -101,7 +101,9 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 - [ ] SF32 on-chip RTC → HalClock (status-bar clock, no NTP without network)
 - [ ] Real wakeup-reason (PMU boot cause register) → PowerButton/AfterFlash routing
       + `verifyPowerButtonWakeup` semantics
-- [ ] esp_mac shim → real SF32 chip UID read (settings obfuscation key)
+- [x] esp_mac shim → real SF32 chip UID — WON'T DO: the bootloader-byte-derived
+      key is equally stable per device; swapping to a UID would invalidate
+      existing obfuscated settings once for zero functional gain.
 - [x] Frontlight settings UI entry — DONE 2026-06-06 (Settings → Display,
       ENUM 0-100% via WodleFrontlight::setPersisted; STR_FRONTLIGHT added to
       en/zh yamls — gen_i18n parser rejects yaml comments, keep them out)
