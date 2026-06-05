@@ -143,6 +143,62 @@ TEST(Render, SdCardFontRendersCjkParagraph) {
   dumpPgm("sd_cjk_text");
 }
 
+// Grayscale AA pipeline (GfxRenderer side): rendering the same content in
+// GRAYSCALE_LSB and GRAYSCALE_MSB modes produces flag planes (bit 1 =
+// flagged) with LSB = dark-gray-only ⊆ MSB = any-gray. SD cpfont glyphs are
+// 2-bit, so they exercise the AA path. Dumps a 4-level preview image
+// (overlaying flags onto the BW render) — the visual check for what the
+// panel's gray pass will draw.
+TEST(Render, GrayscalePlanesInvariantAndPreview) {
+  const char* text = "你好，世界。";
+  renderer.ensureSdCardFontReady(SD_FONT_ID, text, 0x01);
+  sdFont.prewarm(text, 0x01);
+
+  std::vector<uint8_t> bw(HalDisplay::BUFFER_SIZE), lsb(HalDisplay::BUFFER_SIZE), msb(HalDisplay::BUFFER_SIZE);
+
+  renderer.setRenderMode(GfxRenderer::BW);
+  renderer.clearScreen();
+  renderer.drawText(SD_FONT_ID, 20, 60, text, true);
+  memcpy(bw.data(), display.getFrameBuffer(), bw.size());
+
+  renderer.clearScreen(0x00);
+  renderer.setRenderMode(GfxRenderer::GRAYSCALE_LSB);
+  renderer.drawText(SD_FONT_ID, 20, 60, text, true);
+  memcpy(lsb.data(), display.getFrameBuffer(), lsb.size());
+
+  renderer.clearScreen(0x00);
+  renderer.setRenderMode(GfxRenderer::GRAYSCALE_MSB);
+  renderer.drawText(SD_FONT_ID, 20, 60, text, true);
+  memcpy(msb.data(), display.getFrameBuffer(), msb.size());
+
+  renderer.setRenderMode(GfxRenderer::BW);
+
+  size_t lsbInk = 0, msbInk = 0;
+  for (uint32_t i = 0; i < HalDisplay::BUFFER_SIZE; i++) {
+    EXPECT_EQ(lsb[i] & ~msb[i], 0) << "dark-gray flag outside the any-gray plane at byte " << i;
+    lsbInk += __builtin_popcount(lsb[i]);
+    msbInk += __builtin_popcount(msb[i]);
+  }
+  EXPECT_GT(msbInk, 0u) << "2-bit glyphs produced no AA pixels";
+  EXPECT_GE(msbInk, lsbInk);
+
+  // 4-level preview: black/white from the BW render, grays from the flags.
+  const std::string path = std::string(DUMP_DIR) + "/gray_aa_preview.pgm";
+  FILE* f = fopen(path.c_str(), "wb");
+  ASSERT_NE(f, nullptr);
+  fprintf(f, "P5\n%d %d\n255\n", HalDisplay::DISPLAY_WIDTH, HalDisplay::DISPLAY_HEIGHT);
+  for (int y = 0; y < HalDisplay::DISPLAY_HEIGHT; y++) {
+    for (int x = 0; x < HalDisplay::DISPLAY_WIDTH; x++) {
+      const uint32_t idx = y * HalDisplay::DISPLAY_WIDTH_BYTES + x / 8;
+      const uint8_t bit = 0x80 >> (x % 8);
+      uint8_t shade = (bw[idx] & bit) ? 0xFF : 0x00;
+      if (msb[idx] & bit) shade = (lsb[idx] & bit) ? 0x55 : 0xAA;  // dark / light gray
+      fputc(shade, f);
+    }
+  }
+  fclose(f);
+}
+
 // uiFontFor: UI font for ASCII and translation-subset CJK; SD fallback for
 // arbitrary hanzi the UI subset lacks.
 TEST(Render, UiFontForFallsBackForUncoveredCjk) {

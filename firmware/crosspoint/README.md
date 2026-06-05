@@ -14,7 +14,7 @@ came out larger than 1-bit raw; I18n --strip-unused already applied, −82KB.)
 ## Verify (blind-development loop)
 
 ```sh
-firmware/crosspoint/run_checks.sh        # target build + 146 host tests
+firmware/crosspoint/run_checks.sh        # target build + 147 host tests
 ```
 
 Host tests (gtest, `test/`): port shims with known-answer vectors (MD5/base64/
@@ -126,6 +126,10 @@ Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/
   every 10th update; GC for FULL/HALF. Data write = direct-register bit-bang
   (DOSR/DOCR). HIL checkpoint: DU quality/ghosting on this panel; LCDC/hw-SPI
   data path is the remaining speed upgrade.
+- **4-gray AA** (blind, HIL judges): differential-overlay gray pass for
+  Text-Anti-Aliasing using vendor grey waveforms rearranged into overlay cell
+  slots (see HalDisplay.cpp); 2×52KB heap during the pass, alloc failure
+  degrades to plain BW; gray pass forces the next refresh to GC.
 - **Fonts**: 12/14/16 NotoSerif+NotoSans (all styles) + UI fonts in flash;
   the 18pt (XL) tier alone is ~550KB and overflows the 3.5MB region — omitted
   (WODLE_OMIT_18PT in src/main.cpp). XL size falls back; SD `.cpfont` can

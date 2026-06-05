@@ -63,6 +63,39 @@ static const uint8_t LUT_GC[245] = {
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 
+/* 4-gray waveform LUT, vendor reference (refs/epd/UC8279_4gray_reference.c).
+ * Vendor scheme is ABSOLUTE 4-level: cell (old,new) selects the target shade
+ * via bank — WW(1,1)=white, BB(0,0)=black, BW(0,1)=dark grey, WB(1,0)=light
+ * grey. We repurpose the panel-tuned grey drives for a DIFFERENTIAL OVERLAY
+ * (upstream X3 architecture): see s_lutGreyOverlay construction below. */
+static const uint8_t LUT_GREY_VENDOR[245] = {
+    /* VCOM */
+    0x01,0x08,0x02,0x08,0x03,0x01,0x01, 0x01,0x09,0x03,0x04,0x03,0x01,0x01,
+    0x01,0x0A,0x02,0x01,0x01,0x01,0x01, 0x01,0x02,0x02,0x00,0x00,0x01,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    /* WW -> white */
+    0x01,0x08,0x02,0x08,0x03,0x01,0x01, 0x01,0x49,0x43,0x44,0x03,0x01,0x01,
+    0x01,0x8A,0x82,0x81,0x81,0x01,0x01, 0x01,0x82,0x02,0x00,0x00,0x01,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    /* BW -> dark grey */
+    0x01,0x88,0x82,0x08,0x03,0x01,0x01, 0x01,0x49,0x43,0x04,0x03,0x01,0x01,
+    0x01,0x0A,0x82,0x01,0x01,0x01,0x01, 0x01,0x02,0x02,0x00,0x00,0x01,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    /* WB -> light grey */
+    0x01,0x88,0x02,0x08,0x03,0x01,0x01, 0x01,0x49,0x43,0x04,0x03,0x01,0x01,
+    0x01,0x0A,0x82,0x81,0x81,0x01,0x01, 0x01,0x02,0x02,0x00,0x00,0x01,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    /* BB -> black */
+    0x01,0x88,0x82,0x88,0x03,0x01,0x01, 0x01,0x49,0x43,0x44,0x03,0x01,0x01,
+    0x01,0x0A,0x02,0x01,0x01,0x01,0x01, 0x01,0x02,0x42,0x00,0x00,0x01,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+
 /* Direct DOSR/DOCR stores: the 52KB frame write runs ~52K x 8 clock edges;
  * rt_pin_write's device-framework overhead makes that seconds. All EPD pins
  * live in GPIO1 bank 0 (pads 0..6), so single-store set/clear is safe. */
@@ -185,16 +218,64 @@ static void epdPanelInit()
     rt_thread_mdelay(50);
 }
 
-enum class Lut : uint8_t { None, GC, DU };
+enum class Lut : uint8_t { None, GC, DU, GREY };
 static Lut s_lutLoaded = Lut::None;
 static int s_fastSinceGc = 0;
 #define FAST_REFRESHES_PER_GC 10 /* vendor guidance */
 
+/* Differential-overlay grey LUT, constructed from LUT_GREY_VENDOR:
+ * GfxRenderer's AA pass writes flag planes (MSB plane -> 0x10 "old", LSB
+ * plane -> 0x13 "new"), so cells mean: (1,1)=dark grey -> WW slot gets the
+ * vendor drive-to-dark-grey rows; (1,0)=light grey -> WB slot keeps the
+ * vendor drive-to-light-grey rows; (0,0)=untouched pixel -> BB slot must be
+ * a NO-OP, as must the never-generated (0,1) BW slot. No-op rows reuse the
+ * VCOM bank's phase timings with the level byte zeroed (pixel held at GND
+ * through the same frame envelope). HIL tuning knob: if untouched pixels
+ * shift, try all-zero no-op banks instead. */
+static uint8_t s_lutGreyOverlay[245];
+static void buildGreyOverlayLut()
+{
+    static bool built = false;
+    if (built) return;
+    memset(s_lutGreyOverlay, 0, sizeof(s_lutGreyOverlay));
+    /* VCOM verbatim */
+    memcpy(&s_lutGreyOverlay[0], &LUT_GREY_VENDOR[0], 49);
+    /* WW slot (cell 1,1 = dark grey) <- vendor BW bank (drive to dark grey) */
+    memcpy(&s_lutGreyOverlay[49], &LUT_GREY_VENDOR[98], 49);
+    /* BW slot (cell 0,1, never generated) + BB slot (cell 0,0, untouched):
+     * VCOM timings with level byte zeroed per 7-byte row. */
+    for (int bank = 2; bank <= 4; bank += 2)
+    {
+        for (int row = 0; row < 7; row++)
+        {
+            const uint8_t *src = &LUT_GREY_VENDOR[row * 7];
+            uint8_t *dst = &s_lutGreyOverlay[bank * 49 + row * 7];
+            memcpy(dst, src, 7);
+            dst[0] = 0x00; /* levels = GND for every phase */
+        }
+    }
+    /* WB slot (cell 1,0 = light grey) <- vendor WB bank, in place */
+    memcpy(&s_lutGreyOverlay[147], &LUT_GREY_VENDOR[147], 49);
+    built = true;
+}
+
 static void epdLoadLut(Lut which)
 {
     if (s_lutLoaded == which) return;
-    const uint8_t *lut = (which == Lut::DU) ? LUT_DU : LUT_GC;
-    epdCmd(0x50); epdData(which == Lut::DU ? 0xD7 : 0x97); /* VCOM/data interval */
+    const uint8_t *lut = LUT_GC;
+    uint8_t cdi = 0x97;
+    if (which == Lut::DU)
+    {
+        lut = LUT_DU;
+        cdi = 0xD7;
+    }
+    else if (which == Lut::GREY)
+    {
+        buildGreyOverlayLut();
+        lut = s_lutGreyOverlay;
+        cdi = 0x97;
+    }
+    epdCmd(0x50); epdData(cdi); /* VCOM/data interval */
     static const uint8_t bankCmd[5] = {0x20, 0x21, 0x22, 0x23, 0x24};
     for (int bank = 0; bank < 5; bank++)
     {
@@ -282,11 +363,95 @@ void HalDisplay::deepSleep()
     s_lutLoaded = Lut::None;
 }
 
-/* Grayscale: not supported yet on the wodle backend. */
-void HalDisplay::copyGrayscaleBuffers(const uint8_t *, const uint8_t *) {}
-void HalDisplay::copyGrayscaleLsbBuffers(const uint8_t *) {}
-void HalDisplay::copyGrayscaleMsbBuffers(const uint8_t *) {}
-void HalDisplay::cleanupGrayscaleBuffers(const uint8_t *) {}
-void HalDisplay::displayGrayBuffer(bool turnOffScreen) { displayBuffer(FULL_REFRESH, turnOffScreen); }
+/* ------------------------------------------------------------- 4-gray pass
+ * Differential overlay, upstream-X3 style: the BW page is already displayed;
+ * GfxRenderer re-renders the page twice into flag planes (MSB = any-gray,
+ * LSB = dark-gray-only, bit 1 = flagged) which we stage in heap buffers.
+ * displayGrayBuffer() writes MSB->0x10 / LSB->0x13, runs the overlay grey
+ * LUT, and only flagged cells get driven: (1,1)->dark grey, (1,0)->light
+ * grey, (0,0)->no-op. Afterwards both controller RAMs hold flag planes, so
+ * the reader calls cleanupGrayscaleBuffers(bw) to restore the differential
+ * base (it does this after restoring its BW framebuffer). Heap cost: 2x52KB
+ * only while a gray pass is in flight; allocation failure degrades to a
+ * plain BW page (AA pass skipped). ZERO HIL yet — waveform quality is HIL
+ * checklist material. */
+static uint8_t *s_grayMsb = nullptr;
+static uint8_t *s_grayLsb = nullptr;
+
+static void freeGrayPlanes()
+{
+    free(s_grayMsb);
+    free(s_grayLsb);
+    s_grayMsb = nullptr;
+    s_grayLsb = nullptr;
+}
+
+static bool stageGrayPlane(uint8_t *&slot, const uint8_t *plane)
+{
+    if (!plane) return false;
+    if (!slot) slot = static_cast<uint8_t *>(malloc(HalDisplay::BUFFER_SIZE));
+    if (!slot)
+    {
+        rt_kprintf("[HalDisplay] gray plane alloc failed, skipping AA pass\n");
+        return false;
+    }
+    memcpy(slot, plane, HalDisplay::BUFFER_SIZE);
+    return true;
+}
+
+void HalDisplay::copyGrayscaleLsbBuffers(const uint8_t *lsbBuffer)
+{
+    if (!stageGrayPlane(s_grayLsb, lsbBuffer)) freeGrayPlanes();
+}
+
+void HalDisplay::copyGrayscaleMsbBuffers(const uint8_t *msbBuffer)
+{
+    if (!stageGrayPlane(s_grayMsb, msbBuffer)) freeGrayPlanes();
+}
+
+void HalDisplay::copyGrayscaleBuffers(const uint8_t *lsbBuffer, const uint8_t *msbBuffer)
+{
+    copyGrayscaleLsbBuffers(lsbBuffer);
+    copyGrayscaleMsbBuffers(msbBuffer);
+}
+
+void HalDisplay::displayGrayBuffer(bool)
+{
+    if (!s_grayMsb || !s_grayLsb)
+    {
+        /* Planes never staged (alloc failure) — page is already correct BW. */
+        freeGrayPlanes();
+        return;
+    }
+
+    epdLoadLut(Lut::GREY);
+    epdCmd(0x10); /* "old" RAM <- MSB (any-gray) flags */
+    for (uint32_t i = 0; i < BUFFER_SIZE; i++) epdData(s_grayMsb[i]);
+    epdCmd(0x13); /* "new" RAM <- LSB (dark-gray) flags */
+    for (uint32_t i = 0; i < BUFFER_SIZE; i++) epdData(s_grayLsb[i]);
+    epdCmd(0x12);
+    epdWaitBusy(8000);
+
+    freeGrayPlanes();
+
+    /* The reader's full-buffer AA path never calls cleanupGrayscaleBuffers —
+     * both controller RAMs now hold flag planes, useless as a DU diff base.
+     * Force the next refresh onto the GC branch: GC settles every cell to the
+     * NEW frame regardless of stale old data, then re-syncs 0x10. */
+    s_fastSinceGc = FAST_REFRESHES_PER_GC;
+}
+
+/* Re-sync both controller RAMs from the restored BW frame so the next DU/GC
+ * refresh diffs against real content (the gray pass left flag planes there). */
+void HalDisplay::cleanupGrayscaleBuffers(const uint8_t *bwBuffer)
+{
+    freeGrayPlanes();
+    if (!bwBuffer) return;
+    epdCmd(0x13);
+    for (uint32_t i = 0; i < BUFFER_SIZE; i++) epdData(bwBuffer[i]);
+    epdCmd(0x10);
+    for (uint32_t i = 0; i < BUFFER_SIZE; i++) epdData(bwBuffer[i]);
+}
+
 void HalDisplay::writeGrayscalePlaneStrip(bool, const uint8_t *, uint16_t, uint16_t) {}
 bool HalDisplay::supportsStripGrayscale() const { return false; }

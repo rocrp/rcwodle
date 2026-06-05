@@ -48,6 +48,10 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 10. [ ] **Hibernate**: PWR-hold → sleep → PA34 press wakes (edge mode). If no wake:
         USB recovery still works; revisit `HalGPIO::startDeepSleep` wake polarity.
 11. [ ] **Screenshot combo** PWR+KEY2 → BMP appears on SD.
+11b. [ ] **4-gray AA**: Settings → Text Anti-Aliasing ON → page turn runs the
+         gray pass (console "ERS Page render ... gray_*") → judge AA text edge
+         quality + that untouched pixels don't shift; ghosting after the pass
+         (next refresh is forced GC). Knob: no-op LUT banks in HalDisplay.cpp.
 12. [ ] (optional) UART console signal-integrity: solid short GND wire to WCH-Link,
         single reader (`pgrep minicom` first!), 1M baud should now read clean.
 
@@ -94,7 +98,14 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       next to UI rows (reader size drives glyph size).
 
 - [ ] X4-style partial window refresh (`displayWindow`) for status-bar updates
-- [ ] 4-gray grayscale (refs/epd UC8279_4gray_reference.c) for images/AA text
+- [x] 4-gray grayscale — IMPLEMENTED BLIND 2026-06-06 (HIL judges waveform):
+      X3-style differential overlay in HalDisplay (MSB flags→0x10, LSB→0x13,
+      overlay grey LUT built from vendor banks: WW←drive-to-dark-grey, WB=
+      light-grey, BB/BW=timing-aligned GND no-ops); reader's full-buffer AA
+      path (Settings → Text Anti-Aliasing) is now live; gray pass forces next
+      refresh to GC (fallback path never calls cleanup). Host: plane invariant
+      + 4-level preview test. HIL knobs: no-op banks → all-zero variant if
+      untouched pixels shift; AA quality vs 2×52KB heap cost.
 - [ ] LCDC / hardware-SPI EPD data path (bit-bang is the remaining refresh cost)
 - [ ] 18pt/XL font tier via SD `.cpfont` (cut from flash: 550KB over budget)
 - [ ] USB detect (VBUS via PMIC/PA41 PWR_INT?) → charging UI + wake reason
