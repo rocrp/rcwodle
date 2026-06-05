@@ -47,6 +47,8 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
        moves. Fail mode: fixed 100% (I2C2 PA31/32 mux or addr issue).
 10. [ ] **Hibernate**: PWR-hold → sleep → PA34 press wakes (edge mode). If no wake:
         USB recovery still works; revisit `HalGPIO::startDeepSleep` wake polarity.
+        Also: short TAP wake should drop back to hibernate (anti-pocket-wake,
+        unless Settings short-press=sleep); HOLD should boot fully.
 11. [ ] **Screenshot combo** PWR+KEY2 → BMP appears on SD.
 11b. [ ] **4-gray AA**: Settings → Text Anti-Aliasing ON → page turn runs the
          gray pass (console "ERS Page render ... gray_*") → judge AA text edge
@@ -98,6 +100,9 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       next to UI rows (reader size drives glyph size).
 
 - [ ] X4-style partial window refresh (`displayWindow`) for status-bar updates
+      — NOTE: no consumer in vendor snapshot b12839d1 (GfxRenderer::displayWindow
+      is commented out upstream); needs feature design + HIL timing data first,
+      not just the UC8179 0x90/0x91/0x92 primitive.
 - [x] 4-gray grayscale — IMPLEMENTED BLIND 2026-06-06 (HIL judges waveform):
       X3-style differential overlay in HalDisplay (MSB flags→0x10, LSB→0x13,
       overlay grey LUT built from vendor banks: WW←drive-to-dark-grey, WB=
@@ -109,9 +114,17 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 - [ ] LCDC / hardware-SPI EPD data path (bit-bang is the remaining refresh cost)
 - [ ] 18pt/XL font tier via SD `.cpfont` (cut from flash: 550KB over budget)
 - [ ] USB detect (VBUS via PMIC/PA41 PWR_INT?) → charging UI + wake reason
-- [ ] SF32 on-chip RTC → HalClock (status-bar clock, no NTP without network)
-- [ ] Real wakeup-reason (PMU boot cause register) → PowerButton/AfterFlash routing
-      + `verifyPowerButtonWakeup` semantics
+- [ ] SF32 on-chip RTC → HalClock (status-bar clock; 32.768kHz crystal on PA22
+      per schematic). Gated on TWO HIL facts: does the RTC domain survive our
+      hibernate (PMU LDOs off)? + needs a manual time-set UI (upstream only
+      has UTC-offset + NTP — no editor). Don't build the UI before the RTC
+      retention answer.
+- [x] Real wakeup-reason — IMPLEMENTED BLIND 2026-06-06: getWakeupReason reads
+      PMU WSR (PIN0 = PA34 hibernate wake → PowerButton; latched once + WCR
+      cleared); verifyPowerButtonWakeup ports the upstream anti-pocket-wake
+      hold check (released early / too short → straight back to hibernate).
+      HIL: wake with a short tap (default settings) should re-sleep; hold
+      should boot. AfterFlash/AfterUSBPower still need USB detect.
 - [x] esp_mac shim → real SF32 chip UID — WON'T DO: the bootloader-byte-derived
       key is equally stable per device; swapping to a UID would invalidate
       existing obfuscated settings once for zero functional gain.
@@ -119,8 +132,9 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       ENUM 0-100% via WodleFrontlight::setPersisted; STR_FRONTLIGHT added to
       en/zh yamls — gen_i18n parser rejects yaml comments, keep them out)
 - [ ] hello_wodle parity: DU LUT + direct-register IO (low value — it's a probe fw)
-- [ ] Frontlight circuit doc: confirm boost part on schematic sheet 2 (VBAT-fed,
-      proven empirically)
+- [x] Frontlight circuit doc — CLOSED 2026-06-06: sheet 2 (power tree) was
+      never in the vendor package; "VBAT-fed boost, battery required" (proven
+      empirically, noted in README/HalDisplay) is all that's documentable.
 
 ## Open issues / notes
 

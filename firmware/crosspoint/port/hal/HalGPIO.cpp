@@ -188,7 +188,60 @@ void HalGPIO::startDeepSleep()
         ;
 }
 
-void HalGPIO::verifyPowerButtonWakeup(uint16_t, bool)
+HalGPIO::WakeupReason HalGPIO::getWakeupReason() const
 {
-    /* wake verification is a deep-sleep concern; no-op until hibernate lands */
+    /* WSR latches the hibernate wake source until cleared; PIN0 is the PA34
+     * slot armed in startDeepSleep(). Latch once and clear so a later soft
+     * reboot doesn't read a stale wake source. Zero on cold boot / flash. */
+    static const uint32_t wsr = []() {
+        const uint32_t v = hwp_pmuc->WSR;
+        HAL_PMU_CLEAR_WSR(v);
+        return v;
+    }();
+    if (wsr & PMUC_WSR_PIN0)
+    {
+        return WakeupReason::PowerButton;
+    }
+    return WakeupReason::Other;
+}
+
+/* Anti pocket-wake, mirroring upstream: after a power-button wake the button
+ * must still be held for the configured duration or we go straight back to
+ * hibernate. shortPressAllowed (Settings: short press = sleep) skips it. */
+void HalGPIO::verifyPowerButtonWakeup(uint16_t requiredDurationMs, bool shortPressAllowed)
+{
+    if (shortPressAllowed)
+    {
+        return;
+    }
+
+    /* Boot time already elapsed counts toward the hold (button held since wake). */
+    const unsigned long calibration = millis();
+    const unsigned long calibratedDuration =
+        (calibration < requiredDurationMs) ? (requiredDurationMs - calibration) : 1;
+
+    /* Give debounce up to 1s to confirm the press is still down. */
+    const unsigned long start = millis();
+    update();
+    while (!s_pwr.stable && millis() - start < 1000)
+    {
+        rt_thread_mdelay(10);
+        update();
+    }
+    if (!s_pwr.stable)
+    {
+        rt_kprintf("[HalGPIO] wake press released early, back to hibernate\n");
+        startDeepSleep();
+        return; /* unreachable */
+    }
+    while (s_pwr.stable && getPowerButtonHeldTime() < calibratedDuration)
+    {
+        rt_thread_mdelay(10);
+        update();
+    }
+    if (getPowerButtonHeldTime() < calibratedDuration)
+    {
+        rt_kprintf("[HalGPIO] wake press too short, back to hibernate\n");
+        startDeepSleep();
+    }
 }

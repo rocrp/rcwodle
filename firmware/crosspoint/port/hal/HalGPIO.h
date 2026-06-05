@@ -52,7 +52,10 @@ public:
         AfterUSBPower,
         Other
     };
-    WakeupReason getWakeupReason() const { return WakeupReason::Other; }
+    /* PMU wakeup-status register: PIN0 (PA34, the pin startDeepSleep arms)
+     * set -> woke from hibernate via the power button; cold boot/reset ->
+     * Other. (AfterFlash/AfterUSBPower need USB detect — TODO(HIL).) */
+    WakeupReason getWakeupReason() const;
 
     static constexpr uint8_t BTN_BACK = 0;
     static constexpr uint8_t BTN_CONFIRM = 1;
