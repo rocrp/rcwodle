@@ -39,6 +39,7 @@
 #include "WodleAht20.h"       // WODLE-PORT
 #include "WodleFrontlight.h"  // WODLE-PORT
 #include "WodlePsram.h"       // WODLE-PORT
+#include "WodleUsbMsc.h"      // WODLE-PORT
 #include "util/ButtonNavigator.h"
 #include "util/ScreenshotUtil.h"
 
@@ -129,6 +130,7 @@ RTC_NOINIT_ATTR uint32_t silentRebootTarget;
 constexpr uint32_t SILENT_REBOOT_MAGIC = 0xC1EAB007;
 constexpr uint32_t SILENT_REBOOT_TARGET_HOME = 0;
 constexpr uint32_t SILENT_REBOOT_TARGET_READER = 1;
+constexpr uint32_t SILENT_REBOOT_TARGET_USB_MSC = 2;  // WODLE-PORT: USB file transfer
 
 // How the device is coming back to life, resolved once at boot. Both resume
 // flows suppress the splash and leave the panel holding its pre-boot frame; a
@@ -166,6 +168,19 @@ void silentRestartToReader() {
   silentRebootTarget = SILENT_REBOOT_TARGET_READER;
   silentRebootMagic = SILENT_REBOOT_MAGIC;
   LOG_DBG("MAIN", "Silent restart (target=reader)");
+  GUI.drawPopup(renderer, tr(STR_LOADING_POPUP));
+  delay(50);
+  ESP.restart();
+}
+
+// WODLE-PORT: restart into USB mass-storage mode (home menu -> File Transfer).
+// The MSC boot path never mounts the SD card, so the host gets exclusive FAT
+// ownership — see runUsbTransferMode() below.
+void wodleEnterUsbTransfer() {
+  if (deepSleepInProgress) return;
+  silentRebootTarget = SILENT_REBOOT_TARGET_USB_MSC;
+  silentRebootMagic = SILENT_REBOOT_MAGIC;
+  LOG_DBG("MAIN", "Silent restart (target=usb-msc)");
   GUI.drawPopup(renderer, tr(STR_LOADING_POPUP));
   delay(50);
   ESP.restart();
@@ -313,6 +328,43 @@ void setupDisplayAndFonts(bool seamless = false) {
   LOG_DBG("MAIN", "Fonts setup");
 }
 
+// WODLE-PORT: USB mass-storage mode — owns the whole boot on this path. The
+// SD card is never mounted locally (the host gets exclusive FAT ownership);
+// leaving is always a silent restart back into the normal mount-everything
+// boot. Exit triggers: cable unplugged (AW32001 PG_STAT) or power button.
+static void runUsbTransferMode() {
+  LOG_INF("MAIN", "USB transfer mode");
+  setupDisplayAndFonts(true);  // keep the pre-reboot frame; builtin fonts only (no SD)
+
+  const int h = renderer.getScreenHeight();
+  renderer.clearScreen();
+  renderer.drawCenteredText(UI_12_FONT_ID, h / 2 - 70, "USB File Transfer", true, EpdFontFamily::BOLD);
+
+  if (!WodleUsbMsc::start()) {
+    renderer.drawCenteredText(UI_10_FONT_ID, h / 2 - 10, "SD card not ready - check the card and retry.", true);
+    renderer.displayBuffer();
+    delay(3000);
+  } else {
+    renderer.drawCenteredText(UI_10_FONT_ID, h / 2 - 10, "The SD card is attached to the computer.", true);
+    renderer.drawCenteredText(UI_10_FONT_ID, h / 2 + 20, "When done: eject it there, then unplug the", true);
+    renderer.drawCenteredText(UI_10_FONT_ID, h / 2 + 50, "cable or press the power button to leave.", true);
+    renderer.displayBuffer();
+
+    while (true) {
+      mappedInputManager.update();
+      if (mappedInputManager.wasPressed(MappedInputManager::Button::Power)) break;
+      // Unplug exit only when the charger chip answers — otherwise a failed
+      // probe would read as "unplugged" and bounce straight back out.
+      if (WodleBattery::chargerAvailable() && !WodleBattery::usbPowered()) break;
+      delay(100);
+    }
+  }
+
+  silentRebootTarget = SILENT_REBOOT_TARGET_HOME;
+  silentRebootMagic = SILENT_REBOOT_MAGIC;
+  ESP.restart();
+}
+
 void setup() {
   t1 = millis();
 
@@ -334,7 +386,7 @@ void setup() {
   // Bound the target range too — RTC_NOINIT memory is uninitialized on cold boot.
   const bool isSilentReboot = (silentRebootMagic == SILENT_REBOOT_MAGIC);
   const uint32_t snapshotTarget =
-      (isSilentReboot && silentRebootTarget <= SILENT_REBOOT_TARGET_READER) ? silentRebootTarget : 0;
+      (isSilentReboot && silentRebootTarget <= SILENT_REBOOT_TARGET_USB_MSC) ? silentRebootTarget : 0;
   silentRebootMagic = 0;
   silentRebootTarget = 0;
 
@@ -347,6 +399,13 @@ void setup() {
   WodleAht20::init();  // WODLE-PORT: temp/humidity sensor, same I2C2 bus as the gauge
   halTiltSensor.begin();
   halClock.begin();
+
+  // WODLE-PORT: USB transfer mode handles the whole boot itself, BEFORE any
+  // SD mount, so the USB host gets exclusive ownership of the FAT.
+  if (isSilentReboot && snapshotTarget == SILENT_REBOOT_TARGET_USB_MSC) {
+    runUsbTransferMode();  // never returns
+    return;
+  }
 
   LOG_INF("MAIN", "Hardware detect: %s", gpio.deviceIsX3() ? "X3" : "X4");
 

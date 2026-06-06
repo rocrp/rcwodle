@@ -68,9 +68,25 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
          (next refresh is forced GC). Knob: no-op LUT banks in HalDisplay.cpp.
 12. [ ] (optional) UART console signal-integrity: solid short GND wire to WCH-Link,
         single reader (`pgrep minicom` first!), 1M baud should now read clean.
+13. [ ] **USB file transfer (MSC)**: plug USB → Home → File Transfer → device
+        restarts into "USB File Transfer" screen → Mac mounts "wodle SD Card"
+        (VID 0x38F4 PID 0x1002) → copy a book → eject → unplug (or PWR press)
+        → device restarts to home → new book appears in browser. Fail modes:
+        no enumeration (MUSB glue/IRQ — console shows [WodleUsbMsc] lines);
+        "SD card not ready" (spi_msd reprobe). NOTE: HVR1 recovery is
+        unaffected (different boot path, PID 0x1001).
 
 ## Blind-able next (no device needed)
 
+- [x] **USB MSC file transfer** — DONE 2026-06-06 (HIL = 13): cherryusb device
+      stack (PKG_CHERRYUSB_DEVICE_MUSB_SIFLI + MSC, ~15KB flash) straight from
+      SDK example msc/sdcard_disk (SPI_MSD backend, sd0). Mount exclusivity by
+      construction: home menu File Transfer (was "requires WiFi" stub) →
+      wodleEnterUsbTransfer() silent-restart target → boot path runs
+      runUsbTransferMode() BEFORE any SD mount — host owns the FAT alone.
+      Exit = unplug (AW32001 PG_STAT, gated on chargerAvailable) or PWR press
+      → restart to home. usb_config.h in src/ (CPPPATH-exposed for the pkg
+      build); MSC sector IO on cherryusb's own thread (CONFIG_USBDEV_MSC_THREAD).
 - [x] **Hardware diagnostics screen** — DONE 2026-06-06: Settings → System →
       Diagnostics (WODLE-PORT DiagnosticsActivity): live gauge/charger/AHT20/
       frontlight/touch/SD/heap/wake-reason/last-input, 2s fast-refresh cadence,
@@ -112,8 +128,8 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
         first) + LCPU RAM carve-out + pairing UX + power while advertising;
         throughput ~5-20KB/s → 1MB book = minutes.
       - SD-card swap already covers transfer with zero effort. The superior
-        upgrade is **USB MSC** (expose SD over the existing USB-C: instant,
-        fast, no pairing) — check SDK usbd MSC + sdmmc backing post-HIL.
+        upgrade is **USB MSC** — since IMPLEMENTED blind 2026-06-06, see the
+        USB MSC entry above (HIL = 13).
       - docs/bluetooth.md (stock-era "no BLE control path") is about the stock
         fw; doesn't constrain custom fw.
 

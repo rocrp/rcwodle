@@ -6,3 +6,6 @@
 
 void silentRestart();          // home screen
 void silentRestartToReader();  // currently-open EPUB (APP_STATE.openEpubPath)
+// WODLE-PORT: restart into USB mass-storage mode (SD exposed to the host,
+// never mounted locally). Triggered from the home menu's File Transfer item.
+void wodleEnterUsbTransfer();

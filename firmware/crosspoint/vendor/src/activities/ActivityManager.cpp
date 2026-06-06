@@ -1,10 +1,12 @@
 #include "ActivityManager.h"
 
+#include <HalGPIO.h>          // WODLE-PORT: USB presence gate for File Transfer
 #include <HalPowerManager.h>
 
 #include <algorithm>
 
 #include "OpdsServerStore.h"
+#include "SilentRestart.h"  // WODLE-PORT: wodleEnterUsbTransfer
 #include "boot_sleep/BootActivity.h"
 #include "boot_sleep/SleepActivity.h"
 // WODLE-PORT: no WiFi — Opds/WebServer activities pruned
@@ -167,8 +169,14 @@ void ActivityManager::replaceActivity(std::unique_ptr<Activity>&& newActivity) {
 }
 
 void ActivityManager::goToFileTransfer() {
-  // WODLE-PORT: no WiFi — copy books to the SD card directly
-  goToFullScreenMessage("File transfer requires WiFi\n(not available on this device)", EpdFontFamily::Style::REGULAR);
+  // WODLE-PORT: USB mass storage instead of WiFi — restart into MSC mode
+  // (the SD card stays unmounted there, so the host owns the FAT alone).
+  if (!gpio.isUsbConnected()) {
+    goToFullScreenMessage("Connect the USB cable first,\nthen open File Transfer again.",
+                          EpdFontFamily::Style::REGULAR);
+    return;
+  }
+  wodleEnterUsbTransfer();
 }
 
 void ActivityManager::goToSettings() { replaceActivity(std::make_unique<SettingsActivity>(renderer, mappedInput)); }

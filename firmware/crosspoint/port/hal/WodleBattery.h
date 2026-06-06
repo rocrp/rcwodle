@@ -22,6 +22,8 @@ bool available();
 int percent();              /* 0..100, -1 if unavailable */
 int millivolts();           /* -1 if unavailable */
 
+/* True when the AW32001 answered its chip-ID probe at init. */
+bool chargerAvailable();
 /* AW32001 PG_STAT, cached and refreshed at most once a second (the main
  * loop polls usbStateChanged() every tick). False when the charger probe
  * failed. */

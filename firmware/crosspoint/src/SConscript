@@ -1,6 +1,9 @@
 from building import *
 
+cwd = GetCurrentDir()
+
 src = Glob('*.cpp') + Glob('*.c')
-group = DefineGroup('Applications', src, depend = [''])
+# CPPPATH exposes usb_config.h to the cherryusb package build (WODLE-PORT: USB MSC)
+group = DefineGroup('Applications', src, depend = [''], CPPPATH = [cwd])
 
 Return('group')

@@ -121,6 +121,8 @@ int millivolts()
     return mv;
 }
 
+bool chargerAvailable() { return s_chargerAvailable; }
+
 bool usbPowered()
 {
     pollUsb();
