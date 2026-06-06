@@ -17,8 +17,11 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 > Remote driver: with the UART console up, the **`wodle` MSH command** drives
 > the device hands-free: `wodle key down`, `wodle key power 2500` (real
 > hold-to-sleep), `wodle open /books/x.epub`, `wodle shot` (BMP→SD),
-> `wodle stat`, `wodle nosleep on|off`. Any command inhibits auto-sleep for
-> the session. First console session: run `wodle stat` as item 12's sanity.
+> `wodle dump` (framebuffer→console), `wodle stat`, `wodle nosleep on|off`.
+> Any command inhibits auto-sleep for the session. Host side:
+> `uv run tools/wodle_console.py dump screen.png` decodes + CRC-verifies the
+> live screen to a PNG — the complete blind loop is flash → drive → SEE.
+> First console session: run `wodle stat` as item 12's sanity.
 
 1. [ ] **hello_wodle VRES=600**: flash staged build → "2026" renders contiguous
        (mid-screen dead band gone). 1 flash, 30s.
@@ -95,6 +98,18 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## Blind-able next (no device needed)
 
+- [x] **Wave 5 (2026-06-06 night)** — all DONE, see git log:
+      - `wodle dump` + `tools/wodle_console.py`: CRC-verified base64
+        framebuffer over the console → PNG on the Mac. The remote loop is
+        complete: flash → drive (`wodle key/open`) → SEE (`dump`) hands-free.
+      - Codex adversarial review of wave 4 → 3 real blind bugs fixed
+        (IRQ-off prints/allocs in `wodle open`, GIF cache black-gap replay
+        on partial-height/upscaled frames, XML-recovery blank-chapter cache).
+      - Fallback TOC from spine for broken-nav EPUBs (BOOK_CACHE_VERSION 8,
+        fixture test_no_toc.epub).
+      - Cache corruption recovery: bounded readString + book.bin structural
+        validation + LUT bounds → corrupt cache re-indexes instead of
+        bad_alloc crash-looping (EpubCorruptCache suite).
 - [x] **Wave 4 (2026-06-06 eve, codex-prioritized)** — all DONE, see git log:
       - `wodle` MSH debug commands (remote HIL driver; codex top pick) —
         HalGPIO-edge injection, pure core host-tested (test/debugcmds/).

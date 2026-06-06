@@ -5,7 +5,7 @@ Port of [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-read
 UC8179C 528x792 EPD). Vendor snapshot + deltas: `vendor/VENDOR.md`. Plan:
 `docs/superpowers/plans/2026-06-05-crosspoint-port-plan.md` (repo root docs/).
 
-**Status: blind-port, compiles + links (3,481,940 B image, ~56KB headroom),
+**Status: blind-port, compiles + links (3,483,908 B image, ~54KB headroom),
 zero HIL.** Built entirely while the device was away — expect bring-up
 iterations. Reclaim options if flash gets tight again: move the GBK table to
 SD, or drop the 8pt/10pt-bold CJK UI subsets. (Tried and rejected:
@@ -15,7 +15,7 @@ already applied, −82KB.)
 ## Verify (blind-development loop)
 
 ```sh
-firmware/crosspoint/run_checks.sh        # target build + 196 host tests
+firmware/crosspoint/run_checks.sh        # target build + 204 host tests
 ```
 
 Host tests (gtest, `test/`): port shims with known-answer vectors (MD5/base64/
@@ -188,7 +188,9 @@ Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/
   `wodle key <up|down|left|right|confirm|back|power> [holdMs]` injects at
   HalGPIO edge level (power semantics hardware-faithful: short = CONFIRM,
   `power 2500` = real hold-to-sleep); `wodle open <path>`, `wodle shot`
-  (BMP to SD), `wodle stat` (parseable one-liner), `wodle nosleep on|off`.
+  (BMP to SD), `wodle dump` (CRC'd base64 framebuffer over the console —
+  `tools/wodle_console.py dump screen.png` renders it), `wodle stat`
+  (parseable one-liner), `wodle nosleep on|off`.
   Any command latches a debug-session auto-sleep inhibit. Drive the device
   over the WCH-Link UART console without touching it.
 - **EPUB robustness** (from the rocrp x4 fork): control chars in text are
