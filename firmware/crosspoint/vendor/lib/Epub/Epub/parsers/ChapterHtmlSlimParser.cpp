@@ -16,6 +16,7 @@
 #include "Epub/Page.h"
 #include "Epub/converters/ImageDecoderFactory.h"
 #include "Epub/converters/ImageToFramebufferDecoder.h"
+#include "TextSanitizer.h"  // WODLE-PORT (fork f407e5a)
 #include "Epub/htmlEntities.h"
 
 // Minimum file size (in bytes) to show indexing popup - smaller chapters don't benefit from it
@@ -29,8 +30,6 @@ constexpr const char* ITALIC_TAGS[] = {"i", "em"};
 constexpr const char* UNDERLINE_TAGS[] = {"u", "ins"};
 constexpr const char* IMAGE_TAGS[] = {"img"};
 constexpr const char* SKIP_TAGS[] = {"head"};
-
-bool isWhitespace(const char c) { return c == ' ' || c == '\r' || c == '\n' || c == '\t'; }
 
 bool matches(const char* tag_name, const char* const* possible_tags, size_t count) {
   for (size_t i = 0; i < count; i++) {
@@ -142,6 +141,32 @@ void ChapterHtmlSlimParser::flushPendingAnchor() {
   // Record deferred anchor after previous block is flushed (and any TOC page break)
   anchorData.push_back({std::move(pendingAnchorId), static_cast<uint16_t>(completedPageCount)});
   pendingAnchorId.clear();
+}
+
+// WODLE-PORT (fork f407e5a): whitespace / sanitized control byte — flush any
+// buffered word and break.
+void ChapterHtmlSlimParser::treatAsWordBoundary() {
+  if (partWordBufferIndex > 0) {
+    flushPartWordBuffer();
+  }
+  nextWordContinues = false;
+}
+
+// WODLE-PORT (fork f407e5a): U+00A0 / U+202F — emit a standalone space token
+// glued to its neighbours so the line breaker can't separate them. See the
+// NonBreakingSpace comment block in characterData for the full rationale.
+void ChapterHtmlSlimParser::emitNoBreakSpace() {
+  if (partWordBufferIndex > 0) {
+    flushPartWordBuffer();
+  }
+
+  partWordBuffer[0] = ' ';
+  partWordBuffer[1] = '\0';
+  partWordBufferIndex = 1;
+  nextWordContinues = true;  // Attach space to previous word (no break).
+  flushPartWordBuffer();
+
+  nextWordContinues = true;  // Next real word attaches to this space (no break).
 }
 
 // flush the contents of partWordBuffer to currentTextBlock
@@ -949,37 +974,49 @@ void XMLCALL ChapterHtmlSlimParser::characterData(void* userData, const XML_Char
     // "   turn to 256  " => "turn to 256"
 
     // Ignore leading whitespaces and left square brackets
-    while (start < len && (isWhitespace(s[start]) || (s[start] == '['))) {
+    // WODLE-PORT (fork f407e5a): control bytes are trimmed/skipped here too
+    const auto isTrimmable = [](const char c) {
+      const auto b = static_cast<unsigned char>(c);
+      return TextSanitizer::isAsciiWhitespaceByte(b) || TextSanitizer::isSanitizedAsciiControlByte(b);
+    };
+    while (start < len && (isTrimmable(s[start]) || (s[start] == '['))) {
       ++start;
     }
 
     // Ignore trailing whitespaces and right square brackets
-    while (end >= start && (isWhitespace(s[end]) || (s[end] == ']'))) {
+    while (end >= start && (isTrimmable(s[end]) || (s[end] == ']'))) {
       --end;
     }
 
     // Extract footnote link text
     for (int i = start; (self->currentFootnoteLinkTextLen < sizeof(self->currentFootnote.number) - 1) && (i <= end);
          ++i) {
+      // WODLE-PORT: drop interior control bytes (interior whitespace is kept —
+      // labels like "turn to 256" are legitimate)
+      if (TextSanitizer::isSanitizedAsciiControlByte(static_cast<unsigned char>(s[i]))) continue;
       self->currentFootnote.number[self->currentFootnoteLinkTextLen++] = s[i];
     }
     self->currentFootnote.number[self->currentFootnoteLinkTextLen] = '\0';
   }
 
+  // WODLE-PORT (fork f407e5a): byte handling centralized in TextSanitizer.
+  // Whitespace AND stray C0 control bytes / DEL are word boundaries (real
+  // books contain them; they used to corrupt words or render as tofu).
   for (int i = 0; i < len; i++) {
-    if (isWhitespace(s[i])) {
-      // Currently looking at whitespace, if there's anything in the partWordBuffer, flush it
-      if (self->partWordBufferIndex > 0) {
-        self->flushPartWordBuffer();
+    const unsigned char currentByte = static_cast<unsigned char>(s[i]);
+    const auto action = TextSanitizer::classifyTextBytes(s, len, i);
+
+    if (action.kind == TextSanitizer::ActionKind::WordBoundary) {
+      if (TextSanitizer::isSanitizedAsciiControlByte(currentByte) && !self->loggedSanitizedControlChar) {
+        LOG_DBG("EHP", "Sanitized control byte 0x%02X while parsing %s", currentByte, self->filepath.c_str());
+        self->loggedSanitizedControlChar = true;
       }
-      // Whitespace is a real word boundary — reset continuation state
-      self->nextWordContinues = false;
-      // Skip the whitespace char
+      self->treatAsWordBoundary();
+      i += action.bytesConsumed - 1;
       continue;
     }
 
-    // Detect U+00A0 (non-breaking space, UTF-8: 0xC2 0xA0) or
-    //        U+202F (narrow no-break space, UTF-8: 0xE2 0x80 0xAF).
+    // U+00A0 (no-break space) / U+202F (narrow no-break space).
     //
     // Both are rendered as a visible space but must never allow a line break around them.
     // We split the no-break space into its own word token and link the surrounding words
@@ -996,54 +1033,16 @@ void XMLCALL ChapterHtmlSlimParser::characterData(void* userData, const XML_Char
     //   between "200" and "Quadratkilometer". However, "Quadratkilometer" is now a
     //   standalone word for hyphenation purposes, so Liang patterns can produce
     //   "200 Quadrat-" / "kilometer" instead of the unusable "200" / "Quadratkilometer".
-    if (static_cast<uint8_t>(s[i]) == 0xC2 && i + 1 < len && static_cast<uint8_t>(s[i + 1]) == 0xA0) {
-      if (self->partWordBufferIndex > 0) {
-        self->flushPartWordBuffer();
-      }
-
-      self->partWordBuffer[0] = ' ';
-      self->partWordBuffer[1] = '\0';
-      self->partWordBufferIndex = 1;
-      self->nextWordContinues = true;  // Attach space to previous word (no break).
-      self->flushPartWordBuffer();
-
-      self->nextWordContinues = true;  // Next real word attaches to this space (no break).
-
-      i++;  // Skip the second byte (0xA0)
+    if (action.kind == TextSanitizer::ActionKind::NonBreakingSpace) {
+      self->emitNoBreakSpace();
+      i += action.bytesConsumed - 1;
       continue;
     }
 
-    // U+202F (narrow no-break space) — identical logic to U+00A0 above.
-    if (static_cast<uint8_t>(s[i]) == 0xE2 && i + 2 < len && static_cast<uint8_t>(s[i + 1]) == 0x80 &&
-        static_cast<uint8_t>(s[i + 2]) == 0xAF) {
-      if (self->partWordBufferIndex > 0) {
-        self->flushPartWordBuffer();
-      }
-
-      self->partWordBuffer[0] = ' ';
-      self->partWordBuffer[1] = '\0';
-      self->partWordBufferIndex = 1;
-      self->nextWordContinues = true;
-      self->flushPartWordBuffer();
-
-      self->nextWordContinues = true;
-
-      i += 2;  // Skip the remaining two bytes (0x80 0xAF)
+    // U+FEFF zero-width no-break space / BOM — dropped entirely.
+    if (action.kind == TextSanitizer::ActionKind::Skip) {
+      i += action.bytesConsumed - 1;
       continue;
-    }
-
-    // Skip Zero Width No-Break Space / BOM (U+FEFF) = 0xEF 0xBB 0xBF
-    const XML_Char FEFF_BYTE_1 = static_cast<XML_Char>(0xEF);
-    const XML_Char FEFF_BYTE_2 = static_cast<XML_Char>(0xBB);
-    const XML_Char FEFF_BYTE_3 = static_cast<XML_Char>(0xBF);
-
-    if (s[i] == FEFF_BYTE_1) {
-      // Check if the next two bytes complete the 3-byte sequence
-      if ((i + 2 < len) && (s[i + 1] == FEFF_BYTE_2) && (s[i + 2] == FEFF_BYTE_3)) {
-        // Sequence 0xEF 0xBB 0xBF found!
-        i += 2;    // Skip the next two bytes
-        continue;  // Move to the next iteration
-      }
     }
 
     // If we're about to run out of space, then cut the word off and start a new one.
@@ -1296,11 +1295,13 @@ bool ChapterHtmlSlimParser::parseAndBuildPages() {
     done = file.available() == 0;
 
     if (XML_ParseBuffer(parser, static_cast<int>(len), done) == XML_STATUS_ERROR) {
-      LOG_ERR("EHP", "Parse error at line %lu:\n%s", XML_GetCurrentLineNumber(parser),
-              XML_ErrorString(XML_GetErrorCode(parser)));
-      destroyXmlParser(parser);
-      file.close();
-      return false;
+      // WODLE-PORT (rocrp fork d946253): recover instead of discarding the
+      // chapter — break into the shared finalize below so the pages built
+      // before the error survive. Books with malformed XHTML render partially
+      // rather than failing entirely.
+      LOG_ERR("EHP", "Parse error at line %lu:\n%s (recovering with partial content)",
+              XML_GetCurrentLineNumber(parser), XML_ErrorString(XML_GetErrorCode(parser)));
+      break;
     }
   } while (!done);
   LOG_DBG("EHP", "Time to parse and build pages: %lu ms", millis() - chapterStartTime);

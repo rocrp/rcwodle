@@ -124,6 +124,13 @@ struct BlockStyle {
     // User setting overrides CSS, unless "Book's Style" alignment setting is selected
     if (paragraphAlignment == CssTextAlign::None) {
       blockStyle.alignment = blockStyle.textAlignDefined ? cssStyle.textAlign : CssTextAlign::Justify;
+    } else if (blockStyle.textAlignDefined &&
+               (cssStyle.textAlign == CssTextAlign::Center || cssStyle.textAlign == CssTextAlign::Right) &&
+               (paragraphAlignment == CssTextAlign::Justify || paragraphAlignment == CssTextAlign::Left)) {
+      // WODLE-PORT (rocrp fork abc827e): preserve explicit decorative alignment
+      // from the book, such as centered separators or right-aligned signatures,
+      // even when body paragraphs are globally forced to left/justify.
+      blockStyle.alignment = cssStyle.textAlign;
     } else {
       blockStyle.alignment = paragraphAlignment;
     }
