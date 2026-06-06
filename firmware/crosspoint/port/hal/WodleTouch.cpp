@@ -37,6 +37,7 @@ bool s_touching;
 unsigned long s_downAtMs;
 int s_downX, s_downY;
 int s_lastX, s_lastY;
+int s_holdBtn = -1; /* zone button of a declared stationary hold */
 
 bool readTouch(bool &touching, int &x, int &y)
 {
@@ -103,17 +104,18 @@ void init()
 
 bool available() { return s_available; }
 
-int pollTapButton()
+Frame poll()
 {
-    if (!s_available) return -1;
+    Frame frame;
+    if (!s_available) return frame;
 
     /* INT idles high, pulses/holds low while a finger is down. Skip the I2C
-     * read when idle and no tap is in flight. */
-    if (!s_touching && rt_pin_read(PIN_TP_INT) == PIN_HIGH) return -1;
+     * read when idle and no touch is in flight. */
+    if (!s_touching && rt_pin_read(PIN_TP_INT) == PIN_HIGH) return frame;
 
     bool touching;
     int x, y;
-    if (!readTouch(touching, x, y)) return -1;
+    if (!readTouch(touching, x, y)) return frame;
 
     unsigned long now = rt_tick_get_millisecond();
     if (touching)
@@ -124,14 +126,36 @@ int pollTapButton()
             s_downAtMs = now;
             s_downX = x;
             s_downY = y;
+            s_holdBtn = -1;
         }
         s_lastX = x;
         s_lastY = y;
-        return -1;
+
+        /* Stationary past the tap window -> the zone button goes held.
+         * Latched until lift: movement after declaration doesn't cancel. */
+        if (s_holdBtn < 0 && TapClassifier::isHold(now - s_downAtMs, s_lastX - s_downX, s_lastY - s_downY))
+        {
+            s_holdBtn = TapClassifier::zoneButton(s_downX, s_downY);
+        }
+        if (s_holdBtn >= 0)
+        {
+            frame.holdButton = s_holdBtn;
+            frame.holdStartMs = s_downAtMs;
+        }
+        return frame;
     }
 
-    if (!s_touching) return -1;
+    if (!s_touching) return frame;
     s_touching = false;
+
+    if (s_holdBtn >= 0)
+    {
+        /* A declared hold consumes the touch: release the held button and
+         * suppress tap/swipe classification. */
+        frame.holdReleased = true;
+        s_holdBtn = -1;
+        return frame;
+    }
 
     /* finger lifted: classify the full gesture */
     using TapClassifier::Gesture;
@@ -139,19 +163,22 @@ int pollTapButton()
     switch (g)
     {
     case Gesture::Tap:
-        return TapClassifier::zoneButton(s_downX, s_downY);
+        frame.tapButton = TapClassifier::zoneButton(s_downX, s_downY);
+        break;
     case Gesture::SwipeLeft:
     case Gesture::SwipeRight:
-        return TapClassifier::swipeButton(g); /* page turns */
+        frame.tapButton = TapClassifier::swipeButton(g); /* page turns */
+        break;
     case Gesture::SwipeUp:
         WodleFrontlight::stepUp();
-        return -1;
+        break;
     case Gesture::SwipeDown:
         WodleFrontlight::stepDown();
-        return -1;
+        break;
     default:
-        return -1;
+        break;
     }
+    return frame;
 }
 
 } // namespace WodleTouch

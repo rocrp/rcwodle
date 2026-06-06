@@ -3,7 +3,10 @@
  *
  * Gestures: tap (short, little movement) -> zone button; directional swipes
  * (dominant axis, enough travel) -> page turns (horizontal) and frontlight
- * (vertical). Anything else (long-press, diagonal wobble) -> None. */
+ * (vertical); stationary long-press (isHold) -> the zone's button reported
+ * as HELD while the finger stays down, feeding the reader's hold gestures
+ * (hold-center = bookmark, hold-top = go home, hold-page-zone = chapter
+ * skip). Anything else (diagonal wobble, slow drag) -> None. */
 #pragma once
 
 namespace TapClassifier
@@ -39,6 +42,16 @@ inline bool isTap(unsigned long heldMs, int dx, int dy)
     if (dx < 0) dx = -dx;
     if (dy < 0) dy = -dy;
     return heldMs <= TAP_MAX_MS && dx <= TAP_MAX_MOVE && dy <= TAP_MAX_MOVE;
+}
+
+/* Stationary long-press: finger down past the tap window without leaving
+ * the tap movement budget. Declared mid-touch (not on release); once a
+ * touch becomes a hold it stays one until the finger lifts. */
+inline bool isHold(unsigned long heldMs, int dx, int dy)
+{
+    if (dx < 0) dx = -dx;
+    if (dy < 0) dy = -dy;
+    return heldMs > TAP_MAX_MS && dx <= TAP_MAX_MOVE && dy <= TAP_MAX_MOVE;
 }
 
 inline Gesture classify(unsigned long heldMs, int dx, int dy)

@@ -216,6 +216,22 @@ TEST(TapClassifier, TapVsSwipeVsLongPress)
     EXPECT_FALSE(isTap(100, 0, -(TAP_MAX_MOVE + 1))); /* vertical swipe */
 }
 
+TEST(TapClassifier, StationaryHold)
+{
+    using namespace TapClassifier;
+    /* hold starts exactly one tick past the tap window */
+    EXPECT_FALSE(isHold(TAP_MAX_MS, 0, 0)); /* still a potential tap */
+    EXPECT_TRUE(isHold(TAP_MAX_MS + 1, 0, 0));
+    EXPECT_TRUE(isHold(2000, TAP_MAX_MOVE, -TAP_MAX_MOVE)); /* jitter within budget */
+    /* moved out of the tap budget -> drag/swipe in progress, not a hold */
+    EXPECT_FALSE(isHold(TAP_MAX_MS + 1, TAP_MAX_MOVE + 1, 0));
+    EXPECT_FALSE(isHold(2000, 0, -(TAP_MAX_MOVE + 1)));
+    /* a released stationary hold classifies as None either way — the
+     * release-time suppression in WodleTouch has classifier backup */
+    EXPECT_EQ(classify(TAP_MAX_MS + 50, 5, 5), Gesture::None);  /* < SWIPE_MAX_MS */
+    EXPECT_EQ(classify(SWIPE_MAX_MS + 50, 5, 5), Gesture::None); /* > SWIPE_MAX_MS */
+}
+
 TEST(TapClassifier, ZoneMap)
 {
     using namespace TapClassifier;

@@ -24,7 +24,9 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
        Polarity assumed active-low+pullup — if dead/inverted fix `HalGPIO.cpp readRaw`.
 5. [ ] **Touch**: boot log `[WodleTouch] CST836U OK`; tap zones (L/R third = page,
        center = confirm, top strip = back). If zones land wrong → `TOUCH_SWAP_XY/
-       MIRROR_*` flags in `WodleTouch.cpp`.
+       MIRROR_*` flags in `WodleTouch.cpp`. **Long-press** (stationary >400ms):
+       hold center in reader = bookmark, hold top strip ≥1s = go home, hold
+       L/R zone = chapter skip (needs Settings → long-press behavior enabled).
 6. [ ] **Swipes**: L/R = page turns; U/D = frontlight ±20%, survives reboot
        (`/.crosspoint/frontlight`). Also Settings → Display → Frontlight/阅读灯
        (0-100% in 20% steps, same persisted level).

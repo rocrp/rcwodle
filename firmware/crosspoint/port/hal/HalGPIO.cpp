@@ -40,6 +40,12 @@ bool s_wasPressed[NUM_BTNS];
 bool s_wasReleased[NUM_BTNS];
 unsigned long s_heldStartMs = 0;
 
+/* chord edge tracking — separate from s_isPressed[BTN_BACK] so a touch
+ * long-press holding BACK can't be mistaken for a chord release */
+bool s_chordActive = false;
+/* touch stationary-hold latch (see WodleTouch::Frame) */
+int s_touchHoldBtn = -1;
+
 bool readRaw(const RawKey &k)
 {
     /* active-low assumption (pull-up + switch to GND) — HIL checkpoint */
@@ -93,12 +99,12 @@ void HalGPIO::update()
 
     /* chord: both nav keys held -> BACK */
     bool chord = s_key2.stable && s_key3.stable;
-    bool wasChord = s_isPressed[BTN_BACK];
 
-    if (chord && !wasChord)
+    if (chord && !s_chordActive)
         s_wasPressed[BTN_BACK] = true;
-    if (!chord && wasChord)
+    if (!chord && s_chordActive)
         s_wasReleased[BTN_BACK] = true;
+    s_chordActive = chord;
     s_isPressed[BTN_BACK] = chord;
 
     auto mapKey = [&](RawKey &k, bool changed, uint8_t btn) {
@@ -123,18 +129,47 @@ void HalGPIO::update()
     if (pwrChanged && s_pwr.stable)
         s_wasPressed[BTN_POWER] = true;
 
-    /* touch taps synthesize one-frame button edges (zones -> UP/DOWN/
-     * CONFIRM/BACK); physical keys always win if pressed simultaneously */
-    int tapBtn = WodleTouch::pollTapButton();
-    if (tapBtn >= 0 && tapBtn < NUM_BTNS)
+    /* touch: taps synthesize one-frame button edges (zones -> UP/DOWN/
+     * CONFIRM/BACK); a stationary long-press reports the zone button as
+     * continuously held — that's what drives the reader's hold gestures
+     * (bookmark / go-home / chapter-skip). Runs after the key writes so a
+     * touch hold wins the s_isPressed slot. */
+    const WodleTouch::Frame tf = WodleTouch::poll();
+    if (tf.tapButton >= 0 && tf.tapButton < NUM_BTNS)
     {
-        s_wasPressed[tapBtn] = true;
-        s_wasReleased[tapBtn] = true; /* tap = press+release in one frame */
+        s_wasPressed[tf.tapButton] = true;
+        s_wasReleased[tf.tapButton] = true; /* tap = press+release in one frame */
+    }
+    if (tf.holdButton >= 0 && tf.holdButton < NUM_BTNS)
+    {
+        if (s_touchHoldBtn != tf.holdButton)
+        {
+            s_wasPressed[tf.holdButton] = true;
+            s_touchHoldBtn = tf.holdButton;
+        }
+        s_isPressed[tf.holdButton] = true;
+    }
+    if (tf.holdReleased && s_touchHoldBtn >= 0)
+    {
+        s_wasReleased[s_touchHoldBtn] = true;
+        /* CONFIRM has no physical writer of s_isPressed (it's a pwr-release
+         * edge), so clear explicitly; key-backed slots get re-asserted by
+         * the key writes next frame anyway. */
+        s_isPressed[s_touchHoldBtn] = false;
+        s_touchHoldBtn = -1;
     }
 
     bool anyHeld = s_key2.stable || s_key3.stable || s_pwr.stable;
     if (anyHeld && s_heldStartMs == 0) s_heldStartMs = now;
-    if (!anyHeld) s_heldStartMs = 0;
+    if (s_touchHoldBtn >= 0)
+    {
+        /* backdate to touch-down so getHeldTime() matches button semantics */
+        if (s_heldStartMs == 0 || s_heldStartMs > tf.holdStartMs) s_heldStartMs = tf.holdStartMs;
+    }
+    else if (!anyHeld)
+    {
+        s_heldStartMs = 0;
+    }
 }
 
 bool HalGPIO::isPressed(uint8_t b) const { return b < NUM_BTNS && s_isPressed[b]; }
