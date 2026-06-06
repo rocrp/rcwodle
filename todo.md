@@ -219,9 +219,15 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       replaces the dead NTP-sync slot); pure ClockFormat.h w/ host suite
       (offsets incl Nepal +5:45, wrap, 12h midnight/noon). Date anchored
       2026-01-01 (no date editor — only H:MM is ever shown).
-      **Reading statistics** remain future work: day-BOUNDARIES are real even
-      with the anchored date (streaks/daily-time viable), only calendar
-      labels would lie; revisit post-HIL if wanted.
+      **Reading statistics** — DONE 2026-06-06 (see entry below).
+- [x] **Reading statistics** — DONE 2026-06-06: Settings → System → Reading
+      Stats (today / last-7-days / lifetime time+pages + today's avg pace).
+      Pure ReadingStatsCore.h (30-day bucket ring, eviction, host suite);
+      ReadingStatsStore (stats.json, load at boot, save on sleep + 5-min
+      dirty throttle); fed by the time-left estimator's turn samples in the
+      status bar draw (active-reading seconds = accepted 2s-5min intervals;
+      pages count on any ±1 turn). Day keys from RTC+offset (day 0 catch-all
+      until the clock is set; boundaries real despite the anchored date).
 - [x] Real wakeup-reason — IMPLEMENTED BLIND 2026-06-06: getWakeupReason reads
       PMU WSR (PIN0 = PA34 hibernate wake → PowerButton; latched once + WCR
       cleared); verifyPowerButtonWakeup ports the upstream anti-pocket-wake

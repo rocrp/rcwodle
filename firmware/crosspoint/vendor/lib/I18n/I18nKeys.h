@@ -347,6 +347,12 @@ enum class StrId : uint16_t {
   STR_MIN_LEFT,
   STR_SLEEP_PROGRESS,
   STR_SET_TIME,
+  STR_READING_STATS,
+  STR_STATS_TODAY,
+  STR_STATS_LAST7,
+  STR_STATS_LIFETIME,
+  STR_STATS_PAGES,
+  STR_STATS_AVG,
   // Sentinel - must be last
   _COUNT
 };

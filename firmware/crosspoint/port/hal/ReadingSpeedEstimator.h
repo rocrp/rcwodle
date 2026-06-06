@@ -20,27 +20,44 @@ constexpr int MIN_SAMPLES = 3;
 class Estimator
 {
 public:
-    /* Call with the currently displayed page whenever the reader paints. */
-    void observe(int page, unsigned long nowMs)
+    /* What one observe() call concluded — consumed by the stats tracker.
+     * turned: a single-page reading turn happened (jumps don't count);
+     * intervalMs: the accepted reading interval, 0 when rejected as a
+     * pause/flip. */
+    struct Sample
     {
+        bool turned = false;
+        unsigned long intervalMs = 0;
+    };
+
+    /* Call with the currently displayed page whenever the reader paints. */
+    Sample observe(int page, unsigned long nowMs)
+    {
+        Sample sample;
         if (!hasLast_)
         {
             hasLast_ = true;
             lastPage_ = page;
             lastChangeMs_ = nowMs;
-            return;
+            return sample;
         }
-        if (page == lastPage_) return; /* repaint of the same page: keep the anchor */
+        if (page == lastPage_) return sample; /* repaint of the same page: keep the anchor */
 
         const int delta = page - lastPage_;
         if (delta == 1 || delta == -1)
         {
+            sample.turned = true;
             const unsigned long interval = nowMs - lastChangeMs_;
-            if (interval >= MIN_TURN_MS && interval <= MAX_TURN_MS) record(interval);
+            if (interval >= MIN_TURN_MS && interval <= MAX_TURN_MS)
+            {
+                record(interval);
+                sample.intervalMs = interval;
+            }
         }
         /* jumps (chapter nav / book switch / settings preview): no sample */
         lastPage_ = page;
         lastChangeMs_ = nowMs;
+        return sample;
     }
 
     bool ready() const { return count_ >= MIN_SAMPLES; }

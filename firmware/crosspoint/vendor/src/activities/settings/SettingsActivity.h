@@ -23,7 +23,8 @@ enum class SettingAction {
   SdFirmwareUpdate,
   Language,
   DownloadFonts,
-  Diagnostics,  // WODLE-PORT: hardware diagnostics screen
+  Diagnostics,   // WODLE-PORT: hardware diagnostics screen
+  ReadingStats,  // WODLE-PORT: reading statistics screen
 };
 
 struct SettingInfo {

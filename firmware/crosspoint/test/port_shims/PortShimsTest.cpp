@@ -203,6 +203,73 @@ TEST(WString, WriteAppendsForArduinoJson)
     EXPECT_EQ(std::string(s.c_str()), "hey");
 }
 
+/* -------------------------------------------------------- ReadingStatsCore */
+#include "../../port/hal/ReadingStatsCore.h"
+
+TEST(ReadingStatsCore, AccumulatesAndQueries)
+{
+    ReadingStats::Core c;
+    c.record(100, 1, 60);
+    c.record(100, 1, 90);
+    c.record(101, 2, 120);
+
+    uint32_t sec, pages;
+    c.dayTotals(100, sec, pages);
+    EXPECT_EQ(sec, 150u);
+    EXPECT_EQ(pages, 2u);
+    c.dayTotals(101, sec, pages);
+    EXPECT_EQ(sec, 120u);
+    EXPECT_EQ(pages, 2u);
+    c.dayTotals(999, sec, pages); /* absent day */
+    EXPECT_EQ(sec, 0u);
+    EXPECT_EQ(pages, 0u);
+
+    EXPECT_EQ(c.lifetimeSeconds(), 270u);
+    EXPECT_EQ(c.lifetimePages(), 4u);
+
+    /* last-7-days window includes today, excludes older */
+    c.record(94, 1, 30); /* exactly 7 days before 101 -> outside (101-7=94 excluded) */
+    c.record(95, 1, 40); /* inside */
+    uint32_t wSec, wPages;
+    c.lastDaysTotals(101, 7, wSec, wPages);
+    EXPECT_EQ(wSec, 150u + 120u + 40u);
+    EXPECT_EQ(wPages, 5u);
+}
+
+TEST(ReadingStatsCore, EvictsOldestWhenFull)
+{
+    ReadingStats::Core c;
+    for (int d = 1; d <= ReadingStats::MAX_DAYS + 5; d++) c.record(d, 1, 10);
+    EXPECT_EQ(c.bucketCount(), ReadingStats::MAX_DAYS);
+    uint32_t sec, pages;
+    c.dayTotals(1, sec, pages); /* oldest five evicted */
+    EXPECT_EQ(pages, 0u);
+    c.dayTotals(ReadingStats::MAX_DAYS + 5, sec, pages);
+    EXPECT_EQ(pages, 1u);
+    /* lifetime survives eviction */
+    EXPECT_EQ(c.lifetimePages(), (uint64_t)(ReadingStats::MAX_DAYS + 5));
+}
+
+TEST(ReadingStatsCore, RestoreRoundTrip)
+{
+    ReadingStats::Core a;
+    a.record(10, 3, 300);
+    a.record(11, 2, 200);
+
+    ReadingStats::Core b;
+    b.restore(a.lifetimeSeconds(), a.lifetimePages());
+    for (int i = 0; i < ReadingStats::MAX_DAYS; i++)
+    {
+        const ReadingStats::DayBucket &bk = a.buckets()[i];
+        if (bk.day >= 0) b.restoreBucket(bk.day, bk.seconds, bk.pages);
+    }
+    uint32_t sec, pages;
+    b.dayTotals(10, sec, pages);
+    EXPECT_EQ(sec, 300u);
+    EXPECT_EQ(pages, 3u);
+    EXPECT_EQ(b.lifetimeSeconds(), a.lifetimeSeconds());
+}
+
 /* ------------------------------------------------------------- ClockFormat */
 #include "../../port/hal/ClockFormat.h"
 

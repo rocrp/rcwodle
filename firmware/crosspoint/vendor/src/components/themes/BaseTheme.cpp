@@ -15,6 +15,7 @@
 #include <string>
 
 #include "I18n.h"
+#include "ReadingStatsStore.h"  // WODLE-PORT: page-turn stats feed
 #include "RecentBooksStore.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -804,7 +805,8 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
   // just re-anchor without recording, so no reset wiring is needed.
   static ReadingSpeed::Estimator s_readingSpeed;
   int timeLeftWidth = 0;
-  s_readingSpeed.observe(currentPage, millis());
+  const ReadingSpeed::Estimator::Sample turnSample = s_readingSpeed.observe(currentPage, millis());
+  if (turnSample.turned) READING_STATS.onPageTurn(turnSample.intervalMs);
   if (SETTINGS.statusBarTimeLeft) {
     const int minsLeft = s_readingSpeed.minutesLeft(pageCount - currentPage);
     if (minsLeft >= 0) {

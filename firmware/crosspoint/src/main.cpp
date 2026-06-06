@@ -27,6 +27,7 @@
 #include "CrossPointSettings.h"
 #include "CrossPointState.h"
 #include "KOReaderCredentialStore.h"
+#include "ReadingStatsStore.h"  // WODLE-PORT
 #include "MappedInputManager.h"
 #include "OpdsServerStore.h"
 #include "RecentBooksStore.h"
@@ -272,6 +273,7 @@ void enterDeepSleep(bool fromTimeout = false) {
   APP_STATE.showBootScreen = !isQuickResumeSleep;
 
   APP_STATE.saveToFile();
+  if (READING_STATS.isDirty()) READING_STATS.saveToFile();  // WODLE-PORT
 
   // Commit to sleeping before goToSleep() runs the outgoing activity's onExit():
   // a WiFi activity would otherwise silentRestart() here and reboot instead.
@@ -425,6 +427,7 @@ void setup() {
   SETTINGS.loadFromFile();
   APP_STATE.loadFromFile();
   RECENT_BOOKS.loadFromFile();
+  READING_STATS.loadFromFile();  // WODLE-PORT
   I18N.setLanguage(static_cast<Language>(SETTINGS.language));
   KOREADER_STORE.loadFromFile();
   OPDS_STORE.loadFromFile();
@@ -633,6 +636,14 @@ void loop() {
   // Placed after sleep guards so we never queue a render that won't be processed.
   if (gpio.wasUsbStateChanged()) {
     activityManager.requestUpdate();
+  }
+
+  // WODLE-PORT: persist reading stats at most every 5 minutes while dirty
+  // (sleep also saves, so a crash loses bounded data).
+  static unsigned long lastStatsSave = millis();
+  if (READING_STATS.isDirty() && millis() - lastStatsSave >= 300000) {
+    lastStatsSave = millis();
+    READING_STATS.saveToFile();
   }
 
   // WODLE-PORT: low-battery protection (upstream has none). Deep-discharging
