@@ -344,6 +344,8 @@ enum class StrId : uint16_t {
   STR_REFRESH,
   STR_BATTERY_LOW,
   STR_BATTERY_EMPTY,
+  STR_TIME_LEFT,
+  STR_MIN_LEFT,
   // Sentinel - must be last
   _COUNT
 };

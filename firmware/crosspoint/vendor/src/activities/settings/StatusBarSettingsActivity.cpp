@@ -26,6 +26,7 @@ enum MenuItem {
   ITEM_PROGRESS_BAR_THICKNESS,
   ITEM_TITLE,
   ITEM_BATTERY,
+  ITEM_TIME_LEFT,  // WODLE-PORT: reading-speed estimate
   ITEM_XTC_STATUS_BAR,
   ITEM_CLOCK,             // X3 only
   ITEM_CLOCK_FORMAT,      // X3 only
@@ -45,6 +46,7 @@ const StrId menuNames[ITEM_COUNT] = {
     StrId::STR_PROGRESS_BAR_THICKNESS,
     StrId::STR_TITLE,
     StrId::STR_BATTERY,
+    StrId::STR_TIME_LEFT,
     StrId::STR_XTC_STATUS_BAR,
     StrId::STR_CLOCK,
     StrId::STR_CLOCK_FORMAT,
@@ -197,6 +199,9 @@ void StatusBarSettingsActivity::handleSelection() {
     case ITEM_BATTERY:
       SETTINGS.statusBarBattery = (SETTINGS.statusBarBattery + 1) % 2;
       break;
+    case ITEM_TIME_LEFT:  // WODLE-PORT
+      SETTINGS.statusBarTimeLeft = (SETTINGS.statusBarTimeLeft + 1) % 2;
+      break;
     case ITEM_XTC_STATUS_BAR:
       SETTINGS.xtcStatusBarMode = (SETTINGS.xtcStatusBarMode + 1) % XTC_STATUS_BAR_ITEMS;
       break;
@@ -256,6 +261,8 @@ void StatusBarSettingsActivity::render(RenderLock&&) {
             return I18N.get(titleNames[SETTINGS.statusBarTitle]);
           case ITEM_BATTERY:
             return SETTINGS.statusBarBattery ? tr(STR_SHOW) : tr(STR_HIDE);
+          case ITEM_TIME_LEFT:  // WODLE-PORT
+            return SETTINGS.statusBarTimeLeft ? tr(STR_SHOW) : tr(STR_HIDE);
           case ITEM_XTC_STATUS_BAR:
             return I18N.get(xtcStatusBarNames[SETTINGS.xtcStatusBarMode]);
           case ITEM_CLOCK:

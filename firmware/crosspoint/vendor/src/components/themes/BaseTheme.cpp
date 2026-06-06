@@ -6,6 +6,7 @@
 #include <HalPowerManager.h>
 #include <HalStorage.h>
 #include <Logging.h>
+#include <ReadingSpeedEstimator.h>  // WODLE-PORT: "N min left" element
 #include <WodleAht20.h>  // WODLE-PORT: temp/humidity status bar readout
 
 #include <algorithm>
@@ -797,6 +798,25 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
                         showBatteryPercentage);
   }
 
+  // WODLE-PORT: "N min left" reading-speed estimate, right of the battery.
+  // The estimator watches the page number itself: ±1 deltas with sane
+  // intervals are reading turns; jumps (chapter nav, the settings preview)
+  // just re-anchor without recording, so no reset wiring is needed.
+  static ReadingSpeed::Estimator s_readingSpeed;
+  int timeLeftWidth = 0;
+  s_readingSpeed.observe(currentPage, millis());
+  if (SETTINGS.statusBarTimeLeft) {
+    const int minsLeft = s_readingSpeed.minutesLeft(pageCount - currentPage);
+    if (minsLeft >= 0) {
+      char timeLeftStr[32];
+      snprintf(timeLeftStr, sizeof(timeLeftStr), tr(STR_MIN_LEFT), minsLeft);
+      const int batteryFootprint = SETTINGS.statusBarBattery ? (showBatteryPercentage ? 50 : 20) : 0;
+      const int timeLeftX = metrics.statusBarHorizontalMargin + orientedMarginLeft + 1 + batteryFootprint + 10;
+      timeLeftWidth = renderer.getTextWidth(SMALL_FONT_ID, timeLeftStr);
+      renderer.drawText(SMALL_FONT_ID, timeLeftX, textY, timeLeftStr);
+    }
+  }
+
   // Draw Clock (X3 only — DS3231 RTC)
   int clockTextWidth = 0;
   if (SETTINGS.statusBarClock && halClock.isAvailable()) {
@@ -844,7 +864,8 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
         renderer.getScreenWidth() - (metrics.statusBarHorizontalMargin * 2) - orientedMarginLeft - orientedMarginRight;
 
     const int batterySize = SETTINGS.statusBarBattery ? (showBatteryPercentage ? 50 : 20) : 0;
-    const int titleMarginLeft = batterySize + 30;
+    const int timeLeftReserve = timeLeftWidth > 0 ? (timeLeftWidth + 10) : 0;  // WODLE-PORT
+    const int titleMarginLeft = batterySize + timeLeftReserve + 30;
     const int clockReserve = clockTextWidth > 0 ? (clockTextWidth + 10) : 0;
     const int envReserve = envTextWidth > 0 ? (envTextWidth + 10) : 0;  // WODLE-PORT
     const int titleMarginRight = progressTextWidth + clockReserve + envReserve + 30;

@@ -203,6 +203,100 @@ TEST(WString, WriteAppendsForArduinoJson)
     EXPECT_EQ(std::string(s.c_str()), "hey");
 }
 
+/* ------------------------------------------------------ ReadingSpeedEstimator */
+#include "../../port/hal/ReadingSpeedEstimator.h"
+
+TEST(ReadingSpeed, NotReadyUntilMinSamples)
+{
+    ReadingSpeed::Estimator e;
+    unsigned long t = 1000;
+    e.observe(1, t);
+    EXPECT_FALSE(e.ready());
+    EXPECT_EQ(e.minutesLeft(10), -1);
+    for (int p = 2; p <= ReadingSpeed::MIN_SAMPLES; p++)
+    {
+        t += 30000;
+        e.observe(p, t);
+    }
+    EXPECT_FALSE(e.ready()); /* MIN_SAMPLES turns need MIN_SAMPLES+1 pages */
+    t += 30000;
+    e.observe(ReadingSpeed::MIN_SAMPLES + 1, t);
+    EXPECT_TRUE(e.ready());
+}
+
+TEST(ReadingSpeed, AverageAndMinutesLeft)
+{
+    ReadingSpeed::Estimator e;
+    unsigned long t = 0;
+    e.observe(1, t);
+    for (int p = 2; p <= 5; p++)
+    {
+        t += 60000; /* exactly one minute per page */
+        e.observe(p, t);
+    }
+    EXPECT_EQ(e.avgMsPerPage(), 60000UL);
+    EXPECT_EQ(e.minutesLeft(10), 10);
+    EXPECT_EQ(e.minutesLeft(0), 0);
+    /* rounding up: 90s/page x 1 page = 2 min display */
+    ReadingSpeed::Estimator e2;
+    t = 0;
+    e2.observe(1, t);
+    for (int p = 2; p <= 5; p++)
+    {
+        t += 90000;
+        e2.observe(p, t);
+    }
+    EXPECT_EQ(e2.minutesLeft(1), 2);
+}
+
+TEST(ReadingSpeed, RejectsOutliersAndJumps)
+{
+    ReadingSpeed::Estimator e;
+    unsigned long t = 0;
+    e.observe(1, t);
+    t += ReadingSpeed::MIN_TURN_MS - 1; /* flipping: too fast */
+    e.observe(2, t);
+    t += ReadingSpeed::MAX_TURN_MS + 1; /* walked away: too slow */
+    e.observe(3, t);
+    t += 30000;
+    e.observe(10, t); /* chapter jump: no sample */
+    EXPECT_FALSE(e.ready());
+    EXPECT_EQ(e.avgMsPerPage(), 0UL);
+
+    /* repaints of the same page must not move the anchor */
+    ReadingSpeed::Estimator e2;
+    e2.observe(1, 0);
+    e2.observe(1, 25000); /* status bar redraw (USB plug etc.) */
+    e2.observe(2, 30000); /* interval = 30s from page-1 arrival, not 5s */
+    e2.observe(3, 60000);
+    e2.observe(4, 90000);
+    EXPECT_TRUE(e2.ready());
+    EXPECT_EQ(e2.avgMsPerPage(), 30000UL);
+}
+
+TEST(ReadingSpeed, BackwardTurnsCountAndWindowSlides)
+{
+    ReadingSpeed::Estimator e;
+    unsigned long t = 0;
+    e.observe(5, t);
+    t += 30000;
+    e.observe(4, t); /* re-reading backwards is still reading */
+    t += 30000;
+    e.observe(5, t);
+    t += 30000;
+    e.observe(6, t);
+    EXPECT_TRUE(e.ready());
+    EXPECT_EQ(e.avgMsPerPage(), 30000UL);
+
+    /* window slides: WINDOW fast pages push out old slow ones */
+    for (int i = 0; i < ReadingSpeed::WINDOW; i++)
+    {
+        t += 10000;
+        e.observe(7 + i, t);
+    }
+    EXPECT_EQ(e.avgMsPerPage(), 10000UL);
+}
+
 /* ------------------------------------------------------------ TapClassifier */
 #include "../../port/hal/TapClassifier.h"
 

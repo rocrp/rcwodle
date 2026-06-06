@@ -80,6 +80,12 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## Blind-able next (no device needed)
 
+- [x] **"Time left in chapter"** — DONE 2026-06-06: Kindle-style reading-speed
+      estimate right of the battery ("12 min left"/剩余12分钟), toggle in
+      Settings → Status Bar (default on). Pure estimator in port/hal/
+      ReadingSpeedEstimator.h (±1-page turn detection, 2s-5min interval
+      clamp, 8-sample window, ceil minutes; jumps/repaints re-anchor without
+      sampling — no reset wiring); 4 host suites. Appears after 3 page turns.
 - [x] **Low-battery protection** — DONE 2026-06-06: main-loop guard (30s gauge
       poll, suppressed on USB power): ≤5% once-per-boot popup warning, ≤2%
       popup + forced hibernate. Upstream has none (would brown-out mid-read +
