@@ -13,6 +13,7 @@
 #include "ButtonRemapActivity.h"
 #include "ClearCacheActivity.h"
 #include "CrossPointSettings.h"
+#include "DiagnosticsActivity.h"  // WODLE-PORT
 #include "FontSelectionActivity.h"
 #include "LanguageSelectActivity.h"
 #include "MappedInputManager.h"
@@ -68,6 +69,8 @@ void SettingsActivity::rebuildSettingsLists() {
                           SettingInfo::Action(StrId::STR_REMAP_FRONT_BUTTONS, SettingAction::RemapFrontButtons));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_CLEAR_READING_CACHE, SettingAction::ClearCache));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_LANGUAGE, SettingAction::Language));
+  // WODLE-PORT: hardware diagnostics (HIL bring-up aid)
+  systemSettings.push_back(SettingInfo::Action(StrId::STR_DIAGNOSTICS, SettingAction::Diagnostics));
   readerSettings.push_back(SettingInfo::Action(StrId::STR_CUSTOMISE_STATUS_BAR, SettingAction::CustomiseStatusBar));
 
   // Update currentSettings pointer and count for the active category
@@ -250,6 +253,9 @@ void SettingsActivity::toggleCurrentSetting() {
         break;
       case SettingAction::Language:
         startActivityForResult(std::make_unique<LanguageSelectActivity>(renderer, mappedInput), resultHandler);
+        break;
+      case SettingAction::Diagnostics:  // WODLE-PORT
+        startActivityForResult(std::make_unique<DiagnosticsActivity>(renderer, mappedInput), resultHandler);
         break;
       case SettingAction::None:
         // Do nothing

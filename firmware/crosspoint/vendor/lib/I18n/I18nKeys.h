@@ -340,6 +340,8 @@ enum class StrId : uint16_t {
   STR_HUMIDITY,
   STR_TEMP_UNIT_C,
   STR_TEMP_UNIT_F,
+  STR_DIAGNOSTICS,
+  STR_REFRESH,
   // Sentinel - must be last
   _COUNT
 };

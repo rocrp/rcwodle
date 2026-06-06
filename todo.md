@@ -9,6 +9,10 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## HIL checklist — first session with the device (in order)
 
+> Bring-up aid: **Settings → System → Diagnostics** shows live battery/USB/
+> AHT20/touch/SD/heap/wake-reason + last input, auto-refreshing every 2s —
+> covers items 4, 5, 9, 9b, 9c without a working UART console.
+
 1. [ ] **hello_wodle VRES=600**: flash staged build → "2026" renders contiguous
        (mid-screen dead band gone). 1 flash, 30s.
 2. [ ] **crosspoint first boot**: flash `firmware/crosspoint/.../main.bin` @0x12218000
@@ -67,6 +71,10 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## Blind-able next (no device needed)
 
+- [x] **Hardware diagnostics screen** — DONE 2026-06-06: Settings → System →
+      Diagnostics (WODLE-PORT DiagnosticsActivity): live gauge/charger/AHT20/
+      frontlight/touch/SD/heap/wake-reason/last-input, 2s fast-refresh cadence,
+      Confirm = full refresh. Service screen, body intentionally EN-only.
 - [x] **AHT20 temp/humidity → status bar** — DONE 2026-06-06: WodleAht20
       driver (I2C2 @0x38, non-blocking trigger/collect, 30s cache) + reader
       status bar readout left of the clock slot (Hide/°C/°F + humidity toggle,
