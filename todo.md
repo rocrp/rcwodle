@@ -96,8 +96,23 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
         "SD card not ready" (spi_msd reprobe). NOTE: HVR1 recovery is
         unaffected (different boot path, PID 0x1001).
 
-## Blind-able next (no device needed)
+## Blind-able next (no device needed) — **QUEUE EMPTY as of 2026-06-06 night**
 
+> Waves 1-6 below are all shipped. Every remaining open item in this file is
+> physically device-gated (HIL checklist above, or needs on-panel/timing data
+> — see Post-HIL backlog). Next blind work, if any, comes from new HIL
+> findings or new upstream/fork commits.
+
+- [x] **Wave 6 (2026-06-06 night)** — all DONE:
+      - SD write-failure warning: HalStorage sticky latch + once-per-boot
+        popup (SD full/write-protected was silent mystery slowness);
+        test/storagelatch/. NOTE: gen_i18n --strip-unused drops keys with no
+        code reference — wire the tr() call BEFORE regenerating.
+      - Filename torture render test (220-char names, truncated UTF-8,
+        control bytes, emoji, RTL, full-width, empty — browser paths).
+      - Skipped deliberately: store-JSON round-trips (JsonSettingsIO covered
+        by parser suites; stores are field lists behind absolute paths —
+        a host path-redirect hack for marginal coverage).
 - [x] **Wave 5 (2026-06-06 night)** — all DONE, see git log:
       - `wodle dump` + `tools/wodle_console.py`: CRC-verified base64
         framebuffer over the console → PNG on the Mac. The remote loop is
@@ -217,7 +232,7 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       Caveat for HIL: needs an SD font selected; SD-font rows may look large
       next to UI rows (reader size drives glyph size).
 
-- [ ] X4-style partial window refresh (`displayWindow`) for status-bar updates
+- [ ] **[DEVICE-GATED]** X4-style partial window refresh (`displayWindow`) for status-bar updates
       — NOTE: no consumer in vendor snapshot b12839d1 (GfxRenderer::displayWindow
       is commented out upstream); the UC8179 0x90/0x91/0x92 primitive alone
       isn't enough. CONSUMER DESIGN now exists (2026-06-06): with the RTC
@@ -233,7 +248,7 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       refresh to GC (fallback path never calls cleanup). Host: plane invariant
       + 4-level preview test. HIL knobs: no-op banks → all-zero variant if
       untouched pixels shift; AA quality vs 2×52KB heap cost.
-- [ ] LCDC / hardware-SPI EPD data path — ASSESSED blind 2026-06-06, verdict
+- [ ] **[DEVICE-GATED]** LCDC / hardware-SPI EPD data path — ASSESSED blind 2026-06-06, verdict
       **defer until HIL timing data**: bit-bang ≈ 1.2M reg stores/plane
       (~25-50ms, 2 planes per differential update) vs DU refresh ~300-500ms
       → data write is ~10-25% of a page turn, not dominant. LCDC SPI+DMA

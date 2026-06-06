@@ -5,7 +5,7 @@ Port of [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-read
 UC8179C 528x792 EPD). Vendor snapshot + deltas: `vendor/VENDOR.md`. Plan:
 `docs/superpowers/plans/2026-06-05-crosspoint-port-plan.md` (repo root docs/).
 
-**Status: blind-port, compiles + links (3,483,908 B image, ~54KB headroom),
+**Status: blind-port, compiles + links (3,484,676 B image, ~53KB headroom),
 zero HIL.** Built entirely while the device was away — expect bring-up
 iterations. Reclaim options if flash gets tight again: move the GBK table to
 SD, or drop the 8pt/10pt-bold CJK UI subsets. (Tried and rejected:
@@ -15,7 +15,7 @@ already applied, −82KB.)
 ## Verify (blind-development loop)
 
 ```sh
-firmware/crosspoint/run_checks.sh        # target build + 204 host tests
+firmware/crosspoint/run_checks.sh        # target build + 208 host tests
 ```
 
 Host tests (gtest, `test/`): port shims with known-answer vectors (MD5/base64/
