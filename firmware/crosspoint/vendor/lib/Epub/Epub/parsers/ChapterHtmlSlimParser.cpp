@@ -1301,6 +1301,19 @@ bool ChapterHtmlSlimParser::parseAndBuildPages() {
       // rather than failing entirely.
       LOG_ERR("EHP", "Parse error at line %lu:\n%s (recovering with partial content)",
               XML_GetCurrentLineNumber(parser), XML_ErrorString(XML_GetErrorCode(parser)));
+      // Salvage the word in flight — it belongs to the last complete block.
+      if (currentTextBlock && partWordBufferIndex > 0) {
+        flushPartWordBuffer();
+      }
+      // A chapter with no pages AND no words must still report failure:
+      // returning true would let Section persist a blank one-page cache
+      // (currentTextBlock exists from startup even when nothing was parsed).
+      if (completedPageCount == 0 && (!currentTextBlock || currentTextBlock->isEmpty())) {
+        LOG_ERR("EHP", "No content salvaged - failing the parse");
+        destroyXmlParser(parser);
+        file.close();
+        return false;
+      }
       break;
     }
   } while (!done);

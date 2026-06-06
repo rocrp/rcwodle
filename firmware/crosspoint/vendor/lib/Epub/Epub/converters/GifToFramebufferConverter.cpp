@@ -99,9 +99,10 @@ void gifDrawCallback(GIFDRAW* pDraw) {
   // shows the page background (white). Decide on the first delivered line.
   if (ctx->firstLine) {
     ctx->firstLine = false;
-    if (ctx->caching && (pDraw->iX != 0 || pDraw->iY != 0 || pDraw->iWidth != ctx->srcWidth)) {
-      LOG_DBG("GIF", "First frame is not full-canvas (%d,%d %dpx) - caching disabled", pDraw->iX, pDraw->iY,
-              pDraw->iWidth);
+    if (ctx->caching && (pDraw->iX != 0 || pDraw->iY != 0 || pDraw->iWidth != ctx->srcWidth ||
+                         pDraw->iHeight != ctx->srcHeight)) {
+      LOG_DBG("GIF", "First frame is not full-canvas (%d,%d %dx%d) - caching disabled", pDraw->iX, pDraw->iY,
+              pDraw->iWidth, pDraw->iHeight);
       ctx->cache.abort();
       ctx->caching = false;
     }
@@ -292,7 +293,13 @@ bool GifToFramebufferConverter::decodeToFramebuffer(const std::string& imagePath
           ctx.scale);
 
   // Stream the pixel cache to disk; the callback delivers one line at a time.
-  ctx.caching = !config.cachePath.empty();
+  // Upscales (exact-dimensions only) deliver SPARSE destination rows — the
+  // screen leaves the gaps untouched but the cache band would zero-fill them
+  // black, so caching is skipped entirely for scale > 1.
+  ctx.caching = !config.cachePath.empty() && ctx.scale <= 1.0f;
+  if (!config.cachePath.empty() && !ctx.caching) {
+    LOG_DBG("GIF", "Upscaled decode (%.2f) - caching disabled", ctx.scale);
+  }
   if (ctx.caching) {
     if (!ctx.cache.begin(config.cachePath, ctx.dstWidth, ctx.dstHeight, config.x, config.y, 1)) {
       LOG_ERR("GIF", "Failed to start cache stream, continuing without caching");
@@ -312,6 +319,15 @@ bool GifToFramebufferConverter::decodeToFramebuffer(const std::string& imagePath
   }
 
   LOG_DBG("GIF", "GIF decoding complete - render time: %lu ms", decodeTime);
+
+  // The cache may only be finalized when every destination row was actually
+  // delivered — finalize() zero-fills (black) whatever is missing, which a
+  // .pxc replay would paint over the white page (codex review finding).
+  if (ctx.caching && ctx.lastDstY < ctx.dstHeight - 1) {
+    LOG_DBG("GIF", "Rows %d..%d never delivered - dropping cache", ctx.lastDstY + 1, ctx.dstHeight - 1);
+    ctx.cache.abort();
+    ctx.caching = false;
+  }
 
   // Finalize the streamed cache (caching may have been cleared mid-decode).
   if (ctx.caching) {

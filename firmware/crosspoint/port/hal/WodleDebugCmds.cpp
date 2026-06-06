@@ -102,19 +102,25 @@ int cmdOpen(int argc, char **argv)
         rt_kprintf("usage: wodle open </books/foo.epub>\n");
         return -1;
     }
-    markDebugSession();
-    CriticalSection cs;
-    if (s_pendingOpen[0] != '\0')
-    {
-        rt_kprintf("wodle: an open is already pending — command DROPPED\n");
-        return -1;
-    }
     if (std::strlen(argv[0]) >= sizeof(s_pendingOpen))
     {
         rt_kprintf("wodle: path too long\n");
         return -1;
     }
-    std::strcpy(s_pendingOpen, argv[0]);
+    markDebugSession();
+    /* critical section holds ONLY the check-and-copy — no prints/allocs with
+     * interrupts off (codex review finding) */
+    bool busy;
+    {
+        CriticalSection cs;
+        busy = s_pendingOpen[0] != '\0';
+        if (!busy) std::strcpy(s_pendingOpen, argv[0]);
+    }
+    if (busy)
+    {
+        rt_kprintf("wodle: an open is already pending — command DROPPED\n");
+        return -1;
+    }
     rt_kprintf("wodle: open '%s' queued (main thread validates)\n", argv[0]);
     return 0;
 }
@@ -223,10 +229,16 @@ bool dequeueKey(KeyInject &out)
 
 bool consumePendingOpen(std::string &path)
 {
-    CriticalSection cs;
-    if (s_pendingOpen[0] == '\0') return false;
-    path = s_pendingOpen;
-    s_pendingOpen[0] = '\0';
+    /* fixed-buffer copy inside the critical section; the std::string assign
+     * (heap alloc) happens with interrupts enabled (codex review finding) */
+    char local[sizeof(s_pendingOpen)];
+    {
+        CriticalSection cs;
+        if (s_pendingOpen[0] == '\0') return false;
+        std::strcpy(local, s_pendingOpen);
+        s_pendingOpen[0] = '\0';
+    }
+    path = local;
     return true;
 }
 

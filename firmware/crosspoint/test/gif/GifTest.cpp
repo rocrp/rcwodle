@@ -204,6 +204,25 @@ TEST(Gif, InterlacedRendersButAbortsCache) {
   EXPECT_EQ(decoded, snapshotFb());
 }
 
+TEST(Gif, UpscaleDecodesButSkipsCache) {
+  // Exact-dimensions upscale delivers sparse destination rows: the screen
+  // leaves gaps untouched but a cache band would zero-fill them black, so
+  // caching must be skipped entirely.
+  const std::string cachePath = "/tmp/cp_gif_test_upscale.pxc";
+  remove(cachePath.c_str());
+
+  auto cfg = exactConfig(0, 0, kStripesW * 2, kStripesH * 2);
+  cfg.cachePath = cachePath;
+
+  renderer.clearScreen();
+  GifToFramebufferConverter conv;
+  ASSERT_TRUE(conv.decodeToFramebuffer(fixture("gif_stripes.gif"), renderer, cfg));
+
+  FILE* f = fopen(cachePath.c_str(), "rb");
+  EXPECT_EQ(f, nullptr) << "upscaled decode must not produce a cache file";
+  if (f) fclose(f);
+}
+
 TEST(Gif, DownscaleDecodes) {
   // Fit-in-box scaling path (no exact dimensions): 40x32 into 20x20 box.
   RenderConfig cfg;
