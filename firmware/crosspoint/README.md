@@ -170,6 +170,14 @@ Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/
   (suppressed on USB power). Upstream has none.
 - **EPD timing logs**: every refresh prints write/refresh/sync ms (DU/GC) —
   the input for the deferred LCDC data-path decision.
+- **Reading stats** (Settings → System): today / last-7-days / lifetime time
+  + pages and today's pace, fed by the page-turn estimator; persisted to
+  `/.crosspoint/stats.json` (day boundaries are real even before the clock
+  is set — day-0 catch-all bucket until then).
+- **Bold Text** (Settings → Reader, default off): same-advance double-strike
+  of the reader body font — zero layout impact, works for SD CJK fonts,
+  true-bold spans unaffected. Verified numerically + visually in the render
+  harness.
 - **Clock**: SF32 on-chip RTC. Set once via Settings → Status Bar → Set Time
   (local time; stored as UTC under the configured offset); survives sleep
   and reboots, resets only on battery pull ("Not set" reappears). The
