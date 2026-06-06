@@ -114,6 +114,9 @@ void SettingsActivity::onExit() {
   Activity::onExit();
 
   UITheme::getInstance().reload();  // Re-apply theme in case it was changed
+
+  // WODLE-PORT: re-apply Text Weight (the toggle or the reader font may have changed)
+  renderer.setEmboldenFont(SETTINGS.textWeight ? SETTINGS.getReaderFontId() : 0);
 }
 
 void SettingsActivity::loop() {

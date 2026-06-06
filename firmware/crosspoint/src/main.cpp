@@ -467,6 +467,8 @@ void setup() {
                                                         : BootResume::Splash;
 
   setupDisplayAndFonts(resume != BootResume::Splash);
+  // WODLE-PORT: Text Weight — fake-bold the reader body font when enabled
+  renderer.setEmboldenFont(SETTINGS.textWeight ? SETTINGS.getReaderFontId() : 0);
 
   switch (resume) {
     case BootResume::Silent:

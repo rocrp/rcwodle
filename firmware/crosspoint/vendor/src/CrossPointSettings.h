@@ -206,6 +206,8 @@ class CrossPointSettings {
   // Text rendering settings
   uint8_t extraParagraphSpacing = 1;
   uint8_t textAntiAliasing = 1;
+  // WODLE-PORT: same-advance fake bold for body text (e-ink contrast)
+  uint8_t textWeight = 0;
   // Short power button click behaviour
   uint8_t shortPwrBtn = IGNORE;
   // EPUB reading orientation settings

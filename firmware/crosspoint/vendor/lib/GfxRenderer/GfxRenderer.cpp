@@ -436,6 +436,15 @@ void GfxRenderer::drawText(const int fontId, const int x, const int y, const cha
     return;
   }
 
+  // WODLE-PORT: Text Weight — double-strike the reader body font 1px apart.
+  // Same advance, so layout/pagination stay untouched; real BOLD spans keep
+  // their true bold glyphs (style gate keeps them single-struck).
+  if (fontId == emboldenFontId_ && style == EpdFontFamily::REGULAR && !emboldenReentry_) {
+    emboldenReentry_ = true;
+    drawText(fontId, x + 1, y, text, black, style, baseDir);
+    emboldenReentry_ = false;
+  }
+
   const auto fontIt = fontMap.find(fontId);
   if (fontIt == fontMap.end()) {
     LOG_ERR("GFX", "Font %d not found", fontId);

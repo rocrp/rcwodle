@@ -111,6 +111,46 @@ TEST(Render, LatinUiTextRendersInk) {
   dumpPgm("latin_ui");
 }
 
+// WODLE-PORT: Text Weight — double-strike adds ink without changing metrics,
+// affects only the configured font id, and leaves true-BOLD draws alone.
+TEST(Render, EmboldenAddsInkSameMetrics) {
+  const char* sample = "The quick brown fox";
+
+  renderer.clearScreen();
+  renderer.drawText(UI_12_FONT_ID, 20, 40, sample, true);
+  const size_t normalInk = inkPixels();
+  const int normalWidth = renderer.getTextWidth(UI_12_FONT_ID, sample);
+
+  renderer.setEmboldenFont(UI_12_FONT_ID);
+  renderer.clearScreen();
+  renderer.drawText(UI_12_FONT_ID, 20, 40, sample, true);
+  const size_t boldInk = inkPixels();
+  const int boldWidth = renderer.getTextWidth(UI_12_FONT_ID, sample);
+  dumpPgm("embolden");
+
+  // Other fonts unaffected while the flag targets UI_12
+  renderer.clearScreen();
+  renderer.drawText(UI_10_FONT_ID, 20, 40, sample, true);
+  const size_t otherFontInk = inkPixels();
+  renderer.setEmboldenFont(0);
+  renderer.clearScreen();
+  renderer.drawText(UI_10_FONT_ID, 20, 40, sample, true);
+  EXPECT_EQ(otherFontInk, inkPixels());
+
+  EXPECT_GT(boldInk, normalInk + normalInk / 10);  // visibly heavier
+  EXPECT_EQ(boldWidth, normalWidth);               // advance untouched
+
+  // True BOLD style stays single-struck (no double-bold)
+  renderer.setEmboldenFont(UI_12_FONT_ID);
+  renderer.clearScreen();
+  renderer.drawText(UI_12_FONT_ID, 20, 40, sample, true, EpdFontFamily::BOLD);
+  const size_t trueBoldWithFlag = inkPixels();
+  renderer.setEmboldenFont(0);
+  renderer.clearScreen();
+  renderer.drawText(UI_12_FONT_ID, 20, 40, sample, true, EpdFontFamily::BOLD);
+  EXPECT_EQ(trueBoldWithFlag, inkPixels());
+}
+
 TEST(Render, ZhUiTextIsNotTofu) {
   // Render a zh UI string, then the same number of replacement chars.
   // If the CJK subset were missing, both would rasterize identically.

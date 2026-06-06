@@ -161,6 +161,9 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
                             "extraParagraphSpacing", StrId::STR_CAT_READER),
         SettingInfo::Toggle(StrId::STR_TEXT_AA, &CrossPointSettings::textAntiAliasing, "textAntiAliasing",
                             StrId::STR_CAT_READER),
+        // WODLE-PORT: same-advance fake bold for body text
+        SettingInfo::Toggle(StrId::STR_TEXT_WEIGHT, &CrossPointSettings::textWeight, "textWeight",
+                            StrId::STR_CAT_READER),
         SettingInfo::Enum(StrId::STR_IMAGES, &CrossPointSettings::imageRendering,
                           {StrId::STR_IMAGES_DISPLAY, StrId::STR_IMAGES_PLACEHOLDER, StrId::STR_IMAGES_SUPPRESS},
                           "imageRendering", StrId::STR_CAT_READER),

@@ -160,11 +160,14 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## Post-HIL backlog
 
-- [ ] Text weight (render body text bold for e-ink contrast) — ASSESSED
-      2026-06-06: follow the focusReadingEnabled template (ParsedText base
-      style + Section cache-key field, ~6 signatures). Deferred: invasive in
-      pagination code, poor blind verifiability, upstream-sync burden. Judge
-      need after HIL shows real-panel contrast first.
+- [x] Text weight — DONE 2026-06-06 (better approach than the assessed
+      focusReading template): same-advance DOUBLE-STRIKE in GfxRenderer
+      (drawText re-enters at x+1 for the configured reader-font id, REGULAR
+      style only) → zero layout/pagination impact, no cache-key churn, works
+      for builtin + SD CJK fonts. Settings → Reader → Bold Text (default
+      off); applied at boot + settings exit. VISUALLY verified via the render
+      harness (ink +>10%, width identical, true-BOLD/other fonts untouched).
+      HIL: judge stroke quality on the panel at 1-bit.
 
 - [x] CJK filenames/titles tofu in browser/recents — DONE 2026-06-06 via
       GfxRenderer::uiFontFor (per-string SD-reading-font fallback when the UI

@@ -62,6 +62,12 @@ class GfxRenderer {
   // as before, concentrated in a single pointer instead of four fields.
   mutable FontCacheManager* fontCacheManager_ = nullptr;
 
+  // WODLE-PORT: same-advance fake bold for the reader body font (Text Weight
+  // setting). 0 = off; otherwise the font id whose REGULAR-style draws get
+  // double-struck 1px apart (advance unchanged -> zero layout impact).
+  int emboldenFontId_ = 0;
+  mutable bool emboldenReentry_ = false;
+
   // Tiled grayscale strip target. When active, drawPixel()/clearScreen()
   // operate on a caller-owned scratch holding one horizontal band of physical
   // rows [_stripY0, _stripY0 + _stripRows) (panelWidthBytes wide) instead of
@@ -105,6 +111,8 @@ class GfxRenderer {
   void setFontCacheManager(FontCacheManager* m) { fontCacheManager_ = m; }
   FontCacheManager* getFontCacheManager() const { return fontCacheManager_; }
   const std::map<int, EpdFontFamily>& getFontMap() const { return fontMap; }
+  // WODLE-PORT: enable fake bold for one font id (the reader body font), 0 = off.
+  void setEmboldenFont(int fontId) { emboldenFontId_ = fontId; }
   void registerSdCardFont(int fontId, SdCardFont* font) { sdCardFonts_[fontId] = font; }
   void unregisterSdCardFont(int fontId) { removeFont(fontId); }
   void clearSdCardFonts() { sdCardFonts_.clear(); }
