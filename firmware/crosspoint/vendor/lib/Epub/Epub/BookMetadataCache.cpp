@@ -428,11 +428,34 @@ bool BookMetadataCache::load() {
   serialization::readPod(bookFile, spineCount);
   serialization::readPod(bookFile, tocCount);
 
+  // WODLE-PORT: structural validation — a truncated/corrupt book.bin (power
+  // loss mid-write) must report failure so the caller re-indexes, instead of
+  // seeding garbage seeks/lengths that panic the reader into a crash loop.
+  const size_t fileSize = bookFile.size();
+  constexpr uint16_t MAX_ENTRIES = 8192;  // largest real spines are ~hundreds
+  const size_t lutBytes = (static_cast<size_t>(spineCount) + tocCount) * sizeof(uint32_t);
+  if (spineCount > MAX_ENTRIES || tocCount > MAX_ENTRIES || lutOffset > fileSize ||
+      lutOffset + lutBytes > fileSize) {
+    LOG_ERR("BMC", "Cache structurally invalid (lut=%u+%u size=%u spine=%d toc=%d) - discarding",
+            (unsigned)lutOffset, (unsigned)lutBytes, (unsigned)fileSize, spineCount, tocCount);
+    bookFile.close();
+    return false;
+  }
+
   serialization::readString(bookFile, coreMetadata.title);
   serialization::readString(bookFile, coreMetadata.author);
   serialization::readString(bookFile, coreMetadata.language);
   serialization::readString(bookFile, coreMetadata.coverItemHref);
   serialization::readString(bookFile, coreMetadata.textReferenceHref);
+
+  // Metadata strings live before the LUT; running past it means a corrupt
+  // string length walked us out of the header region.
+  if (bookFile.position() > lutOffset) {
+    LOG_ERR("BMC", "Cache metadata overruns LUT (pos=%u lut=%u) - discarding", (unsigned)bookFile.position(),
+            (unsigned)lutOffset);
+    bookFile.close();
+    return false;
+  }
 
   loaded = true;
   LOG_DBG("BMC", "Loaded cache data: %d spine, %d TOC entries", spineCount, tocCount);
@@ -452,8 +475,12 @@ BookMetadataCache::SpineEntry BookMetadataCache::getSpineEntry(const int index) 
 
   // Seek to spine LUT item, read from LUT and get out data
   bookFile.seek(lutOffset + sizeof(uint32_t) * index);
-  uint32_t spineEntryPos;
+  uint32_t spineEntryPos = 0;
   serialization::readPod(bookFile, spineEntryPos);
+  if (spineEntryPos >= bookFile.size()) {  // WODLE-PORT: corrupt LUT slot
+    LOG_ERR("BMC", "Spine LUT entry %d out of bounds (%u)", index, (unsigned)spineEntryPos);
+    return {};
+  }
   bookFile.seek(spineEntryPos);
   return readSpineEntry(bookFile);
 }
@@ -471,8 +498,12 @@ BookMetadataCache::TocEntry BookMetadataCache::getTocEntry(const int index) {
 
   // Seek to TOC LUT item, read from LUT and get out data
   bookFile.seek(lutOffset + sizeof(uint32_t) * spineCount + sizeof(uint32_t) * index);
-  uint32_t tocEntryPos;
+  uint32_t tocEntryPos = 0;
   serialization::readPod(bookFile, tocEntryPos);
+  if (tocEntryPos >= bookFile.size()) {  // WODLE-PORT: corrupt LUT slot
+    LOG_ERR("BMC", "TOC LUT entry %d out of bounds (%u)", index, (unsigned)tocEntryPos);
+    return {};
+  }
   bookFile.seek(tocEntryPos);
   return readTocEntry(bookFile);
 }

@@ -131,6 +131,73 @@ TEST(EpubFallbackToc, SynthesizedFromSpine) {
   EXPECT_EQ(epub.getTocIndexForSpineIndex(2), 2);
 }
 
+// WODLE-PORT: cache corruption recovery — a book.bin mangled by power loss
+// mid-write must make the next open RE-INDEX the book, not panic the reader
+// into a crash loop (corrupt string lengths used to drive multi-GB resizes).
+// Layout under test: version(1) lutOffset(4) spineCount(2) tocCount(2) title...
+class EpubCorruptCache : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    cacheDir_ = std::string(::testing::TempDir()) + "epub_cache_corrupt_" +
+                ::testing::UnitTest::GetInstance()->current_test_info()->name();
+    std::filesystem::remove_all(cacheDir_);
+    std::filesystem::create_directories(cacheDir_);
+    Epub first(FIXTURE_EPUB, cacheDir_);
+    ASSERT_TRUE(first.load());
+    // The cache lives under cacheDir_/epub_<hash>/book.bin — find it.
+    for (const auto& e : std::filesystem::recursive_directory_iterator(cacheDir_)) {
+      if (e.path().filename() == "book.bin") {
+        binPath_ = e.path().string();
+        break;
+      }
+    }
+    ASSERT_FALSE(binPath_.empty());
+  }
+
+  void patch(size_t offset, const void* data, size_t len) {
+    FILE* f = fopen(binPath_.c_str(), "r+b");
+    ASSERT_NE(f, nullptr);
+    fseek(f, static_cast<long>(offset), SEEK_SET);
+    fwrite(data, 1, len, f);
+    fclose(f);
+  }
+
+  void expectRecovery() {
+    Epub again(FIXTURE_EPUB, cacheDir_);
+    ASSERT_TRUE(again.load());  // re-indexed, not crashed
+    EXPECT_EQ(again.getTitle(), "Tables? In CrossPoint?");
+    EXPECT_EQ(again.getSpineItemsCount(), 4);
+  }
+
+  std::string cacheDir_;
+  std::string binPath_;
+};
+
+TEST_F(EpubCorruptCache, TruncatedFile) {
+  std::filesystem::resize_file(binPath_, 16);
+  expectRecovery();
+}
+
+TEST_F(EpubCorruptCache, GarbageSpineCount) {
+  const uint16_t bogus = 0xFFFF;
+  patch(5, &bogus, sizeof(bogus));
+  expectRecovery();
+}
+
+TEST_F(EpubCorruptCache, CorruptTitleLengthOverrunsLut) {
+  // Read the real lutOffset, then make the title "string" exactly long enough
+  // to walk the reader past the LUT — the metadata-overrun check must trip.
+  FILE* f = fopen(binPath_.c_str(), "rb");
+  ASSERT_NE(f, nullptr);
+  fseek(f, 1, SEEK_SET);
+  uint32_t lutOffset = 0;
+  ASSERT_EQ(fread(&lutOffset, 4, 1, f), 1u);
+  fclose(f);
+
+  patch(9, &lutOffset, sizeof(lutOffset));  // title length := lutOffset
+  expectRecovery();
+}
+
 TEST(EpubErrors, MissingFileFailsLoad) {
   Epub missing("/nonexistent/book.epub", std::string(::testing::TempDir()) + "epub_cache_missing");
   EXPECT_FALSE(missing.load());

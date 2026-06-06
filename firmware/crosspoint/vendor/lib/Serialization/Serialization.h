@@ -36,17 +36,37 @@ inline void writeString(HalFile& file, const std::string& s) {
   file.write(reinterpret_cast<const uint8_t*>(s.data()), len);
 }
 
+// WODLE-PORT: a corrupt/truncated cache file (power loss mid-write) must not
+// drive a multi-gigabyte resize() — that's a bad_alloc panic and a crash loop
+// on the book. No legitimate cached string approaches this bound; oversized
+// lengths read as empty, short reads keep only the bytes present.
+constexpr uint32_t MAX_STRING_LEN = 1024 * 1024;
+
 inline void readString(std::istream& is, std::string& s) {
-  uint32_t len;
+  uint32_t len = 0;
   readPod(is, len);
+  if (len > MAX_STRING_LEN) {
+    s.clear();
+    return;
+  }
   s.resize(len);
   is.read(&s[0], len);
+  if (static_cast<uint32_t>(is.gcount()) != len) {
+    s.resize(is.gcount() > 0 ? static_cast<size_t>(is.gcount()) : 0);
+  }
 }
 
 inline void readString(HalFile& file, std::string& s) {
-  uint32_t len;
+  uint32_t len = 0;
   readPod(file, len);
+  if (len > MAX_STRING_LEN) {
+    s.clear();
+    return;
+  }
   s.resize(len);
-  file.read(&s[0], len);
+  const int got = file.read(&s[0], len);
+  if (got < 0 || static_cast<uint32_t>(got) != len) {
+    s.resize(got > 0 ? static_cast<size_t>(got) : 0);
+  }
 }
 }  // namespace serialization
