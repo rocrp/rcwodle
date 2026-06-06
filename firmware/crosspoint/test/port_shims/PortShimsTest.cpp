@@ -203,6 +203,65 @@ TEST(WString, WriteAppendsForArduinoJson)
     EXPECT_EQ(std::string(s.c_str()), "hey");
 }
 
+/* ------------------------------------------------------------- ClockFormat */
+#include "../../port/hal/ClockFormat.h"
+
+TEST(ClockFormat, OffsetMinutes)
+{
+    EXPECT_EQ(ClockFormat::offsetMinutes(48), 0);    /* UTC+0 */
+    EXPECT_EQ(ClockFormat::offsetMinutes(80), 480);  /* UTC+8 */
+    EXPECT_EQ(ClockFormat::offsetMinutes(0), -720);  /* UTC-12 */
+    EXPECT_EQ(ClockFormat::offsetMinutes(104), 840); /* UTC+14 */
+    EXPECT_EQ(ClockFormat::offsetMinutes(71), 345);  /* Nepal +5:45 */
+    EXPECT_EQ(ClockFormat::offsetMinutes(200), 0);   /* corrupt -> UTC+0 */
+}
+
+TEST(ClockFormat, LocalHMAndWrap)
+{
+    int h, m;
+    /* 2025-01-01 00:00:00 UTC = epoch 1735689600 */
+    ClockFormat::localHM(1735689600LL, 48, h, m);
+    EXPECT_EQ(h, 0);
+    EXPECT_EQ(m, 0);
+    ClockFormat::localHM(1735689600LL, 80, h, m); /* UTC+8 -> 08:00 */
+    EXPECT_EQ(h, 8);
+    EXPECT_EQ(m, 0);
+    ClockFormat::localHM(1735689600LL, 0, h, m); /* UTC-12 -> 12:00 previous day */
+    EXPECT_EQ(h, 12);
+    EXPECT_EQ(m, 0);
+    /* 23:30 UTC at +1 wraps to 00:30 */
+    ClockFormat::localHM(1735689600LL + 23 * 3600 + 30 * 60, 52, h, m);
+    EXPECT_EQ(h, 0);
+    EXPECT_EQ(m, 30);
+}
+
+TEST(ClockFormat, LocalToUtcRoundTrip)
+{
+    for (uint8_t q : {(uint8_t)0, (uint8_t)48, (uint8_t)71, (uint8_t)80, (uint8_t)104})
+    {
+        int uh, um, lh, lm;
+        ClockFormat::localToUtcHM(8, 30, q, uh, um);
+        ClockFormat::localHM((long long)uh * 3600 + (long long)um * 60, q, lh, lm);
+        EXPECT_EQ(lh, 8) << "offsetQ=" << (int)q;
+        EXPECT_EQ(lm, 30) << "offsetQ=" << (int)q;
+    }
+}
+
+TEST(ClockFormat, Format24And12)
+{
+    char buf[9];
+    ASSERT_TRUE(ClockFormat::format(buf, sizeof(buf), 9, 5, false));
+    EXPECT_STREQ(buf, "09:05");
+    ASSERT_TRUE(ClockFormat::format(buf, sizeof(buf), 0, 0, true));
+    EXPECT_STREQ(buf, "12:00 AM"); /* midnight */
+    ASSERT_TRUE(ClockFormat::format(buf, sizeof(buf), 12, 0, true));
+    EXPECT_STREQ(buf, "12:00 PM"); /* noon */
+    ASSERT_TRUE(ClockFormat::format(buf, sizeof(buf), 23, 59, true));
+    EXPECT_STREQ(buf, "11:59 PM");
+    EXPECT_FALSE(ClockFormat::format(buf, 5, 9, 5, false));  /* buffer too small */
+    EXPECT_FALSE(ClockFormat::format(buf, sizeof(buf), 24, 0, false)); /* bad hour */
+}
+
 /* ------------------------------------------------------ ReadingSpeedEstimator */
 #include "../../port/hal/ReadingSpeedEstimator.h"
 

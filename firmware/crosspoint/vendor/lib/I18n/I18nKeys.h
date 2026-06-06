@@ -261,7 +261,6 @@ enum class StrId : uint16_t {
   STR_CLOCK_FORMAT_12H,
   STR_CURRENT_TIME,
   STR_NEXT_FIELD,
-  STR_CLOCK_SYNC_NOW,
   STR_CLOCK_SYNCED,
   STR_UI_THEME,
   STR_THEME_CLASSIC,
@@ -347,6 +346,7 @@ enum class StrId : uint16_t {
   STR_TIME_LEFT,
   STR_MIN_LEFT,
   STR_SLEEP_PROGRESS,
+  STR_SET_TIME,
   // Sentinel - must be last
   _COUNT
 };

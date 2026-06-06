@@ -3,6 +3,7 @@
 #include "DiagnosticsActivity.h"
 
 #include <GfxRenderer.h>
+#include <HalClock.h>
 #include <HalDisplay.h>
 #include <HalStorage.h>
 #include <I18n.h>
@@ -14,6 +15,7 @@
 
 #include <cstdio>
 
+#include "CrossPointSettings.h"
 #include "MappedInputManager.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -132,6 +134,14 @@ void DiagnosticsActivity::render(RenderLock&&) {
   put(line);
 
   snprintf(line, sizeof(line), "Wake reason: %s", wakeupReasonName(gpio.getWakeupReason()));
+  put(line);
+
+  char timeBuf[9];
+  if (halClock.formatTime(timeBuf, sizeof(timeBuf), SETTINGS.clockUtcOffsetQ)) {
+    snprintf(line, sizeof(line), "RTC: %s local (UTC offset applied)", timeBuf);
+  } else {
+    snprintf(line, sizeof(line), "RTC: time not set (Status Bar > Set Time)");
+  }
   put(line);
 
   snprintf(line, sizeof(line), "Last input: %s", lastInput);

@@ -59,6 +59,11 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 9c. [ ] **USB charging bolt**: boot log `[WodleBattery] charger OK (id=0x49 ...)`;
         plug USB → lightning bolt in the battery icon within ~1s (unplug →
         gone). Verify a plug/unplug while reading repaints without a page turn.
+9d. [ ] **RTC clock**: Settings → Status Bar → Set Time (HH:MM boxes, local
+        time) → enable Clock → status bar shows it. THE RETENTION CHECK:
+        sleep + wake and reboot — time must survive both (RTC is a PMU wake
+        source + RTC_BACKUP_INITIALIZED skips re-init; only battery pull
+        should reset it → "Not set" reappears). Diagnostics shows the RTC line.
 10. [ ] **Hibernate**: PWR-hold → sleep → PA34 press wakes (edge mode). If no wake:
         USB recovery still works; revisit `HalGPIO::startDeepSleep` wake polarity.
         Also: short TAP wake should drop back to hibernate (anti-pocket-wake,
@@ -200,13 +205,19 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       reason** half stays open ON PURPOSE: post-flash boots also have VBUS →
       AfterUSBPower would insta-sleep after every sftool flash; needs a
       HIL-verified reset-cause signature first (see HalGPIO.h comment).
-- [ ] SF32 on-chip RTC → HalClock (status-bar clock; 32.768kHz crystal on PA22
-      per schematic). Gated on TWO HIL facts: does the RTC domain survive our
-      hibernate (PMU LDOs off)? + needs a manual time-set UI (upstream only
-      has UTC-offset + NTP — no editor). Don't build the UI before the RTC
-      retention answer. ALSO unblocks: **reading statistics** (daily time/
-      pages/streaks need dates; without RTC stats degrade to weak lifetime
-      counters — assessed 2026-06-06, deferred behind this item).
+- [x] SF32 on-chip RTC → HalClock — DONE BLIND 2026-06-06 (HIL = 9d): the
+      retention gate was over-conservative (RTC is a hibernate wake source by
+      architecture; LXT enabled in board init; driver was already compiled in
+      via BSP_USING_ONCHIP_RTC). HalClock on time()/set_time with a
+      plausibility floor (year<2025 → formatTime false → status bar stays
+      clockless until set; isAvailable()=true reveals the clock rows);
+      TimeSetActivity (HH:MM boxes, edits LOCAL, stores UTC via offset;
+      replaces the dead NTP-sync slot); pure ClockFormat.h w/ host suite
+      (offsets incl Nepal +5:45, wrap, 12h midnight/noon). Date anchored
+      2026-01-01 (no date editor — only H:MM is ever shown).
+      **Reading statistics** remain future work: day-BOUNDARIES are real even
+      with the anchored date (streaks/daily-time viable), only calendar
+      labels would lie; revisit post-HIL if wanted.
 - [x] Real wakeup-reason — IMPLEMENTED BLIND 2026-06-06: getWakeupReason reads
       PMU WSR (PIN0 = PA34 hibernate wake → PowerButton; latched once + WCR
       cleared); verifyPowerButtonWakeup ports the upstream anti-pocket-wake

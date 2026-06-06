@@ -9,7 +9,7 @@
 #include <memory>
 
 #include "ClockOffsetActivity.h"
-// WODLE-PORT: ClockSync pruned (NTP needs WiFi)
+#include "TimeSetActivity.h"  // WODLE-PORT: manual RTC editor (ClockSync pruned, NTP needs WiFi)
 #include "CrossPointSettings.h"
 #include "MappedInputManager.h"
 #include "components/UITheme.h"
@@ -51,7 +51,7 @@ const StrId menuNames[ITEM_COUNT] = {
     StrId::STR_CLOCK,
     StrId::STR_CLOCK_FORMAT,
     StrId::STR_CLOCK_UTC_OFFSET,
-    StrId::STR_CLOCK_SYNC_NOW,
+    StrId::STR_SET_TIME,  // WODLE-PORT: manual time editor (no NTP without WiFi)
     StrId::STR_TEMPERATURE,
     StrId::STR_HUMIDITY,
 };
@@ -216,7 +216,8 @@ void StatusBarSettingsActivity::handleSelection() {
       startActivityForResult(std::make_unique<ClockOffsetActivity>(renderer, mappedInput), nullptr);
       return;
     case ITEM_CLOCK_SYNC:
-      /* WODLE-PORT: clock sync unavailable (no WiFi/RTC yet) */
+      // WODLE-PORT: manual time editor instead of NTP sync (no WiFi)
+      startActivityForResult(std::make_unique<TimeSetActivity>(renderer, mappedInput), nullptr);
       return;
     case ITEM_TEMPERATURE:  // WODLE-PORT
       SETTINGS.statusBarTemperature = (SETTINGS.statusBarTemperature + 1) % TEMPERATURE_ITEMS;
@@ -273,8 +274,14 @@ void StatusBarSettingsActivity::render(RenderLock&&) {
           }
           case ITEM_CLOCK_UTC_OFFSET:
             return formatUtcOffset(SETTINGS.clockUtcOffsetQ);
-          case ITEM_CLOCK_SYNC:
-            return SETTINGS.clockHasBeenSynced ? tr(STR_CLOCK_SYNCED) : tr(STR_NOT_SET);
+          case ITEM_CLOCK_SYNC: {
+            // WODLE-PORT: show the current local time as the value
+            char timeBuf[9];
+            if (halClock.formatTime(timeBuf, sizeof(timeBuf), SETTINGS.clockUtcOffsetQ, SETTINGS.clockFormat == 1)) {
+              return std::string(timeBuf);
+            }
+            return std::string(tr(STR_NOT_SET));
+          }
           case ITEM_TEMPERATURE:  // WODLE-PORT
             return std::string(I18N.get(temperatureNames[SETTINGS.statusBarTemperature]));
           case ITEM_HUMIDITY:  // WODLE-PORT
