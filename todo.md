@@ -148,6 +148,12 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## Post-HIL backlog
 
+- [ ] Text weight (render body text bold for e-ink contrast) — ASSESSED
+      2026-06-06: follow the focusReadingEnabled template (ParsedText base
+      style + Section cache-key field, ~6 signatures). Deferred: invasive in
+      pagination code, poor blind verifiability, upstream-sync burden. Judge
+      need after HIL shows real-panel contrast first.
+
 - [x] CJK filenames/titles tofu in browser/recents — DONE 2026-06-06 via
       GfxRenderer::uiFontFor (per-string SD-reading-font fallback when the UI
       font lacks glyphs) applied at BaseTheme/Lyra/Lyra3Covers/RoundedRaff

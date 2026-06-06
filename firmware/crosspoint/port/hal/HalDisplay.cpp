@@ -344,14 +344,21 @@ void HalDisplay::refreshDisplay(RefreshMode mode, bool)
         s_fastSinceGc = 0;
     }
 
+    /* Timing instrumentation: write vs refresh cost is THE input for the
+     * deferred LCDC/hw-SPI decision (todo.md) — every HIL page turn logs it. */
+    const unsigned long t0 = rt_tick_get_millisecond();
     epdCmd(0x13);
     for (uint32_t i = 0; i < BUFFER_SIZE; i++) epdData(s_frameBuffer[i]);
+    const unsigned long t1 = rt_tick_get_millisecond();
     epdCmd(0x12);
     epdWaitBusy(8000);
     if (!wantFast)
         rt_thread_mdelay(500); /* GC settle margin (BUSY already waited) */
+    const unsigned long t2 = rt_tick_get_millisecond();
     epdCmd(0x10); /* sync old RAM = differential base for the next DU */
     for (uint32_t i = 0; i < BUFFER_SIZE; i++) epdData(s_frameBuffer[i]);
+    rt_kprintf("[HalDisplay] %s write=%lums refresh=%lums sync=%lums\n", wantFast ? "DU" : "GC",
+               t1 - t0, t2 - t1, rt_tick_get_millisecond() - t2);
 }
 
 void HalDisplay::deepSleep()
