@@ -157,7 +157,14 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       refresh to GC (fallback path never calls cleanup). Host: plane invariant
       + 4-level preview test. HIL knobs: no-op banks → all-zero variant if
       untouched pixels shift; AA quality vs 2×52KB heap cost.
-- [ ] LCDC / hardware-SPI EPD data path (bit-bang is the remaining refresh cost)
+- [ ] LCDC / hardware-SPI EPD data path — ASSESSED blind 2026-06-06, verdict
+      **defer until HIL timing data**: bit-bang ≈ 1.2M reg stores/plane
+      (~25-50ms, 2 planes per differential update) vs DU refresh ~300-500ms
+      → data write is ~10-25% of a page turn, not dominant. LCDC SPI+DMA
+      (~5ms) is real but means rewiring the ONLY HIL-proven subsystem blind
+      (LCDC init/DCX/clock-pol risk). First HIL: instrument actual write+
+      refresh ms (console), then decide. Stock fw proves LCDC1 drives these
+      pads, so the path is viable when justified.
 - [x] 18pt/XL font tier via SD `.cpfont` — COVERED 2026-06-06: LXGWWenKai SD
       set ships 12/14/16/18 (XL works once an SD font is selected); Latin
       sets buildable with upstream `build-sd-fonts.py` (16 families in
