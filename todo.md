@@ -176,8 +176,12 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 - [ ] X4-style partial window refresh (`displayWindow`) for status-bar updates
       — NOTE: no consumer in vendor snapshot b12839d1 (GfxRenderer::displayWindow
-      is commented out upstream); needs feature design + HIL timing data first,
-      not just the UC8179 0x90/0x91/0x92 primitive.
+      is commented out upstream); the UC8179 0x90/0x91/0x92 primitive alone
+      isn't enough. CONSUMER DESIGN now exists (2026-06-06): with the RTC
+      clock shipped, a minute-fresh status-bar clock while reading needs
+      partial refresh (full DU per minute = ghosting + flash). Still
+      HIL-first: partial-update waveform behavior on this panel is exactly
+      what only the device can judge.
 - [x] 4-gray grayscale — IMPLEMENTED BLIND 2026-06-06 (HIL judges waveform):
       X3-style differential overlay in HalDisplay (MSB flags→0x10, LSB→0x13,
       overlay grey LUT built from vendor banks: WW←drive-to-dark-grey, WB=

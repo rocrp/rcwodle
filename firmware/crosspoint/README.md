@@ -170,7 +170,11 @@ Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/
   (suppressed on USB power). Upstream has none.
 - **EPD timing logs**: every refresh prints write/refresh/sync ms (DU/GC) —
   the input for the deferred LCDC data-path decision.
-- **Clock**: none (status bar clock hidden).
+- **Clock**: SF32 on-chip RTC. Set once via Settings → Status Bar → Set Time
+  (local time; stored as UTC under the configured offset); survives sleep
+  and reboots, resets only on battery pull ("Not set" reappears). The
+  status-bar clock is page-turn-fresh (upstream behavior; minute-fresh
+  needs partial-window refresh — post-HIL).
 - **Tilt / images-in-epub dithering**: stubbed or best-effort; JPEGDEC/
   PNGdec are linked but image rendering is untested.
 - **No WiFi features**: transfer/OPDS/KOReader-sync/OTA menus pruned or show
