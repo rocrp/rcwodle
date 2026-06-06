@@ -635,6 +635,33 @@ void loop() {
     activityManager.requestUpdate();
   }
 
+  // WODLE-PORT: low-battery protection (upstream has none). Deep-discharging
+  // the LiPo hurts the cell and the device would brown-out mid-read anyway —
+  // warn once at <=5%, force hibernate at <=2%. Suppressed on USB power;
+  // 30s poll keeps the gauge I2C traffic negligible.
+  static unsigned long lastBatteryCheck = millis() - 25000;  // first check ~5s in
+  static bool lowBatteryWarned = false;
+  if (millis() - lastBatteryCheck >= 30000) {
+    lastBatteryCheck = millis();
+    if (WodleBattery::available() && !gpio.isUsbConnected()) {
+      const int pct = WodleBattery::percent();
+      if (pct >= 0 && pct <= 2) {
+        LOG_INF("BAT", "Battery critical (%d%%), forcing sleep", pct);
+        GUI.drawPopup(renderer, tr(STR_BATTERY_EMPTY));
+        delay(1500);
+        enterDeepSleep();
+        return;
+      }
+      if (pct >= 0 && pct <= 5 && !lowBatteryWarned) {
+        lowBatteryWarned = true;
+        LOG_INF("BAT", "Battery low (%d%%)", pct);
+        GUI.drawPopup(renderer, tr(STR_BATTERY_LOW));
+        delay(1500);
+        activityManager.requestUpdate();  // repaint over the popup
+      }
+    }
+  }
+
   const unsigned long activityStartTime = millis();
   activityManager.loop();
   const unsigned long activityDuration = millis() - activityStartTime;

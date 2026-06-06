@@ -80,6 +80,11 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## Blind-able next (no device needed)
 
+- [x] **Low-battery protection** — DONE 2026-06-06: main-loop guard (30s gauge
+      poll, suppressed on USB power): ≤5% once-per-boot popup warning, ≤2%
+      popup + forced hibernate. Upstream has none (would brown-out mid-read +
+      deep-discharge the LiPo). HIL: hard to stage quickly — verify via
+      Diagnostics battery % sanity instead; thresholds in src/main.cpp loop().
 - [x] **USB MSC file transfer** — DONE 2026-06-06 (HIL = 13): cherryusb device
       stack (PKG_CHERRYUSB_DEVICE_MUSB_SIFLI + MSC, ~15KB flash) straight from
       SDK example msc/sdcard_disk (SPI_MSD backend, sd0). Mount exclusivity by
