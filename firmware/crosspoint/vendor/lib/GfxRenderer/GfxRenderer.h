@@ -110,6 +110,7 @@ class GfxRenderer {
   }
   void setFontCacheManager(FontCacheManager* m) { fontCacheManager_ = m; }
   FontCacheManager* getFontCacheManager() const { return fontCacheManager_; }
+  bool isFontCacheScanning() const;
   const std::map<int, EpdFontFamily>& getFontMap() const { return fontMap; }
   // WODLE-PORT: enable fake bold for one font id (the reader body font), 0 = off.
   void setEmboldenFont(int fontId) { emboldenFontId_ = fontId; }

@@ -757,7 +757,7 @@ const char* const CHARACTER_SETS[] = {
     "\xD1"
     "\x9E"
     "",  // Беларуская
-    " !%'()*+-./0123457:?ABCDEFGHIKLMNOPQRSTUVWXZ[]_abcdefghiklmnopqrstuvwxyz|\xC2"
+    " !%'()*+-./0123457:?ABCDEFGHIKLMNOPQRSTUVXZ[]_abcdefghiklmnopqrstuvwxyz|\xC2"
     "\xAB"
     "\xC2"
     "\xB0"
@@ -24703,11 +24703,11 @@ const char STRINGS_IT_DATA[] =
     "Visualizza\0"
     "Segnaposto\0"
     "Nascondi\0"
-    "Press. breve tasto accensione\0"
+    "Press. breve pul. accensione\0"
     "Orientamento lettura\0"
-    "Puls. laterali (lettore)\0"
-    "Orienta pulsanti frontali\0"
-    "Press. lunga pulsanti laterali\0"
+    "Pul. laterali (lettore)\0"
+    "Orienta pul. frontali\0"
+    "Press. lunga pul. laterali\0"
     "Salta capitolo\0"
     "Orientamento\0"
     "Font lettore\0"
@@ -24731,7 +24731,7 @@ const char STRINGS_IT_DATA[] =
     "Nome file\0"
     "Binario\0"
     "Fatto\0"
-    "Verranno cancellati tutti i dati in cache.\0"
+    "Verranno cancellati tutti i dati in cache\0"
     "Gli avanzamenti di lettura andranno persi!\0"
     "I libri dovranno essere reindicizzati\0"
     "alla riapertura.\0"
@@ -24761,6 +24761,7 @@ const char STRINGS_IT_DATA[] =
     "Orizzontale Sx\0"
     "Prec/Succ\0"
     "Succ/Prec\0"
+    "Disattivato\0"
     "Piccolo\0"
     "Medio\0"
     "Grande\0"
@@ -24779,7 +24780,7 @@ const char STRINGS_IT_DATA[] =
     "30 pagine\0"
     "Senza nome\0"
     "Tieni premuto Conferma per cancellare\0"
-    "Tieni premuto Conferma nel lettore per creare un segnalibro.\0"
+    "Tieni premuto Conferma nel lettore per creare un segnalibro\0"
     "Scheda SD\0"
     "\xC2"
     "\xAB"
@@ -24824,16 +24825,18 @@ const char STRINGS_IT_DATA[] =
     "Formato orologio\0"
     "24 ore\0"
     "12 ore\0"
+    "Ora attuale: \0"
+    "Succ.\0"
     "Orologio sincronizzato\0"
     "Tema interfaccia\0"
     "Classico\0"
     "Lyra esteso\0"
     "Correzione luce solare\0"
-    "Riassegna puls. frontali\0"
+    "Riassegna pul. frontali\0"
     "Segnalibri\0"
-    "Segnalibro aggiunto.\0"
+    "Segnalibro aggiunto\0"
     "Browser OPDS\0"
-    "Copertina + Wallpaper\0"
+    "Copertina + Sfondo\0"
     "Ripresa rapida\0"
     "Libri recenti\0"
     "Rimuovere da Libri recenti?\0"
@@ -24873,7 +24876,7 @@ const char STRINGS_IT_DATA[] =
     "Sinistra/Destra: 1%  Su/Gi\xC3"
     "\xB9"
     ": 10%\0"
-    "Impossibile salvare avanzamenti\0"
+    "Impossibile salvare la posizione\0"
     "Stile libro\0"
     "Stile integrato dell'epub\0"
     "Lettura guidata\0"
@@ -24904,10 +24907,10 @@ const char STRINGS_IT_DATA[] =
     "Premere [abc] per mostrare la password\0"
     "Tieni premuto SU per modificare la voce\0"
     "Suggerimenti:\0"
-    "GI\xC3"
+    "Premi GI\xC3"
     "\x99"
     " per tornare alla tastiera\0"
-    "ABC per uscire dalla modalit\xC3"
+    "Premi ABC per uscire dalla modalit\xC3"
     "\xA0"
     " URL\0"
     "Tieni premuto CANC per cancellare tutto\0"
@@ -24923,23 +24926,23 @@ const uint16_t OFFSETS_IT[] = {
     32768, 0, 15, 27, 42, 55, 72, 85, 105, 125, 153, 173,
     192, 208, 223, 238, 256, 274, 300, 311, 328, 340, 348, 356,
     366, 374, 396, 424, 444, 464, 491, 511, 520, 531, 542, 551,
-    581, 602, 627, 653, 33343, 684, 699, 712, 725, 741, 760, 784,
-    797, 810, 830, 851, 884, 923, 943, 969, 976, 1000, 1031, 1056,
-    1077, 1095, 1105, 1113, 1119, 1162, 1205, 1243, 1260, 1281, 1296, 1313,
-    1326, 1356, 1398, 1404, 1411, 1418, 1428, 1436, 1443, 1452, 1456, 1468,
-    1475, 1482, 1491, 1505, 1513, 1523, 1538, 1548, 1563, 1573, 34144, 34153,
-    34164, 1583, 1591, 1597, 1604, 1617, 1626, 1634, 1640, 1653, 1662, 1671,
-    1678, 1687, 1696, 1706, 1716, 1726, 1737, 1775, 1836, 1846, 34385, 1858,
+    580, 601, 625, 647, 33343, 674, 689, 702, 715, 731, 750, 774,
+    787, 800, 820, 841, 874, 913, 933, 959, 966, 990, 1021, 1046,
+    1067, 1085, 1095, 1103, 1109, 1151, 1194, 1232, 1249, 1270, 1285, 1302,
+    1315, 1345, 1387, 1393, 1400, 1407, 1417, 1425, 1432, 1441, 1445, 1457,
+    1464, 1471, 1480, 1494, 1502, 1512, 1527, 1537, 1552, 1562, 1572, 34153,
+    34164, 1584, 1592, 1598, 1605, 1618, 1627, 1635, 1641, 1654, 1663, 1672,
+    1679, 1688, 1697, 1707, 1717, 1727, 1738, 1776, 1836, 1846, 34385, 1858,
     1868, 1880, 1887, 1896, 1904, 1909, 1916, 34446, 34449, 1925, 1939, 1948,
     1955, 1958, 34480, 1963, 1980, 1990, 2018, 2044, 2066, 2087, 2114, 2122,
     2128, 2135, 2141, 2150, 2162, 2179, 2189, 2196, 2205, 2224, 2230, 2235,
-    2244, 2271, 2288, 2295, 34772, 34786, 2302, 2325, 2342, 34821, 34826, 2351,
-    2363, 2386, 2411, 2422, 2443, 2456, 2478, 2493, 2507, 2535, 2556, 2564,
-    2602, 2616, 2631, 2667, 2702, 2722, 2742, 2762, 2780, 2804, 2818, 2840,
-    2860, 2868, 2897, 2919, 2930, 2943, 2951, 2985, 3017, 3029, 3055, 3071,
-    3089, 3108, 35497, 3138, 35520, 3149, 3153, 3192, 3218, 3252, 3270, 3384,
-    3403, 3430, 3456, 3498, 3546, 3598, 3648, 3689, 3728, 3768, 3782, 3813,
-    3848, 3888, 3934, 3984, 4034, 4063, 4092, 36305, 36316, 36328, 36337, 36341,
+    2244, 2271, 2288, 2295, 2302, 2316, 2322, 2345, 2362, 34821, 34826, 2371,
+    2383, 2406, 2430, 2441, 2461, 2474, 2493, 2508, 2522, 2550, 2571, 2579,
+    2617, 2631, 2646, 2682, 2717, 2737, 2757, 2777, 2795, 2819, 2833, 2855,
+    2875, 2883, 2912, 2934, 2945, 2958, 2966, 3000, 3033, 3045, 3071, 3087,
+    3105, 3124, 35497, 3154, 35520, 3165, 3169, 3208, 3234, 3268, 3286, 3400,
+    3419, 3446, 3472, 3514, 3562, 3614, 3664, 3705, 3744, 3784, 3798, 3835,
+    3876, 3916, 3962, 4012, 4062, 4091, 4120, 36305, 36316, 36328, 36337, 36341,
     36345, 36357, 36365, 36393, 36424, 36445, 36457, 36479, 36488, 36502, 36508, 36520,
     36529, 36535, 36556,
 };
