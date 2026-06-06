@@ -8,6 +8,7 @@
 #include <rtthread.h>
 
 #include "bf0_hal.h"
+#include "WodleDebugCmds.h"
 #include "WodleFrontlight.h"
 #include "WodleTouch.h"
 
@@ -45,6 +46,8 @@ unsigned long s_heldStartMs = 0;
 bool s_chordActive = false;
 /* touch stationary-hold latch (see WodleTouch::Frame) */
 int s_touchHoldBtn = -1;
+/* synthetic key injection from the `wodle` MSH command (debug/HIL driver) */
+WodleDebugCmdCore::InjectionTracker s_injection;
 
 bool readRaw(const RawKey &k)
 {
@@ -159,12 +162,45 @@ void HalGPIO::update()
         s_touchHoldBtn = -1;
     }
 
+    /* WODLE-PORT debug: synthetic key injection from the `wodle` MSH command.
+     * Runs after the physical/touch writes so an injected event wins the
+     * frame exactly like a touch gesture; edges then flow through the real
+     * input pipeline (MappedInputManager, activities) unchanged. */
+    if (!s_injection.active())
+    {
+        WodleDebugCmdCore::KeyInject pending;
+        if (WodleDebugCmds::dequeueKey(pending) && pending.btn < NUM_BTNS)
+        {
+            s_injection.begin(pending, now);
+            rt_kprintf("[HalGPIO] inject btn=%d hold=%dms\n", pending.btn, pending.holdMs);
+        }
+    }
+    if (s_injection.active())
+    {
+        const auto edges = s_injection.tick(now, PWR_SHORT_MAX_MS, BTN_POWER);
+        if (edges.pressEdge >= 0) s_wasPressed[edges.pressEdge] = true;
+        if (edges.heldBtn >= 0) s_isPressed[edges.heldBtn] = true;
+        if (edges.releaseEdge >= 0)
+        {
+            s_wasReleased[edges.releaseEdge] = true;
+            /* clear slots with no physical writer (CONFIRM); physical slots
+             * get re-asserted from the real pin state next frame anyway */
+            s_isPressed[edges.releaseEdge] = false;
+        }
+        if (edges.synthesizeConfirm) s_wasPressed[BTN_CONFIRM] = true;
+    }
+
     bool anyHeld = s_key2.stable || s_key3.stable || s_pwr.stable;
     if (anyHeld && s_heldStartMs == 0) s_heldStartMs = now;
     if (s_touchHoldBtn >= 0)
     {
         /* backdate to touch-down so getHeldTime() matches button semantics */
         if (s_heldStartMs == 0 || s_heldStartMs > tf.holdStartMs) s_heldStartMs = tf.holdStartMs;
+    }
+    else if (s_injection.active())
+    {
+        /* injected hold: same backdating semantics as a touch hold */
+        if (s_heldStartMs == 0 || s_heldStartMs > s_injection.startMs()) s_heldStartMs = s_injection.startMs();
     }
     else if (!anyHeld)
     {
@@ -197,6 +233,9 @@ unsigned long HalGPIO::getHeldTime() const
 
 unsigned long HalGPIO::getPowerButtonHeldTime() const
 {
+    /* WODLE-PORT debug: an injected power hold reports its synthetic held
+     * time so `wodle key power 2500` exercises the real hold-to-sleep path */
+    if (s_injection.activeButton() == BTN_POWER) return millis() - s_injection.startMs();
     return s_pwr.stable ? millis() - s_pwr.pressedAtMs : 0;
 }
 

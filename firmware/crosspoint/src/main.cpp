@@ -38,6 +38,7 @@
 #include "fontIds.h"
 #include "images/LoadingIcon.h"
 #include "WodleAht20.h"       // WODLE-PORT
+#include "WodleDebugCmds.h"   // WODLE-PORT
 #include "WodleFrontlight.h"  // WODLE-PORT
 #include "WodlePsram.h"       // WODLE-PORT
 #include "WodleUsbMsc.h"      // WODLE-PORT
@@ -557,8 +558,29 @@ void loop() {
     screenshotComboActive = false;
   }
 
+  // WODLE-PORT: `wodle` MSH debug commands — main-thread consumers. Shot and
+  // open both need objects the tshell thread must never touch (renderer,
+  // activityManager); the handlers only queued the request.
+  if (WodleDebugCmds::consumePendingShot()) {
+    RenderLock lock;
+    ScreenshotUtil::takeScreenshot(renderer);
+  }
+  {
+    std::string debugOpenPath;
+    if (WodleDebugCmds::consumePendingOpen(debugOpenPath)) {
+      if (Storage.exists(debugOpenPath.c_str())) {
+        LOG_INF("MAIN", "Debug open: %s", debugOpenPath.c_str());
+        activityManager.goToReader(debugOpenPath);
+      } else {
+        LOG_ERR("MAIN", "Debug open: '%s' not found on SD", debugOpenPath.c_str());
+      }
+    }
+  }
+
   const unsigned long sleepTimeoutMs = SETTINGS.getSleepTimeoutMs();
-  if (sleepTimeoutMs > 0 && millis() - lastActivityTime >= sleepTimeoutMs) {
+  // WODLE-PORT: debug sessions inhibit the auto-sleep timeout (a sleeping
+  // device kills the console session); `wodle nosleep off` re-enables.
+  if (sleepTimeoutMs > 0 && !WodleDebugCmds::sleepInhibited() && millis() - lastActivityTime >= sleepTimeoutMs) {
     LOG_DBG("SLP", "Auto-sleep triggered after %lu ms of inactivity", sleepTimeoutMs);
     enterDeepSleep(true);
     // This should never be hit as `enterDeepSleep` calls esp_deep_sleep_start
