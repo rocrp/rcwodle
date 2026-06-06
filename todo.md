@@ -1,9 +1,10 @@
 # wodle TODO
 
-Status snapshot 2026-06-06. Two firmwares: `firmware/hello_wodle/` (validation
-instrument, EPD console) + `firmware/crosspoint/` (the e-reader, blind-ported,
-compiles + 156/156 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
-Flash: 3,418,636 of 3,538,944 B — ~117KB headroom (I18n --strip-unused
+Status snapshot 2026-06-06 (eve). Two firmwares: `firmware/hello_wodle/`
+(validation instrument, EPD console) + `firmware/crosspoint/` (the e-reader,
+blind-ported, compiles + 196/196 host tests, ZERO HIL). Verify both:
+`firmware/crosspoint/run_checks.sh`.
+Flash: 3,481,940 of 3,538,944 B — ~56KB headroom (I18n --strip-unused
 reclaimed 82KB; UI-font compression tried + rejected, came out larger).
 Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
@@ -12,6 +13,12 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 > Bring-up aid: **Settings → System → Diagnostics** shows live battery/USB/
 > AHT20/touch/SD/heap/wake-reason + last input, auto-refreshing every 2s —
 > covers items 4, 5, 9, 9b, 9c without a working UART console.
+>
+> Remote driver: with the UART console up, the **`wodle` MSH command** drives
+> the device hands-free: `wodle key down`, `wodle key power 2500` (real
+> hold-to-sleep), `wodle open /books/x.epub`, `wodle shot` (BMP→SD),
+> `wodle stat`, `wodle nosleep on|off`. Any command inhibits auto-sleep for
+> the session. First console session: run `wodle stat` as item 12's sanity.
 
 1. [ ] **hello_wodle VRES=600**: flash staged build → "2026" renders contiguous
        (mid-screen dead band gone). 1 flash, 30s.
@@ -47,6 +54,9 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 7e. [ ] **TXT chapters**: in a 第X章-style txt, press Confirm → chapter list
         (reader font, so CJK titles render) → select → jumps; reopen uses
         chapters.bin cache.
+7f. [ ] **GIF images in EPUB**: open the 84-GIF Chinese science EPUB
+        (控制论与科学方法论) → diagrams render; second open is faster
+        (.pxc cache). Interlaced GIFs render but log "caching disabled".
 8. [ ] **DU fast refresh**: page turns use DU LUT (auto-GC every 10th) — judge
        ghosting/quality; tune `FAST_REFRESHES_PER_GC` in `HalDisplay.cpp`.
 9. [ ] **Battery**: boot log `[WodleBattery] gauge OK (voltage=...)`; status bar %
@@ -85,6 +95,21 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## Blind-able next (no device needed)
 
+- [x] **Wave 4 (2026-06-06 eve, codex-prioritized)** — all DONE, see git log:
+      - `wodle` MSH debug commands (remote HIL driver; codex top pick) —
+        HalGPIO-edge injection, pure core host-tested (test/debugcmds/).
+      - EPUB robustness batch from the rocrp x4 fork: TextSanitizer
+        (test/textsanitizer/), XML parse-error recovery, explicit block
+        alignment (SECTION_FILE_VERSION 27).
+      - Non-blocking boot power debounce (fork adf7b31).
+      - Upstream sync b12839d1..master (the earlier "only fd5b807 remains"
+        note was WRONG — 6 portable fixes were still unsynced): streaming
+        .pxc image cache d9bcef7, CSS zero-alloc hot path b5b1f65,
+        underline-scan db94a86, chapter-start long-press f055fdd, progress
+        bar offset f04b8aa, Italian 2d65808. Skipped: webserver/KOSync-only.
+      - GIF decoder (AnimatedGIF 2.2.0 in extlib/, +7.9KB; test/gif/ is
+        pixel-exact incl. transparency + interlace-cache guard). HIL: open
+        the 84-GIF Chinese science EPUB → diagrams render (= new item 7f).
 - [x] **Sleep-screen progress banner** — DONE 2026-06-06: "73%  Title" plate
       at the bottom of dark/light/blank/wallpaper sleep screens when sleep
       came from the reader (Kindle-style). Progress stashed by the readers
@@ -255,9 +280,13 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
   cause never found — moot but curious)
 - ~~`ZipFile` dangling `const std::string&` path~~ — fixed 2026-06-06 (by-value
   + WODLE-PORT marker; test constructs from a temporary); worth upstreaming
-- Upstream sync: vendor snapshot = b12839d1 (2026-06-01) + cherry-picked
-  bd101b2 (EPUB %-encoded asset paths) + 19d51ec (de STR_INVERTED) on
-  2026-06-06; remaining upstream delta (fd5b807 t5s3 fork chore) is N/A.
+- Upstream sync: vendor snapshot = b12839d1 (2026-06-01) + cherry-picks
+  bd101b2/19d51ec + the FULL b12839d1..master portable delta (2026-06-06 eve:
+  d9bcef7 b5b1f65 db94a86 f055fdd f04b8aa 2d65808 — see git log f835062).
+  Remaining upstream delta is now genuinely N/A (fd5b807 t5s3 chore,
+  webserver/KOSync fixes for excluded subsystems, de-yaml churn).
+  Also carrying 6 commits from the rocrp x4 fork (TextSanitizer, XML
+  recovery, block alignment, debounce, GIF, serial-debug concept→MSH).
   `// WODLE-PORT:` marks every local edit; I18n regenerated via gen_i18n.py
   (upstream committed files stale)
 - Repo unpushed (no remote) — decide hosting if/when open-sourcing

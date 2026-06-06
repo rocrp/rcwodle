@@ -5,16 +5,17 @@ Port of [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-read
 UC8179C 528x792 EPD). Vendor snapshot + deltas: `vendor/VENDOR.md`. Plan:
 `docs/superpowers/plans/2026-06-05-crosspoint-port-plan.md` (repo root docs/).
 
-**Status: blind-port, compiles + links (3.44MB image, ~98KB headroom), zero
-HIL.** Built entirely while the device was away — expect bring-up iterations.
-Reclaim options if flash gets tight again: move the GBK table to SD, or drop
-the 8pt/10pt-bold CJK UI subsets. (Tried and rejected: 2bit+DEFLATE UI fonts
-came out larger than 1-bit raw; I18n --strip-unused already applied, −82KB.)
+**Status: blind-port, compiles + links (3,481,940 B image, ~56KB headroom),
+zero HIL.** Built entirely while the device was away — expect bring-up
+iterations. Reclaim options if flash gets tight again: move the GBK table to
+SD, or drop the 8pt/10pt-bold CJK UI subsets. (Tried and rejected:
+2bit+DEFLATE UI fonts came out larger than 1-bit raw; I18n --strip-unused
+already applied, −82KB.)
 
 ## Verify (blind-development loop)
 
 ```sh
-firmware/crosspoint/run_checks.sh        # target build + 158 host tests
+firmware/crosspoint/run_checks.sh        # target build + 196 host tests
 ```
 
 Host tests (gtest, `test/`): port shims with known-answer vectors (MD5/base64/
@@ -183,8 +184,24 @@ Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/
   and reboots, resets only on battery pull ("Not set" reappears). The
   status-bar clock is page-turn-fresh (upstream behavior; minute-fresh
   needs partial-window refresh — post-HIL).
+- **`wodle` MSH console command** (remote HIL driver, port/hal/WodleDebugCmds):
+  `wodle key <up|down|left|right|confirm|back|power> [holdMs]` injects at
+  HalGPIO edge level (power semantics hardware-faithful: short = CONFIRM,
+  `power 2500` = real hold-to-sleep); `wodle open <path>`, `wodle shot`
+  (BMP to SD), `wodle stat` (parseable one-liner), `wodle nosleep on|off`.
+  Any command latches a debug-session auto-sleep inhibit. Drive the device
+  over the WCH-Link UART console without touching it.
+- **EPUB robustness** (from the rocrp x4 fork): control chars in text are
+  sanitized to word boundaries (TextSanitizer); malformed-XHTML chapters keep
+  the pages built before the parse error; explicit CSS center/right alignment
+  survives forced left/justify. Plus upstream sync: streaming image cache
+  (d9bcef7), zero-alloc CSS hot path (b5b1f65), underline-scan fix (db94a86).
+- **GIF images in EPUBs**: AnimatedGIF-based static decode (first frame),
+  same scale/dither path as PNG; streaming cache with full-canvas/interlace
+  guards (interlaced GIFs render but skip caching). Covers stay JPG/PNG.
 - **Tilt / images-in-epub dithering**: stubbed or best-effort; JPEGDEC/
-  PNGdec are linked but image rendering is untested.
+  PNGdec/AnimatedGIF are linked; JPEG/PNG rendering untested on device (GIF
+  has a host pixel-exact suite, test/gif/).
 - **No WiFi features**: transfer/OPDS/KOReader-sync/OTA menus pruned or show
   "requires WiFi" message.
 - **esp_mac shim**: settings obfuscation key derived from bootloader bytes,
