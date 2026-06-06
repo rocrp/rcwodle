@@ -565,6 +565,11 @@ void loop() {
     RenderLock lock;
     ScreenshotUtil::takeScreenshot(renderer);
   }
+  if (WodleDebugCmds::consumePendingDump()) {
+    RenderLock lock;
+    WodleDebugCmds::emitFrameDump(display.getFrameBuffer(), display.getBufferSize(), display.getDisplayWidth(),
+                                  display.getDisplayHeight());
+  }
   {
     std::string debugOpenPath;
     if (WodleDebugCmds::consumePendingOpen(debugOpenPath)) {

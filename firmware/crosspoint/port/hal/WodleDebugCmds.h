@@ -26,6 +26,11 @@ namespace WodleDebugCmds
 bool dequeueKey(WodleDebugCmdCore::KeyInject &out); /* HalGPIO::update() */
 bool consumePendingOpen(std::string &path);         /* loop() */
 bool consumePendingShot();                          /* loop() */
+bool consumePendingDump();                          /* loop() */
+/* Stream the 1-bit framebuffer over the console as base64 between
+ * WODLE_DUMP_BEGIN/END markers (tools/wodle_console.py decodes to PNG).
+ * Main thread only — reads the live framebuffer. */
+void emitFrameDump(const uint8_t *fb, uint32_t size, int width, int height);
 /* True while auto-sleep should be held off (debug session or nosleep on). */
 bool sleepInhibited();
 } // namespace WodleDebugCmds

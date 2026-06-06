@@ -132,4 +132,44 @@ class InjectionTracker {
   bool pressPending_ = false;
 };
 
+/* --- framebuffer dump helpers (`wodle dump`) -------------------------------
+ * The 1-bit panel buffer is streamed over the console as base64 lines between
+ * WODLE_DUMP_BEGIN/END markers with a CRC32 so the host driver
+ * (tools/wodle_console.py) can verify a noisy UART capture. Pure code so the
+ * host suite pins the exact encoding the Python decoder expects. */
+
+/* Standard CRC-32 (IEEE 802.3, reflected, poly 0xEDB88320), bitwise — no
+ * table; ~52KB frame = ~420k iterations, negligible at MCU clock. */
+inline uint32_t crc32(const uint8_t* data, size_t len, uint32_t crc = 0xFFFFFFFFu) {
+  for (size_t i = 0; i < len; i++) {
+    crc ^= data[i];
+    for (int b = 0; b < 8; b++) {
+      crc = (crc >> 1) ^ (0xEDB88320u & (0u - (crc & 1u)));
+    }
+  }
+  return crc ^ 0xFFFFFFFFu;
+}
+
+/* Bytes of input consumed per base64 output line (76 chars). */
+constexpr int BASE64_LINE_BYTES = 57;
+
+/* Encode up to BASE64_LINE_BYTES bytes; out must hold 4*ceil(n/3)+1 chars.
+ * Returns the number of chars written (NUL appended, not counted). */
+inline int encodeBase64Line(const uint8_t* in, int n, char* out) {
+  static const char kAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  int o = 0;
+  for (int i = 0; i < n; i += 3) {
+    const uint32_t b0 = in[i];
+    const uint32_t b1 = (i + 1 < n) ? in[i + 1] : 0;
+    const uint32_t b2 = (i + 2 < n) ? in[i + 2] : 0;
+    const uint32_t triple = (b0 << 16) | (b1 << 8) | b2;
+    out[o++] = kAlphabet[(triple >> 18) & 0x3F];
+    out[o++] = kAlphabet[(triple >> 12) & 0x3F];
+    out[o++] = (i + 1 < n) ? kAlphabet[(triple >> 6) & 0x3F] : '=';
+    out[o++] = (i + 2 < n) ? kAlphabet[triple & 0x3F] : '=';
+  }
+  out[o] = '\0';
+  return o;
+}
+
 }  // namespace WodleDebugCmdCore

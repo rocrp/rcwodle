@@ -31,6 +31,7 @@ namespace
 KeyQueue s_keyQueue;
 char s_pendingOpen[256] = {0}; /* empty = none */
 bool s_pendingShot = false;
+bool s_pendingDump = false;
 bool s_debugSession = false; /* latched by any command except `stat` */
 bool s_noSleepForced = false;
 
@@ -129,6 +130,17 @@ int cmdShot()
     return 0;
 }
 
+int cmdDump()
+{
+    markDebugSession();
+    {
+        CriticalSection cs;
+        s_pendingDump = true;
+    }
+    /* the dump itself prints from the main loop within ~1 frame */
+    return 0;
+}
+
 int cmdStat()
 {
     /* Reads only cached/thread-safe sources — never touches the renderer
@@ -192,12 +204,13 @@ static int wodle(int argc, char **argv)
     if (std::strcmp(argv[1], "key") == 0) return cmdKey(argc - 2, argv + 2);
     if (std::strcmp(argv[1], "open") == 0) return cmdOpen(argc - 2, argv + 2);
     if (std::strcmp(argv[1], "shot") == 0) return cmdShot();
+    if (std::strcmp(argv[1], "dump") == 0) return cmdDump();
     if (std::strcmp(argv[1], "stat") == 0) return cmdStat();
     if (std::strcmp(argv[1], "nosleep") == 0) return cmdNoSleep(argc - 2, argv + 2);
     rt_kprintf("wodle: unknown subcommand '%s'\n", argv[1]);
     return -1;
 }
-MSH_CMD_EXPORT(wodle, CrossPoint debug driver - key/open/shot/stat/nosleep);
+MSH_CMD_EXPORT(wodle, CrossPoint debug driver - key/open/shot/dump/stat/nosleep);
 
 namespace WodleDebugCmds
 {
@@ -223,6 +236,29 @@ bool consumePendingShot()
     if (!s_pendingShot) return false;
     s_pendingShot = false;
     return true;
+}
+
+bool consumePendingDump()
+{
+    CriticalSection cs;
+    if (!s_pendingDump) return false;
+    s_pendingDump = false;
+    return true;
+}
+
+void emitFrameDump(const uint8_t *fb, const uint32_t size, const int width, const int height)
+{
+    using WodleDebugCmdCore::BASE64_LINE_BYTES;
+    const uint32_t crc = WodleDebugCmdCore::crc32(fb, size);
+    rt_kprintf("WODLE_DUMP_BEGIN w=%d h=%d bytes=%u crc32=%08X\n", width, height, (unsigned)size, (unsigned)crc);
+    char line[(BASE64_LINE_BYTES + 2) / 3 * 4 + 1];
+    for (uint32_t off = 0; off < size; off += BASE64_LINE_BYTES)
+    {
+        const int n = (size - off < (uint32_t)BASE64_LINE_BYTES) ? (int)(size - off) : BASE64_LINE_BYTES;
+        WodleDebugCmdCore::encodeBase64Line(fb + off, n, line);
+        rt_kprintf("%s\n", line);
+    }
+    rt_kprintf("WODLE_DUMP_END\n");
 }
 
 bool sleepInhibited()

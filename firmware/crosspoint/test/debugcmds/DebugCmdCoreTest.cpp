@@ -132,6 +132,36 @@ TEST(InjectionTracker, NonPowerHoldNeverConfirms) {
   EXPECT_FALSE(e.synthesizeConfirm);
 }
 
+TEST(FrameDump, Crc32KnownVectors) {
+  // Standard CRC-32 (IEEE): the canonical "123456789" check value.
+  const char* check = "123456789";
+  EXPECT_EQ(crc32(reinterpret_cast<const uint8_t*>(check), 9), 0xCBF43926u);
+  EXPECT_EQ(crc32(nullptr, 0), 0x00000000u);
+  const uint8_t zero[4] = {0, 0, 0, 0};
+  EXPECT_EQ(crc32(zero, 4), 0x2144DF1Cu);
+}
+
+TEST(FrameDump, Base64KnownVectors) {
+  char out[80];
+  // RFC 4648 test vectors.
+  EXPECT_EQ(encodeBase64Line(reinterpret_cast<const uint8_t*>("Man"), 3, out), 4);
+  EXPECT_STREQ(out, "TWFu");
+  encodeBase64Line(reinterpret_cast<const uint8_t*>("Ma"), 2, out);
+  EXPECT_STREQ(out, "TWE=");
+  encodeBase64Line(reinterpret_cast<const uint8_t*>("M"), 1, out);
+  EXPECT_STREQ(out, "TQ==");
+  encodeBase64Line(reinterpret_cast<const uint8_t*>("foobar"), 6, out);
+  EXPECT_STREQ(out, "Zm9vYmFy");
+}
+
+TEST(FrameDump, FullLineIs76Chars) {
+  uint8_t buf[BASE64_LINE_BYTES];
+  for (int i = 0; i < BASE64_LINE_BYTES; i++) buf[i] = static_cast<uint8_t>(i);
+  char out[80];
+  EXPECT_EQ(encodeBase64Line(buf, BASE64_LINE_BYTES, out), 76);  // 57 bytes -> 76 chars, no padding
+  EXPECT_EQ(strchr(out, '='), nullptr);
+}
+
 TEST(InjectionTracker, StartMsExposedForHeldTimeBackdating) {
   InjectionTracker t;
   t.begin({CORE_BTN_POWER, 2000}, 12345);
