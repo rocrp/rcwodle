@@ -204,7 +204,9 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       per schematic). Gated on TWO HIL facts: does the RTC domain survive our
       hibernate (PMU LDOs off)? + needs a manual time-set UI (upstream only
       has UTC-offset + NTP — no editor). Don't build the UI before the RTC
-      retention answer.
+      retention answer. ALSO unblocks: **reading statistics** (daily time/
+      pages/streaks need dates; without RTC stats degrade to weak lifetime
+      counters — assessed 2026-06-06, deferred behind this item).
 - [x] Real wakeup-reason — IMPLEMENTED BLIND 2026-06-06: getWakeupReason reads
       PMU WSR (PIN0 = PA34 hibernate wake → PowerButton; latched once + WCR
       cleared); verifyPowerButtonWakeup ports the upstream anti-pocket-wake

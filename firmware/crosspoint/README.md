@@ -161,6 +161,15 @@ Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/
 - **PSRAM**: the 8MB OPI PSRAM is probed at boot (WodlePsram) and serves
   permanent carve-outs for big buffers (first tenant: the 4-gray AA planes);
   SRAM heap stays the system allocator.
+- **"Time left in chapter"**: Kindle-style reading-speed estimate next to
+  the battery after ~3 page turns (Settings → Status Bar, default on).
+- **Sleep-screen progress banner**: "73%  Title" plate when sleep came from
+  the reader (Settings → Display, default on; skipped on greyscale
+  wallpapers).
+- **Low-battery protection**: warn at ≤5%, forced hibernate at ≤2%
+  (suppressed on USB power). Upstream has none.
+- **EPD timing logs**: every refresh prints write/refresh/sync ms (DU/GC) —
+  the input for the deferred LCDC data-path decision.
 - **Clock**: none (status bar clock hidden).
 - **Tilt / images-in-epub dithering**: stubbed or best-effort; JPEGDEC/
   PNGdec are linked but image rendering is untested.
