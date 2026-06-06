@@ -13,6 +13,8 @@
 
 #include <Arduino.h>
 
+#include "WodleBattery.h"
+
 class HalGPIO
 {
 public:
@@ -42,8 +44,10 @@ public:
     void startDeepSleep();
     void verifyPowerButtonWakeup(uint16_t requiredDurationMs, bool shortPressAllowed);
 
-    bool isUsbConnected() const { return false; } /* TODO(HIL): VBUS via PMIC */
-    bool wasUsbStateChanged() const { return false; }
+    /* USB presence from the AW32001 charger's PG_STAT (1s-cached poll);
+     * drives the battery-icon charging bolt + plug/unplug repaints. */
+    bool isUsbConnected() const { return WodleBattery::usbPowered(); }
+    bool wasUsbStateChanged() const { return WodleBattery::usbStateChanged(); }
 
     enum class WakeupReason
     {
@@ -54,7 +58,11 @@ public:
     };
     /* PMU wakeup-status register: PIN0 (PA34, the pin startDeepSleep arms)
      * set -> woke from hibernate via the power button; cold boot/reset ->
-     * Other. (AfterFlash/AfterUSBPower need USB detect — TODO(HIL).) */
+     * Other. AfterUSBPower mapping is DELIBERATELY deferred even though USB
+     * detect now works (AW32001 PG_STAT): a post-sftool-flash boot also has
+     * VBUS present and would be misclassified -> insta-sleep after every
+     * flash, killing the recovery loop. Needs a HIL-verified reset-cause
+     * signature to tell "USB plug woke us" from "reset with USB attached". */
     WakeupReason getWakeupReason() const;
 
     static constexpr uint8_t BTN_BACK = 0;

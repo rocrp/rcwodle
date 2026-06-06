@@ -50,6 +50,9 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
         Settings → Status Bar → Temperature (Hide/°C/°F) + Humidity rows appear
         only when the sensor responds. Fail mode: `not responding` → addr 0x38
         on I2C2; sanity-check values against a room thermometer.
+9c. [ ] **USB charging bolt**: boot log `[WodleBattery] charger OK (id=0x49 ...)`;
+        plug USB → lightning bolt in the battery icon within ~1s (unplug →
+        gone). Verify a plug/unplug while reading repaints without a page turn.
 10. [ ] **Hibernate**: PWR-hold → sleep → PA34 press wakes (edge mode). If no wake:
         USB recovery still works; revisit `HalGPIO::startDeepSleep` wake polarity.
         Also: short TAP wake should drop back to hibernate (anti-pocket-wake,
@@ -127,7 +130,13 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       set ships 12/14/16/18 (XL works once an SD font is selected); Latin
       sets buildable with upstream `build-sd-fonts.py` (16 families in
       sd-fonts.yaml). Builtin-only XL still falls back to 16pt by design.
-- [ ] USB detect (VBUS via PMIC/PA41 PWR_INT?) → charging UI + wake reason
+- [x] USB detect → charging UI — DONE 2026-06-06 (HIL = 9c): AW32001 PG_STAT
+      (reg 0x08 bit1, chip-ID-verified probe) behind HalGPIO::isUsbConnected/
+      wasUsbStateChanged (1s-cached poll + edge detect in WodleBattery);
+      upstream battery-bolt UI + plug/unplug repaint now live. The **wake
+      reason** half stays open ON PURPOSE: post-flash boots also have VBUS →
+      AfterUSBPower would insta-sleep after every sftool flash; needs a
+      HIL-verified reset-cause signature first (see HalGPIO.h comment).
 - [ ] SF32 on-chip RTC → HalClock (status-bar clock; 32.768kHz crystal on PA22
       per schematic). Gated on TWO HIL facts: does the RTC domain survive our
       hibernate (PMU LDOs off)? + needs a manual time-set UI (upstream only
