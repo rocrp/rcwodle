@@ -96,7 +96,13 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       9 tests: full Epub::load over fixture — opf metadata/spine/toc, item
       streaming, CSS discovery, metadata-cache reload; converter stubs keep
       JPEGDEC/PNGdec out — "deps balloon" concern was obsolete)
-- [ ] PSRAM (8MB) heap region for big-EPUB headroom (only if HIL shows pressure)
+- [x] PSRAM beachhead — DONE 2026-06-06: WodlePsram (boot probe w/ 64KB-stride
+      write/readback + permanent carve-out bump allocator over the dead 8MB
+      @0x60000000; SDK inits the controller every boot via BSP_USING_PSRAM).
+      First tenant: 4-gray AA planes (2×52KB) now PSRAM-backed w/ SRAM-heap
+      fallback; PSRAM line on the Diagnostics screen. Full heap integration
+      (rt_memheap) stays deferred ON PURPOSE — 52x kernel is partly
+      ROM-linked, config skew risk; revisit only if HIL shows SRAM pressure.
 - [x] BT/BLE assessment — ASSESSED 2026-06-06, verdict: **skip BLE transfer for
       v1; assess USB-MSC post-HIL instead.**
       - Feasible in principle: 52x BLE host stack (sibles) + LCPU boot are SDK

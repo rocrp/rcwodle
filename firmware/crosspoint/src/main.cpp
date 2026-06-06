@@ -38,6 +38,7 @@
 #include "images/LoadingIcon.h"
 #include "WodleAht20.h"       // WODLE-PORT
 #include "WodleFrontlight.h"  // WODLE-PORT
+#include "WodlePsram.h"       // WODLE-PORT
 #include "util/ButtonNavigator.h"
 #include "util/ScreenshotUtil.h"
 
@@ -327,6 +328,7 @@ void setup() {
 #endif
 
   HalSystem::begin();
+  WodlePsram::init();  // WODLE-PORT: probe the 8MB PSRAM; big buffers carve from it
 
   // Read-and-clear so a panic later in setup() doesn't loop into silent reboot.
   // Bound the target range too — RTC_NOINIT memory is uninitialized on cold boot.

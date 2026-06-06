@@ -20,6 +20,7 @@
 #include <rtthread.h>
 
 #include "FrameBlit.h"
+#include "WodlePsram.h"
 #include "bf0_hal.h"
 
 #define PIN_EPD_RST 0
@@ -371,25 +372,36 @@ void HalDisplay::deepSleep()
  * LUT, and only flagged cells get driven: (1,1)->dark grey, (1,0)->light
  * grey, (0,0)->no-op. Afterwards both controller RAMs hold flag planes, so
  * the reader calls cleanupGrayscaleBuffers(bw) to restore the differential
- * base (it does this after restoring its BW framebuffer). Heap cost: 2x52KB
- * only while a gray pass is in flight; allocation failure degrades to a
- * plain BW page (AA pass skipped). ZERO HIL yet — waveform quality is HIL
- * checklist material. */
-static uint8_t *s_grayMsb = nullptr;
+ * base (it does this after restoring its BW framebuffer). Plane backing
+ * comes from the otherwise-unused 8MB PSRAM when the boot probe passed
+ * (permanent carve-out, reused across passes) and falls back to 2x52KB of
+ * SRAM heap only while a pass is in flight; allocation failure degrades to
+ * a plain BW page (AA pass skipped). ZERO HIL yet — waveform quality is
+ * HIL checklist material. */
+static uint8_t *s_grayMsb = nullptr; /* staged-plane pointer (null = not staged) */
 static uint8_t *s_grayLsb = nullptr;
+static uint8_t *s_grayMsbPsram = nullptr; /* permanent PSRAM backing, alloc'd once */
+static uint8_t *s_grayLsbPsram = nullptr;
 
 static void freeGrayPlanes()
 {
-    free(s_grayMsb);
-    free(s_grayLsb);
+    /* PSRAM backings persist (carve-outs are never freed); only heap
+     * fallbacks are returned. Clearing the staged pointers is what marks
+     * the planes as consumed either way. */
+    if (s_grayMsb && s_grayMsb != s_grayMsbPsram) free(s_grayMsb);
+    if (s_grayLsb && s_grayLsb != s_grayLsbPsram) free(s_grayLsb);
     s_grayMsb = nullptr;
     s_grayLsb = nullptr;
 }
 
-static bool stageGrayPlane(uint8_t *&slot, const uint8_t *plane)
+static bool stageGrayPlane(uint8_t *&slot, uint8_t *&psramBacking, const uint8_t *plane)
 {
     if (!plane) return false;
-    if (!slot) slot = static_cast<uint8_t *>(malloc(HalDisplay::BUFFER_SIZE));
+    if (!slot)
+    {
+        if (!psramBacking) psramBacking = static_cast<uint8_t *>(WodlePsram::alloc(HalDisplay::BUFFER_SIZE));
+        slot = psramBacking ? psramBacking : static_cast<uint8_t *>(malloc(HalDisplay::BUFFER_SIZE));
+    }
     if (!slot)
     {
         rt_kprintf("[HalDisplay] gray plane alloc failed, skipping AA pass\n");
@@ -401,12 +413,12 @@ static bool stageGrayPlane(uint8_t *&slot, const uint8_t *plane)
 
 void HalDisplay::copyGrayscaleLsbBuffers(const uint8_t *lsbBuffer)
 {
-    if (!stageGrayPlane(s_grayLsb, lsbBuffer)) freeGrayPlanes();
+    if (!stageGrayPlane(s_grayLsb, s_grayLsbPsram, lsbBuffer)) freeGrayPlanes();
 }
 
 void HalDisplay::copyGrayscaleMsbBuffers(const uint8_t *msbBuffer)
 {
-    if (!stageGrayPlane(s_grayMsb, msbBuffer)) freeGrayPlanes();
+    if (!stageGrayPlane(s_grayMsb, s_grayMsbPsram, msbBuffer)) freeGrayPlanes();
 }
 
 void HalDisplay::copyGrayscaleBuffers(const uint8_t *lsbBuffer, const uint8_t *msbBuffer)

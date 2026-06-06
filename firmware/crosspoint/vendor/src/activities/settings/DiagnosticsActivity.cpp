@@ -9,6 +9,7 @@
 #include <WodleAht20.h>
 #include <WodleBattery.h>
 #include <WodleFrontlight.h>
+#include <WodlePsram.h>
 #include <WodleTouch.h>
 
 #include <cstdio>
@@ -91,6 +92,13 @@ void DiagnosticsActivity::render(RenderLock&&) {
 
   snprintf(line, sizeof(line), "Uptime: %lus   Heap free: %u KB", millis() / 1000,
            (unsigned)(ESP.getFreeHeap() / 1024));
+  put(line);
+
+  if (WodlePsram::available()) {
+    snprintf(line, sizeof(line), "PSRAM: OK, %u KB free", (unsigned)(WodlePsram::remaining() / 1024));
+  } else {
+    snprintf(line, sizeof(line), "PSRAM: probe FAILED");
+  }
   put(line);
 
   if (WodleBattery::available()) {
