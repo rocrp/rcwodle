@@ -625,6 +625,22 @@ void loop() {
     activityManager.requestUpdate();
   }
 
+  // WODLE-PORT: surface storage write failures once per boot. SD full /
+  // write-protected otherwise reads as mysterious slowness: every cache
+  // write fails and every book open re-paginates from scratch.
+  static bool storageWarned = false;
+  static unsigned long lastStorageCheck = 0;
+  if (!storageWarned && millis() - lastStorageCheck >= 10000) {
+    lastStorageCheck = millis();
+    if (HalStorage::hadWriteFailure()) {
+      storageWarned = true;
+      LOG_ERR("MAIN", "Storage write failure detected — warning user");
+      GUI.drawPopup(renderer, tr(STR_STORAGE_WRITE_FAILED));
+      delay(2500);
+      activityManager.requestUpdate();  // repaint over the popup
+    }
+  }
+
   // WODLE-PORT: persist reading stats at most every 5 minutes while dirty
   // (sleep also saves, so a crash loses bounded data).
   static unsigned long lastStatsSave = millis();

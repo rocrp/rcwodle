@@ -270,6 +270,46 @@ TEST(Render, BrowserListMockupWithChineseFilenames) {
   dumpPgm("browser_list_mock");
 }
 
+// WODLE-PORT: filename torture — the browser/recents draw whatever the SD
+// card throws at them through uiFontFor + drawText + getTextWidth. None of
+// these may crash or scribble: 200-char names, glyphless emoji, malformed
+// UTF-8 (truncated multibyte from a FAT name), control bytes, RTL (MiniBidi),
+// empty strings, full-width forms.
+TEST(Render, TortureFilenames) {
+  std::string longLatin(220, 'x');
+  longLatin += ".epub";
+  std::string truncatedUtf8 = "broken\xE4\xBD";        // cut-off multibyte
+  std::string controls = std::string("ctl\x01\x1F\x7F") + "name.txt";
+
+  const char* cases[] = {
+      longLatin.c_str(),
+      truncatedUtf8.c_str(),
+      controls.c_str(),
+      "\xF0\x9F\x93\x9A emoji book.epub",          // U+1F4DA, no glyph anywhere
+      "\xD7\xA9\xD7\x9C\xD7\x95\xD7\x9D.txt",      // Hebrew (RTL, MiniBidi path)
+      "\xEF\xBC\xA1\xEF\xBC\xA2\xEF\xBC\xA3.txt",  // full-width ABC
+      "",                                       // empty
+      ".",                                      // degenerate
+      "a",                                      // single char
+  };
+
+  renderer.clearScreen();
+  int y = 30;
+  for (const char* name : cases) {
+    const int font = renderer.uiFontFor(UI_10_FONT_ID, name);
+    // Width query is what the themes use to truncate — must be sane.
+    const int w = renderer.getTextWidth(font, name);
+    EXPECT_GE(w, 0);
+    renderer.drawText(font, 20, y, name, true);
+    // Deliberately also draw starting past the right edge (clip path).
+    renderer.drawText(font, 700, y, name, true);
+    y += 26;
+  }
+  // The long-Latin row alone guarantees ink; the run not crashing is the test.
+  EXPECT_GT(inkPixels(), 200u);
+  dumpPgm("torture_filenames");
+}
+
 // Mock of the TXT chapter-selection screen — title row + list rows with CJK
 // titles drawn with the SD (reader) font, like TxtReaderChapterSelectionActivity.
 // Uses the production LXGWWenKai font (full CJK coverage) when it has been

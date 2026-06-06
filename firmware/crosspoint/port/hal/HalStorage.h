@@ -15,6 +15,12 @@ class HalStorage {
   HalStorage();
   bool begin();
   bool ready() const;
+  /* WODLE-PORT: sticky write-failure latch — set on any failed open-for-write
+   * or short write. The main loop surfaces it once per boot (SD full / write-
+   * protected reads as mysterious slowness otherwise: every cache write fails
+   * and every open re-paginates). */
+  static bool hadWriteFailure();
+  static void noteWriteFailure();
   std::vector<String> listFiles(const char* path = "/", int maxFiles = 200);
   // Read the entire file at `path` into a String. Returns empty string on failure.
   String readFile(const char* path);

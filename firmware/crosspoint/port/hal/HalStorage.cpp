@@ -122,6 +122,8 @@ size_t HalFile::write(const void *buf, size_t count)
 {
     if (!impl || impl->fd < 0) return 0;
     int n = ::write(impl->fd, buf, count);
+    /* WODLE-PORT: a short write = SD full / write-protected / IO error */
+    if (n < 0 || (size_t)n != count) HalStorage::noteWriteFailure();
     return n < 0 ? 0 : (size_t)n;
 }
 
@@ -373,7 +375,17 @@ bool HalStorage::openFileForRead(const char *m, const std::string &p, HalFile &f
 bool HalStorage::openFileForRead(const char *m, const String &p, HalFile &f) { return openChecked(m, p.c_str(), O_RDONLY, f); }
 bool HalStorage::openFileForWrite(const char *m, const char *p, HalFile &f)
 {
-    return openChecked(m, p, O_WRONLY | O_CREAT | O_TRUNC, f);
+    const bool ok = openChecked(m, p, O_WRONLY | O_CREAT | O_TRUNC, f);
+    if (!ok) noteWriteFailure();  // WODLE-PORT: see hadWriteFailure()
+    return ok;
 }
+
+/* WODLE-PORT: sticky write-failure latch (see header) */
+namespace
+{
+bool s_writeFailureSeen = false;
+}
+bool HalStorage::hadWriteFailure() { return s_writeFailureSeen; }
+void HalStorage::noteWriteFailure() { s_writeFailureSeen = true; }
 bool HalStorage::openFileForWrite(const char *m, const std::string &p, HalFile &f) { return openFileForWrite(m, p.c_str(), f); }
 bool HalStorage::openFileForWrite(const char *m, const String &p, HalFile &f) { return openFileForWrite(m, p.c_str(), f); }
