@@ -1088,6 +1088,7 @@ void EpubReaderActivity::renderStatusBar() const {
     title = epub->getTitle();
   }
 
+  APP_STATE.lastBookProgress = static_cast<uint8_t>(bookProgress);  // WODLE-PORT: sleep overlay
   GUI.drawStatusBar(renderer, bookProgress, currentPage, pageCount, title, 0, textYOffset);
 }
 

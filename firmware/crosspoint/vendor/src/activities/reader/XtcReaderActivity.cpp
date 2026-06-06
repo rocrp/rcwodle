@@ -200,6 +200,7 @@ void XtcReaderActivity::renderStatusBarOverlay(const StatusBarOverlayPosition po
   const int displayPage = static_cast<int>(currentPage) + 1;
   const float progress = pageCount > 0 ? (static_cast<float>(displayPage) * 100.0f) / pageCount : 0.0f;
   const auto pageInfo = getStatusBarInfo();
+  APP_STATE.lastBookProgress = static_cast<uint8_t>(progress);  // WODLE-PORT: sleep overlay
   GUI.drawStatusBar(renderer, progress, pageInfo.currentPage, pageInfo.pageCount, pageInfo.title, paddingBottom);
 }
 

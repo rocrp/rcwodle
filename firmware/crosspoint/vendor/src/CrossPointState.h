@@ -16,6 +16,10 @@ class CrossPointState {
   uint8_t readerActivityLoadCount = 0;
   bool lastSleepFromReader = false;
   bool showBootScreen = true;
+  // WODLE-PORT: last seen book progress %, stashed by the readers on each
+  // status-bar paint (RAM) and persisted by the sleep path's saveToFile()
+  // for the sleep-screen progress overlay.
+  uint8_t lastBookProgress = 0;
 
   // Returns true if idx was shown within the last checkCount picks.
   // Walks backwards from the most recently written slot.

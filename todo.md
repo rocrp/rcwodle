@@ -80,6 +80,13 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## Blind-able next (no device needed)
 
+- [x] **Sleep-screen progress banner** — DONE 2026-06-06: "73%  Title" plate
+      at the bottom of dark/light/blank/wallpaper sleep screens when sleep
+      came from the reader (Kindle-style). Progress stashed by the readers
+      into APP_STATE.lastBookProgress (persisted by the existing sleep-path
+      save); title from recents front (CJK via uiFontFor SD fallback).
+      Toggle: Settings → Display → Sleep Screen Progress (default on).
+      Skipped on greyscale wallpapers (gray pass would re-drive its cells).
 - [x] **"Time left in chapter"** — DONE 2026-06-06: Kindle-style reading-speed
       estimate right of the battery ("12 min left"/剩余12分钟), toggle in
       Settings → Status Bar (default on). Pure estimator in port/hal/

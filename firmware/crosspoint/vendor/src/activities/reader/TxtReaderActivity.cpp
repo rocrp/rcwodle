@@ -467,6 +467,7 @@ void TxtReaderActivity::renderStatusBar() const {
   if (SETTINGS.statusBarTitle != CrossPointSettings::STATUS_BAR_TITLE::HIDE_TITLE) {
     title = txt->getTitle();
   }
+  APP_STATE.lastBookProgress = static_cast<uint8_t>(progress);  // WODLE-PORT: sleep overlay
   GUI.drawStatusBar(renderer, progress, currentPage + 1, totalPages, title);
 }
 

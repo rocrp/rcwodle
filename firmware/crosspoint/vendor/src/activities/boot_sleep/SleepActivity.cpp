@@ -11,6 +11,7 @@
 
 #include "CrossPointSettings.h"
 #include "CrossPointState.h"
+#include "RecentBooksStore.h"  // WODLE-PORT: title for the progress overlay
 #include "activities/reader/ReaderUtils.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -159,6 +160,8 @@ void SleepActivity::renderDefaultSleepScreen() const {
   renderer.drawCenteredText(UI_10_FONT_ID, pageHeight / 2 + 70, tr(STR_CROSSPOINT), true, EpdFontFamily::BOLD);
   renderer.drawCenteredText(SMALL_FONT_ID, pageHeight / 2 + 95, tr(STR_SLEEPING));
 
+  drawProgressOverlay();  // WODLE-PORT (inverts along with the rest below)
+
   // Make sleep screen dark unless light is selected in settings
   if (SETTINGS.sleepScreen != CrossPointSettings::SLEEP_SCREEN_MODE::LIGHT) {
     renderer.invertScreen();
@@ -218,6 +221,11 @@ void SleepActivity::renderBitmapSleepScreen(const Bitmap& bitmap) const {
   if (SETTINGS.sleepScreenCoverFilter == CrossPointSettings::SLEEP_SCREEN_COVER_FILTER::INVERTED_BLACK_AND_WHITE) {
     renderer.invertScreen();
   }
+
+  // WODLE-PORT: banner after the filters so it stays white-on-black over any
+  // wallpaper. Skipped for greyscale wallpapers — the gray pass below would
+  // re-drive the banner's cells with image grays.
+  if (!hasGreyscale) drawProgressOverlay();
 
   renderer.displayBuffer(HalDisplay::HALF_REFRESH);
 
@@ -326,5 +334,32 @@ void SleepActivity::renderLastScreenSleepScreen() const {
 
 void SleepActivity::renderBlankSleepScreen() const {
   renderer.clearScreen();
+  drawProgressOverlay();  // WODLE-PORT
   renderer.displayBuffer(HalDisplay::HALF_REFRESH);
+}
+
+// WODLE-PORT: "73%  Title" banner at the bottom of the sleep screen, shown
+// when sleep came from the reader. Title falls back to the SD reading font
+// for CJK (uiFontFor), same as the browser/recents lists.
+void SleepActivity::drawProgressOverlay() const {
+  if (!SETTINGS.sleepScreenProgress || !APP_STATE.lastSleepFromReader) return;
+  const auto& books = RECENT_BOOKS.getBooks();
+  if (books.empty() || books.front().title.empty()) return;
+
+  char label[160];
+  snprintf(label, sizeof(label), "%u%%  %s", (unsigned)APP_STATE.lastBookProgress, books.front().title.c_str());
+
+  const int pageWidth = renderer.getScreenWidth();
+  const int fontId = renderer.uiFontFor(UI_10_FONT_ID, label);
+  const std::string text = renderer.truncatedText(fontId, label, pageWidth - 120);
+  const int textWidth = renderer.getTextWidth(fontId, text.c_str());
+  const int lineHeight = renderer.getLineHeight(fontId);
+
+  const int boxW = textWidth + 40;
+  const int boxH = lineHeight + 14;
+  const int boxX = (pageWidth - boxW) / 2;
+  const int boxY = renderer.getScreenHeight() - boxH - 28;
+  renderer.fillRect(boxX, boxY, boxW, boxH, false); /* white plate */
+  renderer.drawRect(boxX, boxY, boxW, boxH, true);
+  renderer.drawText(fontId, boxX + 20, boxY + 7, text.c_str());
 }
