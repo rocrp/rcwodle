@@ -95,6 +95,10 @@ class BookMetadataCache {
   bool endContentOpfPass();
   bool beginTocPass();
   void createTocEntry(const std::string& title, const std::string& href, const std::string& anchor, uint8_t level);
+  // WODLE-PORT: when both nav and NCX fail, synthesize one flat TOC entry per
+  // spine item (titled from the href filename) so chapter navigation still
+  // works. Call between beginTocPass() and endTocPass() only.
+  bool createFallbackTocFromSpine();
   bool endTocPass();
   bool endWrite();
   bool cleanupTmpFiles() const;

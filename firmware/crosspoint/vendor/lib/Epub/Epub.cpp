@@ -457,7 +457,11 @@ bool Epub::load(const bool buildIfMissing, const bool skipLoadingCss) {
 
   if (!tocParsed) {
     LOG_ERR("EBP", "Warning: Could not parse any TOC format");
-    // Continue anyway - book will work without TOC
+    // WODLE-PORT: synthesize a flat per-spine TOC so the chapter list and
+    // chapter-skip gestures still work on books with missing/broken nav+NCX.
+    if (bookMetadataCache->createFallbackTocFromSpine()) {
+      LOG_INF("EBP", "Synthesized fallback TOC from %d spine items", bookMetadataCache->getSpineCount());
+    }
   }
 
   if (!bookMetadataCache->endTocPass()) {

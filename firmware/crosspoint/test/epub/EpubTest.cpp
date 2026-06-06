@@ -102,6 +102,35 @@ TEST_F(EpubFixture, ReloadsFromMetadataCache) {
   EXPECT_EQ(again.getTocItemsCount(), epub_->getTocItemsCount());
 }
 
+// WODLE-PORT: books with neither nav nor NCX get a synthesized flat TOC from
+// the spine (filename-derived titles) so chapter navigation still works.
+TEST(EpubFallbackToc, SynthesizedFromSpine) {
+  const std::string cacheDir = std::string(::testing::TempDir()) + "epub_cache_fallback_toc";
+  std::filesystem::remove_all(cacheDir);
+  std::filesystem::create_directories(cacheDir);
+
+  Epub epub(FIXTURE_EPUB_NOTOC, cacheDir);
+  ASSERT_TRUE(epub.load());
+
+  ASSERT_EQ(epub.getSpineItemsCount(), 3);
+  ASSERT_EQ(epub.getTocItemsCount(), 3);
+
+  const auto first = epub.getTocItem(0);
+  EXPECT_EQ(first.title, "chapter01");
+  EXPECT_EQ(first.spineIndex, 0);
+  EXPECT_EQ(first.level, 0);
+
+  EXPECT_EQ(epub.getTocItem(1).title, "chapter02");
+  EXPECT_EQ(epub.getTocItem(1).spineIndex, 1);
+
+  // Percent-encoded href -> decoded, extension stripped.
+  EXPECT_EQ(epub.getTocItem(2).title, "the end");
+  EXPECT_EQ(epub.getTocItem(2).spineIndex, 2);
+
+  // Spine->toc reverse mapping works for the synthesized entries.
+  EXPECT_EQ(epub.getTocIndexForSpineIndex(2), 2);
+}
+
 TEST(EpubErrors, MissingFileFailsLoad) {
   Epub missing("/nonexistent/book.epub", std::string(::testing::TempDir()) + "epub_cache_missing");
   EXPECT_FALSE(missing.load());

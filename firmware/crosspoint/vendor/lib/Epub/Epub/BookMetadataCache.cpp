@@ -5,11 +5,14 @@
 #include <ZipFile.h>
 
 #include <deque>
+#include <vector>
 
 #include "FsHelpers.h"
 
 namespace {
-constexpr uint8_t BOOK_CACHE_VERSION = 7;
+// WODLE-PORT: 8 = synthesized fallback TOC for broken-nav books — re-index so
+// already-cached books gain it.
+constexpr uint8_t BOOK_CACHE_VERSION = 8;
 constexpr char bookBinFile[] = "/book.bin";
 constexpr char tmpSpineBinFile[] = "/spine.bin.tmp";
 constexpr char tmpTocBinFile[] = "/toc.bin.tmp";
@@ -367,6 +370,42 @@ void BookMetadataCache::createTocEntry(const std::string& title, const std::stri
   const TocEntry entry(title, href, anchor, level, spineIndex);
   writeTocEntry(tocFile, entry);
   tocCount++;
+}
+
+// WODLE-PORT: see header. Batch-read the hrefs first — createTocEntry()
+// rewinds and scans the SAME spineFile handle for its href->index lookup.
+bool BookMetadataCache::createFallbackTocFromSpine() {
+  if (!buildMode || !tocFile || !spineFile || spineCount == 0) {
+    return false;
+  }
+
+  std::vector<std::string> hrefs;
+  hrefs.reserve(spineCount);
+  spineFile.seek(0);
+  for (int i = 0; i < spineCount; i++) {
+    hrefs.push_back(readSpineEntry(spineFile).href);
+  }
+
+  for (size_t i = 0; i < hrefs.size(); i++) {
+    // Title = decoded filename without directories/extension — mediocre but
+    // navigable ("chapter01" beats an empty chapter list).
+    std::string title = FsHelpers::decodeUriEscapes(hrefs[i]);
+    const auto slash = title.rfind('/');
+    if (slash != std::string::npos) {
+      title = title.substr(slash + 1);
+    }
+    const auto dot = title.rfind('.');
+    if (dot != std::string::npos && dot > 0) {
+      title = title.substr(0, dot);
+    }
+    if (title.empty()) {
+      title = "Section " + std::to_string(i + 1);
+    }
+    createTocEntry(title, hrefs[i], "", 0);
+  }
+
+  LOG_DBG("BMC", "Synthesized fallback TOC: %d entries from spine", tocCount);
+  return tocCount > 0;
 }
 
 /* ============= READING / LOADING FUNCTIONS ================ */

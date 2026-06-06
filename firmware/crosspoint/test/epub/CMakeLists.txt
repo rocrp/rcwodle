@@ -40,6 +40,7 @@ target_include_directories(EpubTest PRIVATE
 
 target_compile_definitions(EpubTest PRIVATE
   FIXTURE_EPUB="${PORT_ROOT}/test/fixtures/test_tables.epub"
+  FIXTURE_EPUB_NOTOC="${PORT_ROOT}/test/fixtures/test_no_toc.epub"
   XML_GE=0
   XML_CONTEXT_BYTES=1024
   ENABLE_SERIAL_LOG
