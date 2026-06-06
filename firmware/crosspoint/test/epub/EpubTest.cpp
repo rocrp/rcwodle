@@ -5,6 +5,7 @@
 // Image conversion (cover/thumb) is stubbed out (see ConverterStubs.cpp).
 
 #include <Epub.h>
+#include <FsHelpers.h>
 #include <gtest/gtest.h>
 
 #include <cstring>
@@ -104,6 +105,17 @@ TEST_F(EpubFixture, ReloadsFromMetadataCache) {
 TEST(EpubErrors, MissingFileFailsLoad) {
   Epub missing("/nonexistent/book.epub", std::string(::testing::TempDir()) + "epub_cache_missing");
   EXPECT_FALSE(missing.load());
+}
+
+// Upstream #2249: EPUB-internal references may be percent-encoded
+// ("Chapter%201.xhtml" for "Chapter 1.xhtml"); the parsers decode them via
+// this helper before lookup. Malformed escapes must pass through untouched.
+TEST(FsHelpersUri, DecodesPercentEscapes) {
+  EXPECT_EQ(FsHelpers::decodeUriEscapes("Chapter%201.xhtml"), "Chapter 1.xhtml");
+  EXPECT_EQ(FsHelpers::decodeUriEscapes("a%2Fb%2fc"), "a/b/c");  // both hex cases
+  EXPECT_EQ(FsHelpers::decodeUriEscapes("plain/path.xhtml"), "plain/path.xhtml");
+  EXPECT_EQ(FsHelpers::decodeUriEscapes("bad%zz%1"), "bad%zz%1");  // malformed: untouched
+  EXPECT_EQ(FsHelpers::decodeUriEscapes(""), "");
 }
 
 }  // namespace

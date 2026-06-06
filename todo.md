@@ -174,6 +174,9 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
   cause never found — moot but curious)
 - ~~`ZipFile` dangling `const std::string&` path~~ — fixed 2026-06-06 (by-value
   + WODLE-PORT marker; test constructs from a temporary); worth upstreaming
-- Upstream sync: vendor snapshot = b12839d1 (2026-06-01); `// WODLE-PORT:` marks
-  every local edit; I18n regenerated via gen_i18n.py (upstream committed files stale)
+- Upstream sync: vendor snapshot = b12839d1 (2026-06-01) + cherry-picked
+  bd101b2 (EPUB %-encoded asset paths) + 19d51ec (de STR_INVERTED) on
+  2026-06-06; remaining upstream delta (fd5b807 t5s3 fork chore) is N/A.
+  `// WODLE-PORT:` marks every local edit; I18n regenerated via gen_i18n.py
+  (upstream committed files stale)
 - Repo unpushed (no remote) — decide hosting if/when open-sourcing
