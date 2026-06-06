@@ -5,7 +5,7 @@ Port of [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-read
 UC8179C 528x792 EPD). Vendor snapshot + deltas: `vendor/VENDOR.md`. Plan:
 `docs/superpowers/plans/2026-06-05-crosspoint-port-plan.md` (repo root docs/).
 
-**Status: blind-port, compiles + links (3.41MB image, ~125KB headroom), zero
+**Status: blind-port, compiles + links (3.42MB image, ~114KB headroom), zero
 HIL.** Built entirely while the device was away — expect bring-up iterations.
 Reclaim options if flash gets tight again: move the GBK table to SD, or drop
 the 8pt/10pt-bold CJK UI subsets. (Tried and rejected: 2bit+DEFLATE UI fonts
@@ -14,7 +14,7 @@ came out larger than 1-bit raw; I18n --strip-unused already applied, −82KB.)
 ## Verify (blind-development loop)
 
 ```sh
-firmware/crosspoint/run_checks.sh        # target build + 147 host tests
+firmware/crosspoint/run_checks.sh        # target build + 157 host tests
 ```
 
 Host tests (gtest, `test/`): port shims with known-answer vectors (MD5/base64/
@@ -142,10 +142,18 @@ Polarity assumed active-low w/ pullups — **HIL checkpoint #1 if input is dead/
   boot (quick-resume restores the frame from SD). HIL: verify it actually
   wakes; if not, USB recovery still works.
 - **Battery**: live BQ27220 SOC over I2C2 (PA31/32); falls back to 100% if
-  the gauge doesn't respond.
+  the gauge doesn't respond. **USB/charging**: AW32001 PG_STAT drives the
+  battery-icon bolt + plug/unplug repaint (wake-reason mapping deferred —
+  see HalGPIO.h).
+- **AHT20 temp/humidity** (wodle extra HW): status bar `23°C 45%` readout,
+  Hide/°C/°F + humidity toggle in Settings → Status Bar (rows appear only
+  when the sensor responds). Non-blocking driver, 30s cache.
+- **Diagnostics screen** (Settings → System → Diagnostics): live gauge/
+  charger/AHT20/frontlight/touch/SD/heap/wake-reason/last-input, 2s
+  fast-refresh — covers most HIL electrical checks without a console.
 - **Clock**: none (status bar clock hidden).
-- **USB detect / tilt / grayscale / images-in-epub dithering**: stubbed or
-  best-effort; JPEGDEC/PNGdec are linked but image rendering is untested.
+- **Tilt / images-in-epub dithering**: stubbed or best-effort; JPEGDEC/
+  PNGdec are linked but image rendering is untested.
 - **No WiFi features**: transfer/OPDS/KOReader-sync/OTA menus pruned or show
   "requires WiFi" message.
 - **esp_mac shim**: settings obfuscation key derived from bootloader bytes,
