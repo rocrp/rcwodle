@@ -36,6 +36,7 @@
 #include "components/UITheme.h"
 #include "fontIds.h"
 #include "images/LoadingIcon.h"
+#include "WodleAht20.h"       // WODLE-PORT
 #include "WodleFrontlight.h"  // WODLE-PORT
 #include "util/ButtonNavigator.h"
 #include "util/ScreenshotUtil.h"
@@ -341,6 +342,7 @@ void setup() {
   WodleFrontlight::init();
   WodleFrontlight::pulse(300);
   powerManager.begin();
+  WodleAht20::init();  // WODLE-PORT: temp/humidity sensor, same I2C2 bus as the gauge
   halTiltSensor.begin();
   halClock.begin();
 

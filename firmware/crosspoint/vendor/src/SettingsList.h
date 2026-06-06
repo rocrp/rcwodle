@@ -249,6 +249,13 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
         // on next WiFi connect, which is useful when crossing time zones.
         SettingInfo::Toggle(StrId::STR_CLOCK_SYNCED, &CrossPointSettings::clockHasBeenSynced, "clockHasBeenSynced",
                             StrId::STR_CUSTOMISE_STATUS_BAR),
+        // WODLE-PORT: AHT20 temp/humidity status bar entries (device UI gates
+        // them on sensor presence; registered here for JSON persistence)
+        SettingInfo::Enum(StrId::STR_TEMPERATURE, &CrossPointSettings::statusBarTemperature,
+                          {StrId::STR_HIDE, StrId::STR_TEMP_UNIT_C, StrId::STR_TEMP_UNIT_F}, "statusBarTemperature",
+                          StrId::STR_CUSTOMISE_STATUS_BAR),
+        SettingInfo::Toggle(StrId::STR_HUMIDITY, &CrossPointSettings::statusBarHumidity, "statusBarHumidity",
+                            StrId::STR_CUSTOMISE_STATUS_BAR),
     };
     // Only show tilt page turn setting when the QMI8658 IMU is present (X3)
     if (halTiltSensor.isAvailable()) {

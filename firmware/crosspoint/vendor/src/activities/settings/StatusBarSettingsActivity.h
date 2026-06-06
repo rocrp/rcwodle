@@ -3,6 +3,9 @@
 #include <freertos/semphr.h>
 #include <freertos/task.h>
 
+#include <cstdint>
+#include <vector>
+
 #include "activities/Activity.h"
 #include "util/ButtonNavigator.h"
 
@@ -21,8 +24,10 @@ class StatusBarSettingsActivity final : public Activity {
   ButtonNavigator buttonNavigator;
 
   int selectedIndex = 0;
-  // Decided in onEnter() based on halClock.isAvailable() so clock entries are hidden on X4.
-  int visibleItemCount = 0;
+  // WODLE-PORT: displayed-row -> MenuItem map, built in onEnter(). Clock rows
+  // appear only with an RTC (upstream behaviour); temp/humidity rows only
+  // when the AHT20 responds — so the visible set is no longer a plain prefix.
+  std::vector<uint8_t> visibleItems;
 
   void handleSelection();
 };

@@ -42,6 +42,7 @@ target_compile_options(cp_test_common INTERFACE -Wall -Wextra)
 enable_testing()
 include(GoogleTest)
 
+add_subdirectory(aht20)
 add_subdirectory(port_shims)
 add_subdirectory(streaming_json_parser)
 add_subdirectory(release_json_parser)

@@ -1,12 +1,15 @@
 #include "BaseTheme.h"
 
+#include <Aht20Codec.h>  // WODLE-PORT: °F conversion
 #include <GfxRenderer.h>
 #include <HalClock.h>
 #include <HalPowerManager.h>
 #include <HalStorage.h>
 #include <Logging.h>
+#include <WodleAht20.h>  // WODLE-PORT: temp/humidity status bar readout
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <string>
 
@@ -807,6 +810,31 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
     }
   }
 
+  // WODLE-PORT: Draw temp/humidity (AHT20 only), left of the clock slot
+  int envTextWidth = 0;
+  const bool wantTemp = SETTINGS.statusBarTemperature != CrossPointSettings::TEMP_HIDE;
+  if ((wantTemp || SETTINGS.statusBarHumidity) && WodleAht20::available()) {
+    float tempC = 0, rhPct = 0;
+    if (WodleAht20::read(tempC, rhPct)) {
+      const bool fahrenheit = SETTINGS.statusBarTemperature == CrossPointSettings::TEMP_FAHRENHEIT;
+      const int t = static_cast<int>(lroundf(fahrenheit ? Aht20Codec::toFahrenheit(tempC) : tempC));
+      const int h = static_cast<int>(lroundf(rhPct));
+      char envStr[16];
+      if (wantTemp && SETTINGS.statusBarHumidity) {
+        snprintf(envStr, sizeof(envStr), "%d°%c %d%%", t, fahrenheit ? 'F' : 'C', h);
+      } else if (wantTemp) {
+        snprintf(envStr, sizeof(envStr), "%d°%c", t, fahrenheit ? 'F' : 'C');
+      } else {
+        snprintf(envStr, sizeof(envStr), "%d%%", h);
+      }
+      envTextWidth = renderer.getTextWidth(SMALL_FONT_ID, envStr);
+      const int envX = renderer.getScreenWidth() - metrics.statusBarHorizontalMargin - orientedMarginRight -
+                       progressTextWidth - (progressTextWidth > 0 ? 10 : 0) - clockTextWidth -
+                       (clockTextWidth > 0 ? 10 : 0) - envTextWidth;
+      renderer.drawText(SMALL_FONT_ID, envX, textY, envStr);
+    }
+  }
+
   // Draw Title
   if (!title.empty()) {
     textY -= textYOffset;
@@ -818,7 +846,8 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
     const int batterySize = SETTINGS.statusBarBattery ? (showBatteryPercentage ? 50 : 20) : 0;
     const int titleMarginLeft = batterySize + 30;
     const int clockReserve = clockTextWidth > 0 ? (clockTextWidth + 10) : 0;
-    const int titleMarginRight = progressTextWidth + clockReserve + 30;
+    const int envReserve = envTextWidth > 0 ? (envTextWidth + 10) : 0;  // WODLE-PORT
+    const int titleMarginRight = progressTextWidth + clockReserve + envReserve + 30;
 
     // Attempt to center title on the screen, but if title is too wide then later we will center it within the
     // available space.

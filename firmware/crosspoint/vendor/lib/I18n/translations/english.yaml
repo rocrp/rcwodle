@@ -378,3 +378,7 @@ STR_RECOVERY_MODE: "Recovery Mode"
 STR_RECOVERY_MODE_HINT: "Place firmware.bin on SD card root and select it"
 
 STR_FRONTLIGHT: "Frontlight"
+STR_TEMPERATURE: "Temperature"
+STR_HUMIDITY: "Humidity"
+STR_TEMP_UNIT_C: "°C"
+STR_TEMP_UNIT_F: "°F"

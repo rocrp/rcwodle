@@ -336,6 +336,10 @@ enum class StrId : uint16_t {
   STR_SELECT_FIRMWARE_FILE,
   STR_NO_BIN_FILES,
   STR_FRONTLIGHT,
+  STR_TEMPERATURE,
+  STR_HUMIDITY,
+  STR_TEMP_UNIT_C,
+  STR_TEMP_UNIT_F,
   // Sentinel - must be last
   _COUNT
 };

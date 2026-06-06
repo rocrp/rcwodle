@@ -161,6 +161,14 @@ class CrossPointSettings {
     QUICK_RESUME_SLEEP_SCREEN_COUNT
   };
 
+  // WODLE-PORT: temperature readout in the status bar (AHT20 sensor)
+  enum STATUS_BAR_TEMPERATURE {
+    TEMP_HIDE = 0,
+    TEMP_CELSIUS = 1,
+    TEMP_FAHRENHEIT = 2,
+    STATUS_BAR_TEMPERATURE_COUNT
+  };
+
   // Sleep screen settings
   uint8_t sleepScreen = DARK;
   // Sleep screen cover mode settings
@@ -187,6 +195,10 @@ class CrossPointSettings {
   // Set once an NTP sync succeeds. Used to skip re-syncing on every WiFi connect.
   // Resetting to 0 (e.g. via the web UI) forces a re-sync on next WiFi connect.
   uint8_t clockHasBeenSynced = 0;
+  // WODLE-PORT: AHT20 temp/humidity in the status bar (drawn only when the
+  // sensor responds, so these are inert on sensorless hardware)
+  uint8_t statusBarTemperature = TEMP_CELSIUS;
+  uint8_t statusBarHumidity = 1;
   // Text rendering settings
   uint8_t extraParagraphSpacing = 1;
   uint8_t textAntiAliasing = 1;

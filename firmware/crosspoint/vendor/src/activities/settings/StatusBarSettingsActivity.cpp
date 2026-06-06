@@ -3,6 +3,7 @@
 #include <GfxRenderer.h>
 #include <HalClock.h>
 #include <I18n.h>
+#include <WodleAht20.h>  // WODLE-PORT: temp/humidity rows gated on sensor presence
 
 #include <cstring>
 #include <memory>
@@ -15,8 +16,9 @@
 #include "fontIds.h"
 
 namespace {
-// Menu items in their natural order. Clock entries are appended only when the
-// DS3231 RTC is present so X4 devices don't see them at all.
+// Menu items in their natural order. Clock entries appear only when the
+// DS3231 RTC is present; temp/humidity entries (WODLE-PORT) only when the
+// AHT20 sensor responds. onEnter() builds the visible-row map.
 enum MenuItem {
   ITEM_CHAPTER_PAGE_COUNT = 0,
   ITEM_BOOK_PROGRESS_PERCENTAGE,
@@ -29,13 +31,14 @@ enum MenuItem {
   ITEM_CLOCK_FORMAT,      // X3 only
   ITEM_CLOCK_UTC_OFFSET,  // X3 only, launches ClockOffsetActivity
   ITEM_CLOCK_SYNC,        // X3 only, launches ClockSyncActivity
+  ITEM_TEMPERATURE,       // WODLE-PORT: AHT20 only
+  ITEM_HUMIDITY,          // WODLE-PORT: AHT20 only
   ITEM_COUNT
 };
 
 constexpr int BASE_MENU_ITEMS = ITEM_CLOCK;  // Items shown on every device
-constexpr int FULL_MENU_ITEMS = ITEM_COUNT;  // Items shown when RTC is available
 
-const StrId menuNames[FULL_MENU_ITEMS] = {
+const StrId menuNames[ITEM_COUNT] = {
     StrId::STR_CHAPTER_PAGE_COUNT,
     StrId::STR_BOOK_PROGRESS_PERCENTAGE,
     StrId::STR_PROGRESS_BAR,
@@ -47,7 +50,13 @@ const StrId menuNames[FULL_MENU_ITEMS] = {
     StrId::STR_CLOCK_FORMAT,
     StrId::STR_CLOCK_UTC_OFFSET,
     StrId::STR_CLOCK_SYNC_NOW,
+    StrId::STR_TEMPERATURE,
+    StrId::STR_HUMIDITY,
 };
+
+// WODLE-PORT: temperature row cycles Hide -> °C -> °F
+constexpr int TEMPERATURE_ITEMS = 3;
+const StrId temperatureNames[TEMPERATURE_ITEMS] = {StrId::STR_HIDE, StrId::STR_TEMP_UNIT_C, StrId::STR_TEMP_UNIT_F};
 
 constexpr int CLOCK_FORMAT_ITEMS = 2;
 const StrId clockFormatNames[CLOCK_FORMAT_ITEMS] = {StrId::STR_CLOCK_FORMAT_24H, StrId::STR_CLOCK_FORMAT_12H};
@@ -85,7 +94,16 @@ void StatusBarSettingsActivity::onEnter() {
   Activity::onEnter();
 
   selectedIndex = 0;
-  visibleItemCount = halClock.isAvailable() ? FULL_MENU_ITEMS : BASE_MENU_ITEMS;
+  // WODLE-PORT: build the visible-row map (see header)
+  visibleItems.clear();
+  for (int i = 0; i < BASE_MENU_ITEMS; i++) visibleItems.push_back(static_cast<uint8_t>(i));
+  if (halClock.isAvailable()) {
+    for (int i = ITEM_CLOCK; i <= ITEM_CLOCK_SYNC; i++) visibleItems.push_back(static_cast<uint8_t>(i));
+  }
+  if (WodleAht20::available()) {
+    visibleItems.push_back(ITEM_TEMPERATURE);
+    visibleItems.push_back(ITEM_HUMIDITY);
+  }
 
   // Clamp statusBarProgressBar and statusBarTitle in case of corrupt/migrated data
   if (SETTINGS.statusBarProgressBar >= PROGRESS_BAR_ITEMS) {
@@ -112,6 +130,11 @@ void StatusBarSettingsActivity::onEnter() {
     SETTINGS.clockFormat = 0;
   }
 
+  // WODLE-PORT: clamp temp enum in case of corrupt/migrated data
+  if (SETTINGS.statusBarTemperature >= TEMPERATURE_ITEMS) {
+    SETTINGS.statusBarTemperature = CrossPointSettings::STATUS_BAR_TEMPERATURE::TEMP_CELSIUS;
+  }
+
   requestUpdate();
 }
 
@@ -129,30 +152,32 @@ void StatusBarSettingsActivity::loop() {
     return;
   }
 
-  // Handle navigation
-  buttonNavigator.onNextRelease([this] {
-    selectedIndex = ButtonNavigator::nextIndex(selectedIndex, visibleItemCount);
+  // Handle navigation (WODLE-PORT: count comes from the visible-row map)
+  const int itemCount = static_cast<int>(visibleItems.size());
+  buttonNavigator.onNextRelease([this, itemCount] {
+    selectedIndex = ButtonNavigator::nextIndex(selectedIndex, itemCount);
     requestUpdate();
   });
 
-  buttonNavigator.onPreviousRelease([this] {
-    selectedIndex = ButtonNavigator::previousIndex(selectedIndex, visibleItemCount);
+  buttonNavigator.onPreviousRelease([this, itemCount] {
+    selectedIndex = ButtonNavigator::previousIndex(selectedIndex, itemCount);
     requestUpdate();
   });
 
-  buttonNavigator.onNextContinuous([this] {
-    selectedIndex = ButtonNavigator::nextIndex(selectedIndex, visibleItemCount);
+  buttonNavigator.onNextContinuous([this, itemCount] {
+    selectedIndex = ButtonNavigator::nextIndex(selectedIndex, itemCount);
     requestUpdate();
   });
 
-  buttonNavigator.onPreviousContinuous([this] {
-    selectedIndex = ButtonNavigator::previousIndex(selectedIndex, visibleItemCount);
+  buttonNavigator.onPreviousContinuous([this, itemCount] {
+    selectedIndex = ButtonNavigator::previousIndex(selectedIndex, itemCount);
     requestUpdate();
   });
 }
 
 void StatusBarSettingsActivity::handleSelection() {
-  switch (selectedIndex) {
+  // WODLE-PORT: map the displayed row back to its MenuItem
+  switch (visibleItems[selectedIndex]) {
     case ITEM_CHAPTER_PAGE_COUNT:
       SETTINGS.statusBarChapterPageCount = (SETTINGS.statusBarChapterPageCount + 1) % 2;
       break;
@@ -188,6 +213,12 @@ void StatusBarSettingsActivity::handleSelection() {
     case ITEM_CLOCK_SYNC:
       /* WODLE-PORT: clock sync unavailable (no WiFi/RTC yet) */
       return;
+    case ITEM_TEMPERATURE:  // WODLE-PORT
+      SETTINGS.statusBarTemperature = (SETTINGS.statusBarTemperature + 1) % TEMPERATURE_ITEMS;
+      break;
+    case ITEM_HUMIDITY:  // WODLE-PORT
+      SETTINGS.statusBarHumidity = (SETTINGS.statusBarHumidity + 1) % 2;
+      break;
     default:
       return;
   }
@@ -205,11 +236,14 @@ void StatusBarSettingsActivity::render(RenderLock&&) {
 
   const int contentTop = metrics.topPadding + metrics.headerHeight + metrics.verticalSpacing;
   const int contentHeight = pageHeight - contentTop - metrics.buttonHintsHeight - metrics.verticalSpacing * 2;
+  // WODLE-PORT: rows go through the visible-item map (clock and temp rows
+  // are independently gated, so displayed index != MenuItem)
   GUI.drawList(
-      renderer, Rect{0, contentTop, pageWidth, contentHeight}, visibleItemCount, static_cast<int>(selectedIndex),
-      [](int index) { return std::string(I18N.get(menuNames[index])); }, nullptr, nullptr,
-      [](int index) -> std::string {
-        switch (index) {
+      renderer, Rect{0, contentTop, pageWidth, contentHeight}, static_cast<int>(visibleItems.size()),
+      static_cast<int>(selectedIndex),
+      [this](int index) { return std::string(I18N.get(menuNames[visibleItems[index]])); }, nullptr, nullptr,
+      [this](int index) -> std::string {
+        switch (visibleItems[index]) {
           case ITEM_CHAPTER_PAGE_COUNT:
             return SETTINGS.statusBarChapterPageCount ? tr(STR_SHOW) : tr(STR_HIDE);
           case ITEM_BOOK_PROGRESS_PERCENTAGE:
@@ -234,6 +268,10 @@ void StatusBarSettingsActivity::render(RenderLock&&) {
             return formatUtcOffset(SETTINGS.clockUtcOffsetQ);
           case ITEM_CLOCK_SYNC:
             return SETTINGS.clockHasBeenSynced ? tr(STR_CLOCK_SYNCED) : tr(STR_NOT_SET);
+          case ITEM_TEMPERATURE:  // WODLE-PORT
+            return std::string(I18N.get(temperatureNames[SETTINGS.statusBarTemperature]));
+          case ITEM_HUMIDITY:  // WODLE-PORT
+            return SETTINGS.statusBarHumidity ? tr(STR_SHOW) : tr(STR_HIDE);
           default:
             return tr(STR_HIDE);
         }

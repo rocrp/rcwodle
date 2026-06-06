@@ -378,3 +378,7 @@ STR_RECOVERY_MODE: "恢复模式"
 STR_RECOVERY_MODE_HINT: "将 firmware.bin 放到 SD 卡根目录并选择它"
 
 STR_FRONTLIGHT: "阅读灯"
+STR_TEMPERATURE: "温度"
+STR_HUMIDITY: "湿度"
+STR_TEMP_UNIT_C: "°C"
+STR_TEMP_UNIT_F: "°F"

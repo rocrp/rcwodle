@@ -2,8 +2,8 @@
 
 Status snapshot 2026-06-06. Two firmwares: `firmware/hello_wodle/` (validation
 instrument, EPD console) + `firmware/crosspoint/` (the e-reader, blind-ported,
-compiles + 146/146 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
-Flash: 3,413,068 of 3,538,944 B — ~123KB headroom (I18n --strip-unused
+compiles + 156/156 host tests, ZERO HIL). Verify both: `firmware/crosspoint/run_checks.sh`.
+Flash: 3,418,636 of 3,538,944 B — ~117KB headroom (I18n --strip-unused
 reclaimed 82KB; UI-font compression tried + rejected, came out larger).
 Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
@@ -45,6 +45,11 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
        ghosting/quality; tune `FAST_REFRESHES_PER_GC` in `HalDisplay.cpp`.
 9. [ ] **Battery**: boot log `[WodleBattery] gauge OK (voltage=...)`; status bar %
        moves. Fail mode: fixed 100% (I2C2 PA31/32 mux or addr issue).
+9b. [ ] **AHT20 temp/humidity**: boot log `[WodleAht20] OK (status=0x..)`; reader
+        status bar shows e.g. `23°C 45%` left of the progress text (default on).
+        Settings → Status Bar → Temperature (Hide/°C/°F) + Humidity rows appear
+        only when the sensor responds. Fail mode: `not responding` → addr 0x38
+        on I2C2; sanity-check values against a room thermometer.
 10. [ ] **Hibernate**: PWR-hold → sleep → PA34 press wakes (edge mode). If no wake:
         USB recovery still works; revisit `HalGPIO::startDeepSleep` wake polarity.
         Also: short TAP wake should drop back to hibernate (anti-pocket-wake,
@@ -59,6 +64,12 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## Blind-able next (no device needed)
 
+- [x] **AHT20 temp/humidity → status bar** — DONE 2026-06-06: WodleAht20
+      driver (I2C2 @0x38, non-blocking trigger/collect, 30s cache) + reader
+      status bar readout left of the clock slot (Hide/°C/°F + humidity toggle,
+      gated on sensor presence, persisted via SettingsList) + zh/en i18n +
+      UI fonts regenerated (温/湿). Host suite test/aht20/ (9 tests: published
+      CRC vector, decode math, busy/CRC rejection). HIL = checklist 9b.
 - [x] **CJK reading fonts** — DONE 2026-06-06: `tools/build_cjk_font.py` builds
       LXGWWenKai_{12,14,16,18}.cpfont (latin-ext+cjk, regular+Medium-as-bold)
       → `dist/sd-fonts/`; `test/sdcardfont/` host suite (12 tests) proves
