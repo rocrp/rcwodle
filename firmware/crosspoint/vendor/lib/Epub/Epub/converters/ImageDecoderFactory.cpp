@@ -5,9 +5,11 @@
 #include <memory>
 #include <string>
 
+#include "GifToFramebufferConverter.h"  // WODLE-PORT (fork a1f5077)
 #include "JpegToFramebufferConverter.h"
 #include "PngToFramebufferConverter.h"
 
+std::unique_ptr<GifToFramebufferConverter> ImageDecoderFactory::gifDecoder = nullptr;  // WODLE-PORT
 std::unique_ptr<JpegToFramebufferConverter> ImageDecoderFactory::jpegDecoder = nullptr;
 std::unique_ptr<PngToFramebufferConverter> ImageDecoderFactory::pngDecoder = nullptr;
 
@@ -33,6 +35,11 @@ ImageToFramebufferDecoder* ImageDecoderFactory::getDecoder(const std::string& im
       pngDecoder.reset(new PngToFramebufferConverter());
     }
     return pngDecoder.get();
+  } else if (GifToFramebufferConverter::supportsFormat(ext)) {  // WODLE-PORT (fork a1f5077)
+    if (!gifDecoder) {
+      gifDecoder.reset(new GifToFramebufferConverter());
+    }
+    return gifDecoder.get();
   }
 
   LOG_ERR("DEC", "No decoder found for image: %s", imagePath.c_str());

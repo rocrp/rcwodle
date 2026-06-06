@@ -47,12 +47,14 @@ src += Glob('lib/PngToBmpConverter/*.cpp')
 src += Glob('extlib/JPEGDEC/src/*.cpp')
 src += Glob('extlib/PNGdec/src/*.c') + Glob('extlib/PNGdec/src/*.cpp')
 src += Glob('extlib/QRCode/src/*.c')
+src += Glob('extlib/AnimatedGIF/src/*.cpp')  # WODLE-PORT (fork a1f5077): GIF in EPUBs
 
 CPPPATH += [cwd + '/lib/' + d for d in [
     'ZipFile', 'TextEncoding', 'Txt', 'Xtc', 'MiniBidi', 'Serialization', 'Epub', 'KOReaderSync',
     'JpegToBmpConverter', 'PngToBmpConverter', 'GfxRenderer', 'EpdFont',
 ]]
-CPPPATH += [cwd + '/extlib/JPEGDEC/src', cwd + '/extlib/PNGdec/src', cwd + '/extlib/ArduinoJson/src', cwd + '/extlib/QRCode/src']
+CPPPATH += [cwd + '/extlib/JPEGDEC/src', cwd + '/extlib/PNGdec/src', cwd + '/extlib/ArduinoJson/src', cwd + '/extlib/QRCode/src',
+            cwd + '/extlib/AnimatedGIF/src']  # WODLE-PORT
 
 # --- batch 3: fonts + renderer ----------------------------------------------
 src += Glob('lib/EpdFont/*.cpp')
