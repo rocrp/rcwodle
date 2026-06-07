@@ -7,7 +7,13 @@
  * white-fills the status-bar strip, re-runs the activity's renderStatusBar()
  * and partial-refreshes just that strip — no page-turn DU, no full flash.
  * The backend refuses the window while the controller RAMs hold 4-gray AA
- * planes (returns false); the next full refresh re-arms it. */
+ * planes (returns false); the next full refresh re-arms it.
+ *
+ * Wired into the EPUB and TXT readers. The XTC reader is INTENTIONALLY
+ * skipped: its status bar is an overlay composited onto pre-rendered page
+ * images (renderStatusBarOverlay, top OR bottom), so a white-fill+redraw
+ * would erase page pixels under the strip — a correct partial clock there
+ * needs the page image re-blitted first. Revisit post-HIL if XTC matters. */
 #pragma once
 
 #include <CrossPointSettings.h>

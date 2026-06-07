@@ -224,9 +224,30 @@ static bool epdLcdcWaitIdle()
     return true;
 }
 
+/* Bus-error latch (demo pattern): helpers record the first failure; refresh
+ * entry points check-and-clear it and ABORT before mutating software state —
+ * a stalled LCDC must not leave us believing controller RAM is current. */
+static bool s_busError = false;
+static void epdNoteBusError(const char *what)
+{
+    if (!s_busError) rt_kprintf("[HalDisplay] BUS ERROR: %s\n", what);
+    s_busError = true;
+}
+
 static void epdCmd(uint8_t c)
 {
-    HAL_LCDC_WriteU8Reg(&s_lcdc, c, RT_NULL, 0);
+    if (HAL_LCDC_WriteU8Reg(&s_lcdc, c, RT_NULL, 0) != HAL_OK) epdNoteBusError("cmd");
+}
+
+/* Command + short parameter block in ONE WriteU8Reg transaction — exactly the
+ * demo's epd_write_command_data (CS held across cmd+params). Used for panel
+ * init, CDI, LUT banks, the partial-window payload and deep-sleep key; bulk
+ * frame/plane streams keep the raw data path below (the demo splits those the
+ * same way). Codex-review finding: the previous cmd-then-raw-data split was
+ * not demo-equivalent for short params. */
+static void epdCmdData(uint8_t c, const uint8_t *data, uint32_t len)
+{
+    if (HAL_LCDC_WriteU8Reg(&s_lcdc, c, (uint8_t *)data, len) != HAL_OK) epdNoteBusError("cmd+data");
 }
 
 static void epdWriteBuf(const uint8_t *data, uint32_t len)
@@ -237,7 +258,11 @@ static void epdWriteBuf(const uint8_t *data, uint32_t len)
         const uint32_t count = len > 4 ? 4 : len;
         for (uint32_t i = 0; i < count; i++) value = (value << 8) | data[i];
 
-        if (!epdLcdcWaitIdle()) return;
+        if (!epdLcdcWaitIdle())
+        {
+            epdNoteBusError("data timeout");
+            return;
+        }
 
         uint32_t config = s_lcdc.Instance->SPI_IF_CONF;
         config &= ~(LCD_IF_SPI_IF_CONF_RD_LEN_Msk | LCD_IF_SPI_IF_CONF_SPI_RD_MODE_Msk |
@@ -251,10 +276,8 @@ static void epdWriteBuf(const uint8_t *data, uint32_t len)
         data += count;
         len -= count;
     }
-    epdLcdcWaitIdle();
+    if (!epdLcdcWaitIdle()) epdNoteBusError("data drain timeout");
 }
-
-static void epdData(uint8_t d) { epdWriteBuf(&d, 1); }
 
 #else /* WODLE_EPD_BITBANG */
 
@@ -319,6 +342,15 @@ static void epdWriteBuf(const uint8_t *data, uint32_t len)
     for (uint32_t i = 0; i < len; i++) epdData(data[i]);
 }
 
+/* Bit-bang has no failure source; per-byte CS framing is the HIL-proven
+ * semantics, so cmd+params just chain the proven primitives. */
+static bool s_busError = false;
+static void epdCmdData(uint8_t c, const uint8_t *data, uint32_t len)
+{
+    epdCmd(c);
+    epdWriteBuf(data, len);
+}
+
 #endif /* WODLE_EPD_BITBANG */
 
 /* ------------------------------------------------------- shared panel ops */
@@ -353,18 +385,28 @@ static void epdWriteRepeated(uint8_t cmd, uint8_t value, uint32_t len)
 
 static void epdPanelInit()
 {
-    epdCmd(0x00); epdData(0x3F); epdData(0x4A);
-    epdCmd(0x03); epdData(0x10);
-    epdCmd(0x01); epdData(0x03); epdData(0x00);
-    epdData(0x78); epdData(0x78); epdData(0x17);
-    epdCmd(0x06); epdData(0x25); epdData(0x25); epdData(0x3C);
-    epdCmd(0x82); epdData(0x24);
-    epdCmd(0x30); epdData(0x0F);
-    epdCmd(0x61); epdData(0x03); epdData(0x18); /* HRES=792 */
-    epdData(0x02); epdData(0x58);               /* VRES=600 (NOT 528 — see header) */
+    /* Same values as before, but each command's parameters ride in ONE
+     * transaction (demo epd_write_command_data — codex-review finding). */
+    static const uint8_t panelSetting[] = {0x3F, 0x4A};
+    static const uint8_t pfs[] = {0x10};
+    static const uint8_t powerSetting[] = {0x03, 0x00, 0x78, 0x78, 0x17};
+    static const uint8_t boosterSoftStart[] = {0x25, 0x25, 0x3C};
+    static const uint8_t vcomDc[] = {0x24};
+    static const uint8_t pll[] = {0x0F};
+    static const uint8_t resolution[] = {0x03, 0x18, 0x02, 0x58}; /* 792 x 600 (NOT 528 — see header) */
+    static const uint8_t flashMode[] = {0x00, 0x00, 0x00, 0x00};
+    static const uint8_t powerSaving[] = {0x02};
+
+    epdCmdData(0x00, panelSetting, sizeof(panelSetting));
+    epdCmdData(0x03, pfs, sizeof(pfs));
+    epdCmdData(0x01, powerSetting, sizeof(powerSetting));
+    epdCmdData(0x06, boosterSoftStart, sizeof(boosterSoftStart));
+    epdCmdData(0x82, vcomDc, sizeof(vcomDc));
+    epdCmdData(0x30, pll, sizeof(pll));
+    epdCmdData(0x61, resolution, sizeof(resolution));
     epdWaitBusy(1000);
-    epdCmd(0x65); epdData(0x00); epdData(0x00); epdData(0x00); epdData(0x00);
-    epdCmd(0xE1); epdData(0x02);
+    epdCmdData(0x65, flashMode, sizeof(flashMode));
+    epdCmdData(0xE1, powerSaving, sizeof(powerSaving));
     epdWriteRepeated(0x10, 0xFF, HalDisplay::BUFFER_SIZE); /* old RAM = white */
     epdCmd(0x04); /* power on */
     epdWaitBusy(2000);
@@ -395,19 +437,21 @@ static void epdLoadLut(Lut which)
      * 0x50 when loading the gray LUT (codex: match it; "harmless" unproven). */
     if (which == Lut::GC)
     {
-        epdCmd(0x50); epdData(0x97);
+        const uint8_t cdi = 0x97;
+        epdCmdData(0x50, &cdi, 1);
     }
     else if (which == Lut::DU)
     {
-        epdCmd(0x50); epdData(0xD7);
+        const uint8_t cdi = 0xD7;
+        epdCmdData(0x50, &cdi, 1);
     }
 
     for (int bank = 0; bank < 5; bank++)
     {
-        epdCmd(bankCmd[bank]);
-        epdWriteBuf(&lut[bank * 49], 49);
+        epdCmdData(bankCmd[bank], &lut[bank * 49], 49);
     }
-    s_lutLoaded = which;
+    /* a failed load must not be remembered as loaded */
+    if (!s_busError) s_lutLoaded = which;
 }
 
 static void epdLoadLutGc() { epdLoadLut(Lut::GC); }
@@ -420,10 +464,15 @@ void HalDisplay::begin(bool seamless)
 {
     (void)seamless;
     if (s_panelInitialized) return;
-    epdBusInit();
+    s_busError = false;
+    if (!epdBusInit())
+    {
+        rt_kprintf("[HalDisplay] bus init FAILED — display dead, continuing blind\n");
+    }
     epdReset();
     epdPanelInit();
     epdLoadLutGc();
+    if (s_busError) rt_kprintf("[HalDisplay] panel init saw bus errors — expect a dead display\n");
     memset(s_frameBuffer, 0xFF, sizeof(s_frameBuffer));
     s_panelInitialized = true;
 }
@@ -474,6 +523,7 @@ static void captureBwShadow()
 
 void HalDisplay::refreshDisplay(RefreshMode mode, bool)
 {
+    s_busError = false;
     /* FAST -> DU differential (vs old RAM); FULL/HALF -> GC. Auto-promote to
      * GC every FAST_REFRESHES_PER_GC fast updates (ghosting management). */
     bool wantFast = (mode == FAST_REFRESH) && (s_fastSinceGc < FAST_REFRESHES_PER_GC);
@@ -494,6 +544,15 @@ void HalDisplay::refreshDisplay(RefreshMode mode, bool)
     epdCmd(0x13);
     epdWriteBuf(s_frameBuffer, BUFFER_SIZE);
     const unsigned long t1 = rt_tick_get_millisecond();
+    if (s_busError)
+    {
+        /* Controller RAM is in an unknown state — do NOT refresh against it
+           and do NOT mark the DU base/shadow current (codex finding #2). */
+        rt_kprintf("[HalDisplay] refresh ABORTED on bus error (frame write)\n");
+        s_lutLoaded = Lut::None;
+        s_fastSinceGc = FAST_REFRESHES_PER_GC; /* force GC once the bus recovers */
+        return;
+    }
     epdCmd(0x12);
     epdWaitBusy(8000);
     if (!wantFast)
@@ -531,6 +590,7 @@ bool HalDisplay::refreshWindow(int x, int y, int w, int h)
     x1 = ((x1 + 8) / 8) * 8 - 1;
     if (x1 >= DISPLAY_WIDTH) x1 = DISPLAY_WIDTH - 1;
 
+    s_busError = false;
     /* Promote every Nth partial to GC so clock-style updates can't accumulate
      * unbounded local ghosting between page turns. */
     const bool promoteGc = (++s_partialsSinceGc >= PARTIALS_PER_GC);
@@ -549,8 +609,7 @@ bool HalDisplay::refreshWindow(int x, int y, int w, int h)
     payload[7] = (uint8_t)y1;
     payload[8] = 0x01; /* partial scan */
     epdCmd(0x91);
-    epdCmd(0x90);
-    epdWriteBuf(payload, sizeof(payload));
+    epdCmdData(0x90, payload, sizeof(payload));
 
     const int firstByte = x0 / 8;
     const int spanBytes = (x1 - x0 + 1) / 8;
@@ -566,6 +625,14 @@ bool HalDisplay::refreshWindow(int x, int y, int w, int h)
     for (int row = y0; row <= y1; row++)
         epdWriteBuf(&s_frameBuffer[(uint32_t)row * DISPLAY_WIDTH_BYTES + firstByte], spanBytes);
     epdCmd(0x92); /* exit partial mode */
+
+    if (s_busError)
+    {
+        rt_kprintf("[HalDisplay] partial ABORTED on bus error\n");
+        s_lutLoaded = Lut::None;
+        s_fastSinceGc = FAST_REFRESHES_PER_GC;
+        return false;
+    }
 
     /* Keep the BW shadow current for the next AA pass. */
     if (s_bwShadow)
@@ -583,8 +650,8 @@ void HalDisplay::deepSleep()
 {
     epdCmd(0x02); /* power off */
     epdWaitBusy(5000);
-    epdCmd(0x07);
-    epdData(0xA5); /* deep sleep */
+    static const uint8_t sleepKey = 0xA5;
+    epdCmdData(0x07, &sleepKey, 1); /* deep sleep */
     s_panelInitialized = false;
     s_lutLoaded = Lut::None;
 }
@@ -677,15 +744,27 @@ void HalDisplay::displayGrayBuffer(bool)
     }
 
     /* Demo sequence: planes first, then the gray LUT, then refresh. */
+    s_busError = false;
     const unsigned long t0 = rt_tick_get_millisecond();
     epdCmd(0x10);
     epdWriteBuf(s_grayMsb, BUFFER_SIZE);
     epdCmd(0x13);
     epdWriteBuf(s_grayLsb, BUFFER_SIZE);
     epdLoadLut(Lut::GRAY4);
-    epdCmd(0x12);
-    epdWaitBusy(8000);
-    rt_kprintf("[HalDisplay] GRAY4 total=%lums\n", rt_tick_get_millisecond() - t0);
+    if (s_busError)
+    {
+        /* RAM state unknown — the post-pass bookkeeping below (forced GC +
+           partial refusal) is already the conservative recovery; skip only
+           the refresh trigger. */
+        rt_kprintf("[HalDisplay] GRAY4 ABORTED on bus error\n");
+        s_lutLoaded = Lut::None;
+    }
+    else
+    {
+        epdCmd(0x12);
+        epdWaitBusy(8000);
+        rt_kprintf("[HalDisplay] GRAY4 total=%lums\n", rt_tick_get_millisecond() - t0);
+    }
 
     freeGrayPlanes();
 
@@ -702,11 +781,12 @@ void HalDisplay::cleanupGrayscaleBuffers(const uint8_t *bwBuffer)
 {
     freeGrayPlanes();
     if (!bwBuffer) return;
+    s_busError = false;
     epdCmd(0x13);
     epdWriteBuf(bwBuffer, BUFFER_SIZE);
     epdCmd(0x10);
     epdWriteBuf(bwBuffer, BUFFER_SIZE);
-    s_ramsHoldGrayPlanes = false;
+    if (!s_busError) s_ramsHoldGrayPlanes = false;
 }
 
 void HalDisplay::writeGrayscalePlaneStrip(bool, const uint8_t *, uint16_t, uint16_t) {}

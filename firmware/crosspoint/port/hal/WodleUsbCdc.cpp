@@ -162,7 +162,12 @@ void cdcWrite(const char *text)
         while (s_txBusy && waitMs-- > 0) rt_thread_mdelay(1);
         if (s_txBusy)
         {
-            s_txBusy = false; /* host stopped draining — give up quietly */
+            /* Host stopped draining — treat the port as gone so follow-up
+             * writes (e.g. the remaining ~900 dump lines) don't each burn the
+             * full timeout; DTR re-assert re-arms it (codex finding). */
+            s_txBusy = false;
+            s_dtr = false;
+            rt_kprintf("[WodleUsbCdc] TX stalled — dropping console until DTR re-asserts\n");
             break;
         }
         p += count;

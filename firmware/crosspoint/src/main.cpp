@@ -573,9 +573,23 @@ void loop() {
     ScreenshotUtil::takeScreenshot(renderer);
   }
   if (WodleDebugCmds::consumePendingDump()) {
-    RenderLock lock;
-    WodleDebugCmds::emitFrameDump(display.getFrameBuffer(), display.getBufferSize(), display.getDisplayWidth(),
-                                  display.getDisplayHeight());
+    // Snapshot under the lock, stream WITHOUT it — a host that stops draining
+    // the CDC port must not block rendering for the dump duration (codex).
+    static uint8_t* dumpShadow = nullptr;
+    if (!dumpShadow) dumpShadow = static_cast<uint8_t*>(WodlePsram::alloc(display.getBufferSize()));
+    if (!dumpShadow) dumpShadow = static_cast<uint8_t*>(malloc(display.getBufferSize()));
+    if (dumpShadow) {
+      {
+        RenderLock lock;
+        memcpy(dumpShadow, display.getFrameBuffer(), display.getBufferSize());
+      }
+      WodleDebugCmds::emitFrameDump(dumpShadow, display.getBufferSize(), display.getDisplayWidth(),
+                                    display.getDisplayHeight());
+    } else {
+      RenderLock lock;  // no memory for a snapshot — stream live (old behavior)
+      WodleDebugCmds::emitFrameDump(display.getFrameBuffer(), display.getBufferSize(), display.getDisplayWidth(),
+                                    display.getDisplayHeight());
+    }
   }
   {
     WodleDebugCmds::PartialRect pr;

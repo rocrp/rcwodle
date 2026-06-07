@@ -120,11 +120,26 @@ int cmdOpen(int argc, char **argv)
         reply("usage: wodle open </books/foo.epub>\n");
         return -1;
     }
-    if (std::strlen(argv[0]) >= sizeof(s_pendingOpen))
+    /* Re-join the remaining args with single spaces: both MSH and the CDC
+     * tokenizer split on whitespace, so "/books/My Book.epub" arrives as
+     * multiple argv entries (codex finding; runs of spaces are collapsed —
+     * acceptable for FAT names). */
+    char path[sizeof(s_pendingOpen)];
+    size_t len = 0;
+    for (int i = 0; i < argc; i++)
     {
-        reply("wodle: path too long\n");
-        return -1;
+        const size_t partLen = std::strlen(argv[i]);
+        if (len + partLen + (i > 0 ? 1 : 0) >= sizeof(path))
+        {
+            reply("wodle: path too long\n");
+            return -1;
+        }
+        if (i > 0) path[len++] = ' ';
+        std::memcpy(&path[len], argv[i], partLen);
+        len += partLen;
     }
+    path[len] = '\0';
+
     markDebugSession();
     /* critical section holds ONLY the check-and-copy — no prints/allocs with
      * interrupts off (codex review finding) */
@@ -132,14 +147,14 @@ int cmdOpen(int argc, char **argv)
     {
         CriticalSection cs;
         busy = s_pendingOpen[0] != '\0';
-        if (!busy) std::strcpy(s_pendingOpen, argv[0]);
+        if (!busy) std::strcpy(s_pendingOpen, path);
     }
     if (busy)
     {
         reply("wodle: an open is already pending — command DROPPED\n");
         return -1;
     }
-    reply("wodle: open '%s' queued (main thread validates)\n", argv[0]);
+    reply("wodle: open '%s' queued (main thread validates)\n", path);
     return 0;
 }
 
