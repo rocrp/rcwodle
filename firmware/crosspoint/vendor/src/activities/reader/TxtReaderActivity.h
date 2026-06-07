@@ -7,9 +7,11 @@
 
 #include "CrossPointSettings.h"
 #include "activities/Activity.h"
+#include "PartialClockTicker.h"
 
 class TxtReaderActivity final : public Activity {
   std::unique_ptr<Txt> txt;
+  PartialClockTicker partialClock;  // WODLE-PORT: minute-fresh clock (experimental)
 
   int currentPage = 0;
   int totalPages = 1;

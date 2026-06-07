@@ -27,6 +27,13 @@ bool dequeueKey(WodleDebugCmdCore::KeyInject &out); /* HalGPIO::update() */
 bool consumePendingOpen(std::string &path);         /* loop() */
 bool consumePendingShot();                          /* loop() */
 bool consumePendingDump();                          /* loop() */
+/* Pending partial-window refresh experiment (`wodle partial x y w h`,
+ * PANEL coords: x along the 792 source axis, y = gate row). */
+struct PartialRect
+{
+    int x, y, w, h;
+};
+bool consumePendingPartial(PartialRect &out); /* loop() */
 /* Stream the 1-bit framebuffer over the console as base64 between
  * WODLE_DUMP_BEGIN/END markers (tools/wodle_console.py decodes to PNG).
  * Main thread only — reads the live framebuffer. */

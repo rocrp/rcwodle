@@ -32,6 +32,7 @@ enum MenuItem {
   ITEM_CLOCK_FORMAT,      // X3 only
   ITEM_CLOCK_UTC_OFFSET,  // X3 only, launches ClockOffsetActivity
   ITEM_CLOCK_SYNC,        // X3 only, launches ClockSyncActivity
+  ITEM_CLOCK_PARTIAL,     // WODLE-PORT: experimental minute-clock partial refresh
   ITEM_TEMPERATURE,       // WODLE-PORT: AHT20 only
   ITEM_HUMIDITY,          // WODLE-PORT: AHT20 only
   ITEM_COUNT
@@ -52,6 +53,7 @@ const StrId menuNames[ITEM_COUNT] = {
     StrId::STR_CLOCK_FORMAT,
     StrId::STR_CLOCK_UTC_OFFSET,
     StrId::STR_SET_TIME,  // WODLE-PORT: manual time editor (no NTP without WiFi)
+    StrId::STR_CLOCK_PARTIAL,  // WODLE-PORT
     StrId::STR_TEMPERATURE,
     StrId::STR_HUMIDITY,
 };
@@ -100,7 +102,7 @@ void StatusBarSettingsActivity::onEnter() {
   visibleItems.clear();
   for (int i = 0; i < BASE_MENU_ITEMS; i++) visibleItems.push_back(static_cast<uint8_t>(i));
   if (halClock.isAvailable()) {
-    for (int i = ITEM_CLOCK; i <= ITEM_CLOCK_SYNC; i++) visibleItems.push_back(static_cast<uint8_t>(i));
+    for (int i = ITEM_CLOCK; i <= ITEM_CLOCK_PARTIAL; i++) visibleItems.push_back(static_cast<uint8_t>(i));
   }
   if (WodleAht20::available()) {
     visibleItems.push_back(ITEM_TEMPERATURE);
@@ -219,6 +221,9 @@ void StatusBarSettingsActivity::handleSelection() {
       // WODLE-PORT: manual time editor instead of NTP sync (no WiFi)
       startActivityForResult(std::make_unique<TimeSetActivity>(renderer, mappedInput), nullptr);
       return;
+    case ITEM_CLOCK_PARTIAL:  // WODLE-PORT: experimental, default off
+      SETTINGS.clockPartialRefresh = (SETTINGS.clockPartialRefresh + 1) % 2;
+      break;
     case ITEM_TEMPERATURE:  // WODLE-PORT
       SETTINGS.statusBarTemperature = (SETTINGS.statusBarTemperature + 1) % TEMPERATURE_ITEMS;
       break;
@@ -282,6 +287,8 @@ void StatusBarSettingsActivity::render(RenderLock&&) {
             }
             return std::string(tr(STR_NOT_SET));
           }
+          case ITEM_CLOCK_PARTIAL:  // WODLE-PORT
+            return SETTINGS.clockPartialRefresh ? tr(STR_SHOW) : tr(STR_HIDE);
           case ITEM_TEMPERATURE:  // WODLE-PORT
             return std::string(I18N.get(temperatureNames[SETTINGS.statusBarTemperature]));
           case ITEM_HUMIDITY:  // WODLE-PORT

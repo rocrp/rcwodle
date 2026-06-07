@@ -196,6 +196,10 @@ void EpubReaderActivity::loop() {
     return;
   }
 
+  // WODLE-PORT: minute-fresh status-bar clock via partial refresh (gated in
+  // the ticker on the experimental setting; no-op while disabled/unset).
+  partialClock.tick(renderer, [this] { renderStatusBar(); });
+
   // End-of-Book screen reached (currentSpineIndex == spine count) means the book is
   // finished. Two independent finished-book features key off this same condition.
   const bool atEndOfBook = currentSpineIndex > 0 && currentSpineIndex >= epub->getSpineItemsCount();

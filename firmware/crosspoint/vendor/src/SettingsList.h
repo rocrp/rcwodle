@@ -249,6 +249,9 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
         // Range 0..104 = quarter-hour steps from UTC-12:00 to UTC+14:00, biased by 48.
         SettingInfo::Toggle(StrId::STR_CLOCK, &CrossPointSettings::statusBarClock, "statusBarClock",
                             StrId::STR_CUSTOMISE_STATUS_BAR),
+        // WODLE-PORT: experimental minute-clock partial refresh (default off)
+        SettingInfo::Toggle(StrId::STR_CLOCK_PARTIAL, &CrossPointSettings::clockPartialRefresh,
+                            "clockPartialRefresh", StrId::STR_CUSTOMISE_STATUS_BAR),
         SettingInfo::Value(StrId::STR_CLOCK_UTC_OFFSET, &CrossPointSettings::clockUtcOffsetQ, {0, 104, 1},
                            "clockUtcOffsetQ", StrId::STR_CUSTOMISE_STATUS_BAR),
         SettingInfo::Enum(StrId::STR_CLOCK_FORMAT, &CrossPointSettings::clockFormat,

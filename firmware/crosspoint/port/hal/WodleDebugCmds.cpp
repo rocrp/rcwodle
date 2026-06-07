@@ -32,6 +32,7 @@ KeyQueue s_keyQueue;
 char s_pendingOpen[256] = {0}; /* empty = none */
 bool s_pendingShot = false;
 bool s_pendingDump = false;
+WodleDebugCmds::PartialRect s_pendingPartial = {0, 0, 0, 0}; /* w==0 = none */
 bool s_debugSession = false; /* latched by any command except `stat` */
 bool s_noSleepForced = false;
 
@@ -136,6 +137,39 @@ int cmdShot()
     return 0;
 }
 
+int cmdPartial(int argc, char **argv)
+{
+    int v[4] = {0, 0, 0, 0};
+    if (argc < 4)
+    {
+        rt_kprintf("usage: wodle partial <x> <y> <w> <h>  (panel coords: x=0..791 source, y=0..527 gate)\n");
+        return -1;
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        v[i] = (int)std::strtol(argv[i], nullptr, 10);
+    }
+    if (v[2] <= 0 || v[3] <= 0)
+    {
+        rt_kprintf("wodle: width/height must be positive\n");
+        return -1;
+    }
+    markDebugSession();
+    bool busy;
+    {
+        CriticalSection cs;
+        busy = s_pendingPartial.w != 0;
+        if (!busy) s_pendingPartial = {v[0], v[1], v[2], v[3]};
+    }
+    if (busy)
+    {
+        rt_kprintf("wodle: a partial refresh is already pending — command DROPPED\n");
+        return -1;
+    }
+    rt_kprintf("wodle: partial %d,%d %dx%d queued (main thread refreshes)\n", v[0], v[1], v[2], v[3]);
+    return 0;
+}
+
 int cmdDump()
 {
     markDebugSession();
@@ -210,13 +244,14 @@ static int wodle(int argc, char **argv)
     if (std::strcmp(argv[1], "key") == 0) return cmdKey(argc - 2, argv + 2);
     if (std::strcmp(argv[1], "open") == 0) return cmdOpen(argc - 2, argv + 2);
     if (std::strcmp(argv[1], "shot") == 0) return cmdShot();
+    if (std::strcmp(argv[1], "partial") == 0) return cmdPartial(argc - 2, argv + 2);
     if (std::strcmp(argv[1], "dump") == 0) return cmdDump();
     if (std::strcmp(argv[1], "stat") == 0) return cmdStat();
     if (std::strcmp(argv[1], "nosleep") == 0) return cmdNoSleep(argc - 2, argv + 2);
     rt_kprintf("wodle: unknown subcommand '%s'\n", argv[1]);
     return -1;
 }
-MSH_CMD_EXPORT(wodle, CrossPoint debug driver - key/open/shot/dump/stat/nosleep);
+MSH_CMD_EXPORT(wodle, CrossPoint debug driver - key/open/shot/dump/partial/stat/nosleep);
 
 namespace WodleDebugCmds
 {
@@ -247,6 +282,15 @@ bool consumePendingShot()
     CriticalSection cs;
     if (!s_pendingShot) return false;
     s_pendingShot = false;
+    return true;
+}
+
+bool consumePendingPartial(PartialRect &out)
+{
+    CriticalSection cs;
+    if (s_pendingPartial.w == 0) return false;
+    out = s_pendingPartial;
+    s_pendingPartial = {0, 0, 0, 0};
     return true;
 }
 

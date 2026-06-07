@@ -571,6 +571,14 @@ void loop() {
                                   display.getDisplayHeight());
   }
   {
+    WodleDebugCmds::PartialRect pr;
+    if (WodleDebugCmds::consumePendingPartial(pr)) {
+      RenderLock lock;
+      const bool ok = display.refreshWindow(pr.x, pr.y, pr.w, pr.h);
+      LOG_INF("MAIN", "Debug partial %d,%d %dx%d -> %s", pr.x, pr.y, pr.w, pr.h, ok ? "ok" : "refused");
+    }
+  }
+  {
     std::string debugOpenPath;
     if (WodleDebugCmds::consumePendingOpen(debugOpenPath)) {
       if (Storage.exists(debugOpenPath.c_str())) {

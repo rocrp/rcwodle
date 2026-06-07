@@ -6,11 +6,13 @@
 #include <optional>
 
 #include "EpubReaderMenuActivity.h"
+#include "PartialClockTicker.h"
 #include "ProgressMapper.h"
 #include "activities/Activity.h"
 
 class EpubReaderActivity final : public Activity {
   std::shared_ptr<Epub> epub;
+  PartialClockTicker partialClock;  // WODLE-PORT: minute-fresh clock (experimental)
   std::unique_ptr<Section> section = nullptr;
   int currentSpineIndex = 0;
   int nextPageNumber = 0;

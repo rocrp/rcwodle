@@ -355,6 +355,7 @@ enum class StrId : uint16_t {
   STR_STATS_AVG,
   STR_TEXT_WEIGHT,
   STR_STORAGE_WRITE_FAILED,
+  STR_CLOCK_PARTIAL,
   // Sentinel - must be last
   _COUNT
 };

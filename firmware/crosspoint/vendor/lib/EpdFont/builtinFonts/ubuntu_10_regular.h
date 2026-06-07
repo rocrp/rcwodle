@@ -3,12 +3,12 @@
  * name: ubuntu_10_regular
  * size: 10
  * mode: 1-bit
- * Command used: /Users/rocry/w/_hw/rcwodle/firmware/crosspoint/vendor/lib/EpdFont/scripts/fontconvert.py ubuntu_10_regular 10 /Users/rocry/w/_hw/crosspoint-reader/lib/EpdFont/builtinFonts/source/Ubuntu/Ubuntu-Regular.ttf /Users/rocry/w/_hw/crosspoint-reader/lib/EpdFont/builtinFonts/source/NotoSansHebrew/NotoSansHebrew-Regular.ttf /Users/rocry/w/_hw/rcwodle/tools/.font-cache/LXGWWenKai-Regular.ttf --additional-intervals 0x05D0,0x05EA --additional-intervals 0x00A1,0x00A1 --additional-intervals 0x00AB,0x00AB --additional-intervals 0x00B0,0x00B0 --additional-intervals 0x00B7,0x00B7 --additional-intervals 0x00BA,0x00BB --additional-intervals 0x00BF,0x00BF --additional-intervals 0x00C1,0x00C1 --additional-intervals 0x00C4,0x00C7 --additional-intervals 0x00C9,0x00CA --additional-intervals 0x00CD,0x00CE --additional-intervals 0x00D2,0x00D3 --additional-intervals 0x00D6,0x00D6 --additional-intervals 0x00D9,0x00DA --additional-intervals 0x00DC,0x00DC --additional-intervals 0x00DF,0x00EF --additional-intervals 0x00F1,0x00F3 --additional-intervals 0x00F5,0x00F6 --additional-intervals 0x00F8,0x00FA --additional-intervals 0x00FC,0x00FD --additional-intervals 0x0103,0x0103 --additional-intervals 0x0105,0x0105 --additional-intervals 0x0107,0x0107 --additional-intervals 0x010C,0x010D --additional-intervals 0x010F,0x010F --additional-intervals 0x0117,0x0117 --additional-intervals 0x0119,0x011B --additional-intervals 0x011F,0x011F --additional-intervals 0x012E,0x0131 --additional-intervals 0x0141,0x0142 --additional-intervals 0x0144,0x0144 --additional-intervals 0x0151,0x0151 --additional-intervals 0x0158,0x015B --additional-intervals 0x015E,0x0161 --additional-intervals 0x0163,0x0163 --additional-intervals 0x0165,0x0165 --additional-intervals 0x016B,0x016B --additional-intervals 0x016F,0x016F --additional-intervals 0x0171,0x0171 --additional-intervals 0x0173,0x0173 --additional-intervals 0x017A,0x017A --additional-intervals 0x017C,0x017E --additional-intervals 0x0218,0x0218 --additional-intervals 0x021B,0x021B --additional-intervals 0x0406,0x0406 --additional-intervals 0x0410,0x0429 --additional-intervals 0x042B,0x042D --additional-intervals 0x042F,0x0449 --additional-intervals 0x044B,0x044F --additional-intervals 0x0451,0x0451 --additional-intervals 0x0454,0x0454 --additional-intervals 0x0456,0x0457 --additional-intervals 0x045E,0x045E --additional-intervals 0x0493,0x0493 --additional-intervals 0x049A,0x049B --additional-intervals 0x04A3,0x04A3 --additional-intervals 0x04AE,0x04B1 --additional-intervals 0x04D8,0x04D9 --additional-intervals 0x04E8,0x04E9 --additional-intervals 0x05D0,0x05EA --additional-intervals 0x05F4,0x05F4 --additional-intervals 0x2014,0x2014 --additional-intervals 0x2018,0x2019 --additional-intervals 0x201C,0x201E --additional-intervals 0x2026,0x2026 --additional-intervals 0x2190,0x2190 --additional-intervals 0x3002,0x3002 --additional-intervals 0x300C,0x300D --additional-intervals 0x4E00,0x4E00 --additional-intervals 0x4E0A,0x4E0B --additional-intervals 0x4E0D,0x4E0D --additional-intervals 0x4E13,0x4E13 --additional-intervals 0x4E22,0x4E22 --additional-intervals 0x4E24,0x4E24 --additional-intervals 0x4E2A,0x4E2A --additional-intervals 0x4E2D,0x4E2D --additional-intervals 0x4E32,0x4E32 --additional-intervals 0x4E3A,0x4E3B --additional-intervals 0x4E49,0x4E49 --additional-intervals 0x4E66,0x4E66 --additional-intervals 0x4E8C,0x4E8C --additional-intervals 0x4EA4,0x4EA4 --additional-intervals 0x4ECA,0x4ECA --additional-intervals 0x4ECE,0x4ECE --additional-intervals 0x4ED6,0x4ED6 --additional-intervals 0x4EE5,0x4EE5 --additional-intervals 0x4EF6,0x4EF6 --additional-intervals 0x4F11,0x4F11 --additional-intervals 0x4F1A,0x4F1A --additional-intervals 0x4F20,0x4F20 --additional-intervals 0x4F4D,0x4F4D --additional-intervals 0x4F4F,0x4F4F --additional-intervals 0x4F53,0x4F53 --additional-intervals 0x4F59,0x4F59 --additional-intervals 0x4F5C,0x4F5C --additional-intervals 0x4F60,0x4F60 --additional-intervals 0x4F7F,0x4F7F --additional-intervals 0x4F9B,0x4F9B --additional-intervals 0x4FA7,0x4FA7 --additional-intervals 0x4FBF,0x4FBF --additional-intervals 0x4FDD,0x4FDD --additional-intervals 0x4FE1,0x4FE1 --additional-intervals 0x4FEE,0x4FEE --additional-intervals 0x5012,0x5012 --additional-intervals 0x503E,0x503E --additional-intervals 0x504F,0x504F --additional-intervals 0x50A8,0x50A8 --additional-intervals 0x5145,0x5145 --additional-intervals 0x5148,0x5149 --additional-intervals 0x5165,0x5165 --additional-intervals 0x5168,0x5168 --additional-intervals 0x5173,0x5173 --additional-intervals 0x5176,0x5176 --additional-intervals 0x5178,0x5178 --additional-intervals 0x5185,0x5185 --additional-intervals 0x518D,0x518D --additional-intervals 0x5199,0x5199 --additional-intervals 0x51C6,0x51C6 --additional-intervals 0x51D1,0x51D1 --additional-intervals 0x51E0,0x51E0 --additional-intervals 0x51FA,0x51FA --additional-intervals 0x5206,0x5207 --additional-intervals 0x5217,0x5217 --additional-intervals 0x521B,0x521B --additional-intervals 0x5220,0x5220 --additional-intervals 0x5230,0x5230 --additional-intervals 0x5236,0x5237 --additional-intervals 0x524D,0x524D --additional-intervals 0x5269,0x526A --additional-intervals 0x526F,0x526F --additional-intervals 0x529F,0x52A1 --additional-intervals 0x52A8,0x52A8 --additional-intervals 0x52FF,0x52FF --additional-intervals 0x5339,0x533A --additional-intervals 0x5360,0x5361 --additional-intervals 0x5373,0x5373 --additional-intervals 0x539F,0x539F --additional-intervals 0x53D1,0x53D1 --additional-intervals 0x53D6,0x53D6 --additional-intervals 0x53E3,0x53E3 --additional-intervals 0x53EF,0x53EF --additional-intervals 0x53F3,0x53F3 --additional-intervals 0x53F7,0x53F7 --additional-intervals 0x540C,0x540E --additional-intervals 0x5411,0x5411 --additional-intervals 0x5426,0x5426 --additional-intervals 0x542F,0x542F --additional-intervals 0x544A,0x544A --additional-intervals 0x547D,0x547D --additional-intervals 0x54C8,0x54C8 --additional-intervals 0x5668,0x5668 --additional-intervals 0x56DE,0x56DE --additional-intervals 0x56E0,0x56E0 --additional-intervals 0x56F4,0x56F4 --additional-intervals 0x56FA,0x56FA --additional-intervals 0x56FE,0x56FE --additional-intervals 0x5728,0x5728 --additional-intervals 0x5730,0x5730 --additional-intervals 0x5740,0x5740 --additional-intervals 0x5747,0x5747 --additional-intervals 0x5907,0x5907 --additional-intervals 0x590D,0x590D --additional-intervals 0x5916,0x5916 --additional-intervals 0x5927,0x5927 --additional-intervals 0x5929,0x5929 --additional-intervals 0x5931,0x5931 --additional-intervals 0x5939,0x5939 --additional-intervals 0x5982,0x5982 --additional-intervals 0x59CB,0x59CB --additional-intervals 0x5B57,0x5B58 --additional-intervals 0x5B83,0x5B83 --additional-intervals 0x5B89,0x5B89 --additional-intervals 0x5B8C,0x5B8C --additional-intervals 0x5B9A,0x5B9A --additional-intervals 0x5BBD,0x5BBD --additional-intervals 0x5BC6,0x5BC6 --additional-intervals 0x5BF9,0x5BF9 --additional-intervals 0x5C01,0x5C01 --additional-intervals 0x5C04,0x5C04 --additional-intervals 0x5C06,0x5C06 --additional-intervals 0x5C0F,0x5C0F --additional-intervals 0x5C31,0x5C31 --additional-intervals 0x5C3D,0x5C3D --additional-intervals 0x5C40,0x5C40 --additional-intervals 0x5C45,0x5C45 --additional-intervals 0x5C4F,0x5C4F --additional-intervals 0x5C55,0x5C55 --additional-intervals 0x5D29,0x5D29 --additional-intervals 0x5D4C,0x5D4C --additional-intervals 0x5DE6,0x5DE6 --additional-intervals 0x5DF2,0x5DF2 --additional-intervals 0x5E03,0x5E03 --additional-intervals 0x5E0C,0x5E0C --additional-intervals 0x5E26,0x5E26 --additional-intervals 0x5E38,0x5E38 --additional-intervals 0x5E45,0x5E45 --additional-intervals 0x5E55,0x5E55 --additional-intervals 0x5E73,0x5E73 --additional-intervals 0x5E76,0x5E76 --additional-intervals 0x5E94,0x5E95 --additional-intervals 0x5EA6,0x5EA6 --additional-intervals 0x5EFA,0x5EFA --additional-intervals 0x5F00,0x5F00 --additional-intervals 0x5F0F,0x5F0F --additional-intervals 0x5F15,0x5F15 --additional-intervals 0x5F53,0x5F53 --additional-intervals 0x5F55,0x5F55 --additional-intervals 0x5FEB,0x5FEB --additional-intervals 0x5FFD,0x5FFD --additional-intervals 0x6001,0x6001 --additional-intervals 0x603B,0x603B --additional-intervals 0x6062,0x6062 --additional-intervals 0x606F,0x606F --additional-intervals 0x60C5,0x60C5 --additional-intervals 0x6210,0x6210 --additional-intervals 0x6216,0x6216 --additional-intervals 0x622A,0x622A --additional-intervals 0x6237,0x6237 --additional-intervals 0x6240,0x6240 --additional-intervals 0x624B,0x624B --additional-intervals 0x6253,0x6253 --additional-intervals 0x6269,0x6269 --additional-intervals 0x626B,0x626B --additional-intervals 0x627E,0x627E --additional-intervals 0x6297,0x6297 --additional-intervals 0x62A5,0x62A5 --additional-intervals 0x62E9,0x62E9 --additional-intervals 0x6301,0x6301 --additional-intervals 0x6309,0x6309 --additional-intervals 0x6362,0x6362 --additional-intervals 0x636E,0x636E --additional-intervals 0x63A5,0x63A5 --additional-intervals 0x63CF,0x63D0 --additional-intervals 0x63D2,0x63D2 --additional-intervals 0x641C,0x641C --additional-intervals 0x64CD,0x64CD --additional-intervals 0x6536,0x6536 --additional-intervals 0x653E,0x653E --additional-intervals 0x6548,0x6548 --additional-intervals 0x6570,0x6570 --additional-intervals 0x6587,0x6587 --additional-intervals 0x659C,0x659C --additional-intervals 0x65AD,0x65AD --additional-intervals 0x65B0,0x65B0 --additional-intervals 0x65B9,0x65B9 --additional-intervals 0x65E0,0x65E0 --additional-intervals 0x65E5,0x65E5 --additional-intervals 0x65F6,0x65F6 --additional-intervals 0x6620,0x6620 --additional-intervals 0x662F,0x662F --additional-intervals 0x663E,0x663E --additional-intervals 0x6682,0x6682 --additional-intervals 0x66F4,0x66F4 --additional-intervals 0x6700,0x6700 --additional-intervals 0x6709,0x6709 --additional-intervals 0x670D,0x670D --additional-intervals 0x672A,0x672A --additional-intervals 0x672C,0x672C --additional-intervals 0x673A,0x673A --additional-intervals 0x6761,0x6761 --additional-intervals 0x6765,0x6765 --additional-intervals 0x677E,0x677E --additional-intervals 0x6790,0x6790 --additional-intervals 0x679C,0x679C --additional-intervals 0x67E5,0x67E5 --additional-intervals 0x6807,0x6807 --additional-intervals 0x680F,0x680F --additional-intervals 0x6821,0x6821 --additional-intervals 0x6837,0x6837 --additional-intervals 0x6839,0x6839 --additional-intervals 0x683C,0x683C --additional-intervals 0x6863,0x6863 --additional-intervals 0x68C0,0x68C0 --additional-intervals 0x6A21,0x6A21 --additional-intervals 0x6A2A,0x6A2A --additional-intervals 0x6B21,0x6B21 --additional-intervals 0x6B63,0x6B65 --additional-intervals 0x6BB5,0x6BB5 --additional-intervals 0x6BCF,0x6BCF --additional-intervals 0x6BD4,0x6BD4 --additional-intervals 0x6CA1,0x6CA1 --additional-intervals 0x6CD5,0x6CD5 --additional-intervals 0x6CE8,0x6CE8 --additional-intervals 0x6D45,0x6D45 --additional-intervals 0x6D4F,0x6D4F --additional-intervals 0x6D88,0x6D88 --additional-intervals 0x6DF1,0x6DF1 --additional-intervals 0x6DFB,0x6DFB --additional-intervals 0x6E05,0x6E05 --additional-intervals 0x6E29,0x6E29 --additional-intervals 0x6E7F,0x6E7F --additional-intervals 0x6E83,0x6E83 --additional-intervals 0x6E90,0x6E90 --additional-intervals 0x6EE4,0x6EE4 --additional-intervals 0x706F,0x706F --additional-intervals 0x70B9,0x70B9 --additional-intervals 0x70ED,0x70ED --additional-intervals 0x7247,0x7248 --additional-intervals 0x7279,0x7279 --additional-intervals 0x72B6,0x72B6 --additional-intervals 0x7387,0x7387 --additional-intervals 0x73B0,0x73B0 --additional-intervals 0x7406,0x7406 --additional-intervals 0x7528,0x7528 --additional-intervals 0x7535,0x7535 --additional-intervals 0x754C,0x754C --additional-intervals 0x7565,0x7565 --additional-intervals 0x767B,0x767B --additional-intervals 0x767E,0x767E --additional-intervals 0x7684,0x7684 --additional-intervals 0x76D8,0x76D8 --additional-intervals 0x76EE,0x76EE --additional-intervals 0x7720,0x7720 --additional-intervals 0x77ED,0x77ED --additional-intervals 0x7801,0x7801 --additional-intervals 0x786C,0x786C --additional-intervals 0x786E,0x786E --additional-intervals 0x793A,0x793A --additional-intervals 0x7981,0x7981 --additional-intervals 0x79D2,0x79D2 --additional-intervals 0x79F0,0x79F0 --additional-intervals 0x79FB,0x79FB --additional-intervals 0x7A0B,0x7A0B --additional-intervals 0x7A7A,0x7A7A --additional-intervals 0x7ACB,0x7ACB --additional-intervals 0x7AD6,0x7AD6 --additional-intervals 0x7AE0,0x7AE0 --additional-intervals 0x7AEF,0x7AEF --additional-intervals 0x7B26,0x7B26 --additional-intervals 0x7B2C,0x7B2C --additional-intervals 0x7B7E,0x7B7E --additional-intervals 0x7B80,0x7B80 --additional-intervals 0x7B97,0x7B97 --additional-intervals 0x7BA1,0x7BA1 --additional-intervals 0x7C4D,0x7C4D --additional-intervals 0x7C97,0x7C97 --additional-intervals 0x7CFB,0x7CFB --additional-intervals 0x7D22,0x7D22 --additional-intervals 0x7D27,0x7D27 --additional-intervals 0x7D2F,0x7D2F --additional-intervals 0x7EBF,0x7EBF --additional-intervals 0x7EC6,0x7EC6 --additional-intervals 0x7ECF,0x7ECF --additional-intervals 0x7EDC,0x7EDC --additional-intervals 0x7EDF,0x7EDF --additional-intervals 0x7EE7,0x7EE7 --additional-intervals 0x7EEA,0x7EEA --additional-intervals 0x7EED,0x7EED --additional-intervals 0x7EF4,0x7EF4 --additional-intervals 0x7F13,0x7F13 --additional-intervals 0x7F16,0x7F16 --additional-intervals 0x7F51,0x7F51 --additional-intervals 0x7F6E,0x7F6E --additional-intervals 0x7FFB,0x7FFB --additional-intervals 0x8017,0x8017 --additional-intervals 0x80FD,0x80FD --additional-intervals 0x811A,0x811A --additional-intervals 0x81EA,0x81EA --additional-intervals 0x8272,0x8272 --additional-intervals 0x8282,0x8282 --additional-intervals 0x8303,0x8303 --additional-intervals 0x83B7,0x83B7 --additional-intervals 0x843D,0x843D --additional-intervals 0x85CF,0x85CF --additional-intervals 0x884C,0x884C --additional-intervals 0x8868,0x8868 --additional-intervals 0x88AB,0x88AB --additional-intervals 0x88C1,0x88C1 --additional-intervals 0x88C5,0x88C5 --additional-intervals 0x892A,0x892A --additional-intervals 0x8981,0x8981 --additional-intervals 0x89C1,0x89C1 --additional-intervals 0x89C8,0x89C8 --additional-intervals 0x89E3,0x89E3 --additional-intervals 0x8A00,0x8A00 --additional-intervals 0x8BA1,0x8BA1 --additional-intervals 0x8BA4,0x8BA4 --additional-intervals 0x8BB0,0x8BB0 --additional-intervals 0x8BBE,0x8BBE --additional-intervals 0x8BC1,0x8BC1 --additional-intervals 0x8BCA,0x8BCA --additional-intervals 0x8BCD,0x8BCD --additional-intervals 0x8BD5,0x8BD5 --additional-intervals 0x8BE5,0x8BE6 --additional-intervals 0x8BED,0x8BED --additional-intervals 0x8BEF,0x8BEF --additional-intervals 0x8BF7,0x8BF7 --additional-intervals 0x8BFB,0x8BFB --additional-intervals 0x8D25,0x8D26 --additional-intervals 0x8D85,0x8D85 --additional-intervals 0x8DB3,0x8DB3 --additional-intervals 0x8DDD,0x8DDD --additional-intervals 0x8DDF,0x8DDF --additional-intervals 0x8DF3,0x8DF3 --additional-intervals 0x8F6C,0x8F6C --additional-intervals 0x8F7D,0x8F7D --additional-intervals 0x8F91,0x8F91 --additional-intervals 0x8F93,0x8F93 --additional-intervals 0x8FB9,0x8FB9 --additional-intervals 0x8FC7,0x8FC7 --additional-intervals 0x8FD1,0x8FD1 --additional-intervals 0x8FD4,0x8FD4 --additional-intervals 0x8FDB,0x8FDC --additional-intervals 0x8FDE,0x8FDE --additional-intervals 0x9000,0x9002 --additional-intervals 0x9006,0x9006 --additional-intervals 0x9009,0x9009 --additional-intervals 0x901F,0x901F --additional-intervals 0x90E8,0x90E8 --additional-intervals 0x90FD,0x90FD --additional-intervals 0x914D,0x914D --additional-intervals 0x91CD,0x91CD --additional-intervals 0x91CF,0x91CF --additional-intervals 0x9488,0x9488 --additional-intervals 0x949F,0x949F --additional-intervals 0x94FE,0x94FE --additional-intervals 0x9519,0x9519 --additional-intervals 0x952E,0x952F --additional-intervals 0x955C,0x955C --additional-intervals 0x957F,0x957F --additional-intervals 0x95ED,0x95EE --additional-intervals 0x95F4,0x95F4 --additional-intervals 0x9605,0x9605 --additional-intervals 0x9633,0x9633 --additional-intervals 0x9644,0x9644 --additional-intervals 0x9664,0x9664 --additional-intervals 0x968F,0x9690 --additional-intervals 0x9700,0x9700 --additional-intervals 0x9762,0x9762 --additional-intervals 0x9875,0x9876 --additional-intervals 0x9879,0x987A --additional-intervals 0x9884,0x9884 --additional-intervals 0x9891,0x9891 --additional-intervals 0x9898,0x9898 --additional-intervals 0x989D,0x989D --additional-intervals 0x9A8C,0x9A8C --additional-intervals 0x9ED8,0x9ED8 --additional-intervals 0x9F50,0x9F50 --additional-intervals 0x9F7F,0x9F7F --additional-intervals 0xFF01,0xFF01 --additional-intervals 0xFF08,0xFF09 --additional-intervals 0xFF0C,0xFF0C --additional-intervals 0xFF1A,0xFF1A --additional-intervals 0xFF1F,0xFF1F
+ * Command used: /Users/rocry/w/_hw/rcwodle/firmware/crosspoint/vendor/lib/EpdFont/scripts/fontconvert.py ubuntu_10_regular 10 /Users/rocry/w/_hw/crosspoint-reader/lib/EpdFont/builtinFonts/source/Ubuntu/Ubuntu-Regular.ttf /Users/rocry/w/_hw/crosspoint-reader/lib/EpdFont/builtinFonts/source/NotoSansHebrew/NotoSansHebrew-Regular.ttf /Users/rocry/w/_hw/rcwodle/tools/.font-cache/LXGWWenKai-Regular.ttf --additional-intervals 0x05D0,0x05EA --additional-intervals 0x00A1,0x00A1 --additional-intervals 0x00AB,0x00AB --additional-intervals 0x00B0,0x00B0 --additional-intervals 0x00B7,0x00B7 --additional-intervals 0x00BA,0x00BB --additional-intervals 0x00BF,0x00BF --additional-intervals 0x00C1,0x00C1 --additional-intervals 0x00C4,0x00C7 --additional-intervals 0x00C9,0x00CA --additional-intervals 0x00CD,0x00CE --additional-intervals 0x00D2,0x00D3 --additional-intervals 0x00D6,0x00D6 --additional-intervals 0x00D9,0x00DA --additional-intervals 0x00DC,0x00DC --additional-intervals 0x00DF,0x00EF --additional-intervals 0x00F1,0x00F3 --additional-intervals 0x00F5,0x00F6 --additional-intervals 0x00F8,0x00FA --additional-intervals 0x00FC,0x00FD --additional-intervals 0x0103,0x0103 --additional-intervals 0x0105,0x0105 --additional-intervals 0x0107,0x0107 --additional-intervals 0x010C,0x010D --additional-intervals 0x010F,0x010F --additional-intervals 0x0117,0x0117 --additional-intervals 0x0119,0x011B --additional-intervals 0x011F,0x011F --additional-intervals 0x012E,0x0131 --additional-intervals 0x0141,0x0142 --additional-intervals 0x0144,0x0144 --additional-intervals 0x0151,0x0151 --additional-intervals 0x0158,0x015B --additional-intervals 0x015E,0x0161 --additional-intervals 0x0163,0x0163 --additional-intervals 0x0165,0x0165 --additional-intervals 0x016B,0x016B --additional-intervals 0x016F,0x016F --additional-intervals 0x0171,0x0171 --additional-intervals 0x0173,0x0173 --additional-intervals 0x017A,0x017A --additional-intervals 0x017C,0x017E --additional-intervals 0x0218,0x0218 --additional-intervals 0x021B,0x021B --additional-intervals 0x0406,0x0406 --additional-intervals 0x0410,0x0429 --additional-intervals 0x042B,0x042D --additional-intervals 0x042F,0x0449 --additional-intervals 0x044B,0x044F --additional-intervals 0x0451,0x0451 --additional-intervals 0x0454,0x0454 --additional-intervals 0x0456,0x0457 --additional-intervals 0x045E,0x045E --additional-intervals 0x0493,0x0493 --additional-intervals 0x049A,0x049B --additional-intervals 0x04A3,0x04A3 --additional-intervals 0x04AE,0x04B1 --additional-intervals 0x04D8,0x04D9 --additional-intervals 0x04E8,0x04E9 --additional-intervals 0x05D0,0x05EA --additional-intervals 0x05F4,0x05F4 --additional-intervals 0x2014,0x2014 --additional-intervals 0x2018,0x2019 --additional-intervals 0x201C,0x201E --additional-intervals 0x2026,0x2026 --additional-intervals 0x2190,0x2190 --additional-intervals 0x3002,0x3002 --additional-intervals 0x300C,0x300D --additional-intervals 0x4E00,0x4E00 --additional-intervals 0x4E0A,0x4E0B --additional-intervals 0x4E0D,0x4E0D --additional-intervals 0x4E13,0x4E13 --additional-intervals 0x4E22,0x4E22 --additional-intervals 0x4E24,0x4E24 --additional-intervals 0x4E2A,0x4E2A --additional-intervals 0x4E2D,0x4E2D --additional-intervals 0x4E32,0x4E32 --additional-intervals 0x4E3A,0x4E3B --additional-intervals 0x4E49,0x4E49 --additional-intervals 0x4E66,0x4E66 --additional-intervals 0x4E8C,0x4E8C --additional-intervals 0x4EA4,0x4EA4 --additional-intervals 0x4ECA,0x4ECA --additional-intervals 0x4ECE,0x4ECE --additional-intervals 0x4ED6,0x4ED6 --additional-intervals 0x4EE5,0x4EE5 --additional-intervals 0x4EF6,0x4EF6 --additional-intervals 0x4F11,0x4F11 --additional-intervals 0x4F1A,0x4F1A --additional-intervals 0x4F20,0x4F20 --additional-intervals 0x4F4D,0x4F4D --additional-intervals 0x4F4F,0x4F4F --additional-intervals 0x4F53,0x4F53 --additional-intervals 0x4F59,0x4F59 --additional-intervals 0x4F5C,0x4F5C --additional-intervals 0x4F60,0x4F60 --additional-intervals 0x4F7F,0x4F7F --additional-intervals 0x4F9B,0x4F9B --additional-intervals 0x4FA7,0x4FA7 --additional-intervals 0x4FBF,0x4FBF --additional-intervals 0x4FDD,0x4FDD --additional-intervals 0x4FE1,0x4FE1 --additional-intervals 0x4FEE,0x4FEE --additional-intervals 0x5012,0x5012 --additional-intervals 0x503E,0x503E --additional-intervals 0x504F,0x504F --additional-intervals 0x50A8,0x50A8 --additional-intervals 0x5145,0x5145 --additional-intervals 0x5148,0x5149 --additional-intervals 0x5165,0x5165 --additional-intervals 0x5168,0x5168 --additional-intervals 0x5173,0x5173 --additional-intervals 0x5176,0x5176 --additional-intervals 0x5178,0x5178 --additional-intervals 0x5185,0x5185 --additional-intervals 0x518D,0x518D --additional-intervals 0x5199,0x5199 --additional-intervals 0x51C6,0x51C6 --additional-intervals 0x51D1,0x51D1 --additional-intervals 0x51E0,0x51E0 --additional-intervals 0x51FA,0x51FA --additional-intervals 0x5206,0x5207 --additional-intervals 0x5217,0x5217 --additional-intervals 0x521B,0x521B --additional-intervals 0x5220,0x5220 --additional-intervals 0x5230,0x5230 --additional-intervals 0x5236,0x5237 --additional-intervals 0x524D,0x524D --additional-intervals 0x5269,0x526A --additional-intervals 0x526F,0x526F --additional-intervals 0x529F,0x52A1 --additional-intervals 0x52A8,0x52A8 --additional-intervals 0x52FF,0x52FF --additional-intervals 0x5339,0x533A --additional-intervals 0x5360,0x5361 --additional-intervals 0x5373,0x5373 --additional-intervals 0x539F,0x539F --additional-intervals 0x53D1,0x53D1 --additional-intervals 0x53D6,0x53D6 --additional-intervals 0x53E3,0x53E3 --additional-intervals 0x53EF,0x53EF --additional-intervals 0x53F3,0x53F3 --additional-intervals 0x53F7,0x53F7 --additional-intervals 0x540C,0x540E --additional-intervals 0x5411,0x5411 --additional-intervals 0x5426,0x5426 --additional-intervals 0x542F,0x542F --additional-intervals 0x544A,0x544A --additional-intervals 0x547D,0x547D --additional-intervals 0x54C8,0x54C8 --additional-intervals 0x5668,0x5668 --additional-intervals 0x56DE,0x56DE --additional-intervals 0x56E0,0x56E0 --additional-intervals 0x56F4,0x56F4 --additional-intervals 0x56FA,0x56FA --additional-intervals 0x56FE,0x56FE --additional-intervals 0x5728,0x5728 --additional-intervals 0x5730,0x5730 --additional-intervals 0x5740,0x5740 --additional-intervals 0x5747,0x5747 --additional-intervals 0x5907,0x5907 --additional-intervals 0x590D,0x590D --additional-intervals 0x5916,0x5916 --additional-intervals 0x5927,0x5927 --additional-intervals 0x5929,0x5929 --additional-intervals 0x5931,0x5931 --additional-intervals 0x5939,0x5939 --additional-intervals 0x5982,0x5982 --additional-intervals 0x59CB,0x59CB --additional-intervals 0x5B57,0x5B58 --additional-intervals 0x5B83,0x5B83 --additional-intervals 0x5B89,0x5B89 --additional-intervals 0x5B8C,0x5B8C --additional-intervals 0x5B9A,0x5B9A --additional-intervals 0x5B9E,0x5B9E --additional-intervals 0x5BBD,0x5BBD --additional-intervals 0x5BC6,0x5BC6 --additional-intervals 0x5BF9,0x5BF9 --additional-intervals 0x5C01,0x5C01 --additional-intervals 0x5C04,0x5C04 --additional-intervals 0x5C06,0x5C06 --additional-intervals 0x5C0F,0x5C0F --additional-intervals 0x5C31,0x5C31 --additional-intervals 0x5C3D,0x5C3D --additional-intervals 0x5C40,0x5C40 --additional-intervals 0x5C45,0x5C45 --additional-intervals 0x5C4F,0x5C4F --additional-intervals 0x5C55,0x5C55 --additional-intervals 0x5D29,0x5D29 --additional-intervals 0x5D4C,0x5D4C --additional-intervals 0x5DE6,0x5DE6 --additional-intervals 0x5DF2,0x5DF2 --additional-intervals 0x5E03,0x5E03 --additional-intervals 0x5E0C,0x5E0C --additional-intervals 0x5E26,0x5E26 --additional-intervals 0x5E38,0x5E38 --additional-intervals 0x5E45,0x5E45 --additional-intervals 0x5E55,0x5E55 --additional-intervals 0x5E73,0x5E73 --additional-intervals 0x5E76,0x5E76 --additional-intervals 0x5E94,0x5E95 --additional-intervals 0x5EA6,0x5EA6 --additional-intervals 0x5EFA,0x5EFA --additional-intervals 0x5F00,0x5F00 --additional-intervals 0x5F0F,0x5F0F --additional-intervals 0x5F15,0x5F15 --additional-intervals 0x5F53,0x5F53 --additional-intervals 0x5F55,0x5F55 --additional-intervals 0x5FEB,0x5FEB --additional-intervals 0x5FFD,0x5FFD --additional-intervals 0x6001,0x6001 --additional-intervals 0x603B,0x603B --additional-intervals 0x6062,0x6062 --additional-intervals 0x606F,0x606F --additional-intervals 0x60C5,0x60C5 --additional-intervals 0x6210,0x6210 --additional-intervals 0x6216,0x6216 --additional-intervals 0x622A,0x622A --additional-intervals 0x6237,0x6237 --additional-intervals 0x6240,0x6240 --additional-intervals 0x624B,0x624B --additional-intervals 0x6253,0x6253 --additional-intervals 0x6269,0x6269 --additional-intervals 0x626B,0x626B --additional-intervals 0x627E,0x627E --additional-intervals 0x6297,0x6297 --additional-intervals 0x62A5,0x62A5 --additional-intervals 0x62E9,0x62E9 --additional-intervals 0x6301,0x6301 --additional-intervals 0x6309,0x6309 --additional-intervals 0x6362,0x6362 --additional-intervals 0x636E,0x636E --additional-intervals 0x63A5,0x63A5 --additional-intervals 0x63CF,0x63D0 --additional-intervals 0x63D2,0x63D2 --additional-intervals 0x641C,0x641C --additional-intervals 0x64CD,0x64CD --additional-intervals 0x6536,0x6536 --additional-intervals 0x653E,0x653E --additional-intervals 0x6548,0x6548 --additional-intervals 0x6570,0x6570 --additional-intervals 0x6587,0x6587 --additional-intervals 0x659C,0x659C --additional-intervals 0x65AD,0x65AD --additional-intervals 0x65B0,0x65B0 --additional-intervals 0x65B9,0x65B9 --additional-intervals 0x65E0,0x65E0 --additional-intervals 0x65E5,0x65E5 --additional-intervals 0x65F6,0x65F6 --additional-intervals 0x6620,0x6620 --additional-intervals 0x662F,0x662F --additional-intervals 0x663E,0x663E --additional-intervals 0x6682,0x6682 --additional-intervals 0x66F4,0x66F4 --additional-intervals 0x6700,0x6700 --additional-intervals 0x6709,0x6709 --additional-intervals 0x670D,0x670D --additional-intervals 0x672A,0x672A --additional-intervals 0x672C,0x672C --additional-intervals 0x673A,0x673A --additional-intervals 0x6761,0x6761 --additional-intervals 0x6765,0x6765 --additional-intervals 0x677E,0x677E --additional-intervals 0x6790,0x6790 --additional-intervals 0x679C,0x679C --additional-intervals 0x67E5,0x67E5 --additional-intervals 0x6807,0x6807 --additional-intervals 0x680F,0x680F --additional-intervals 0x6821,0x6821 --additional-intervals 0x6837,0x6837 --additional-intervals 0x6839,0x6839 --additional-intervals 0x683C,0x683C --additional-intervals 0x6863,0x6863 --additional-intervals 0x68C0,0x68C0 --additional-intervals 0x6A21,0x6A21 --additional-intervals 0x6A2A,0x6A2A --additional-intervals 0x6B21,0x6B21 --additional-intervals 0x6B63,0x6B65 --additional-intervals 0x6BB5,0x6BB5 --additional-intervals 0x6BCF,0x6BCF --additional-intervals 0x6BD4,0x6BD4 --additional-intervals 0x6CA1,0x6CA1 --additional-intervals 0x6CD5,0x6CD5 --additional-intervals 0x6CE8,0x6CE8 --additional-intervals 0x6D45,0x6D45 --additional-intervals 0x6D4F,0x6D4F --additional-intervals 0x6D88,0x6D88 --additional-intervals 0x6DF1,0x6DF1 --additional-intervals 0x6DFB,0x6DFB --additional-intervals 0x6E05,0x6E05 --additional-intervals 0x6E29,0x6E29 --additional-intervals 0x6E7F,0x6E7F --additional-intervals 0x6E83,0x6E83 --additional-intervals 0x6E90,0x6E90 --additional-intervals 0x6EE4,0x6EE4 --additional-intervals 0x706F,0x706F --additional-intervals 0x70B9,0x70B9 --additional-intervals 0x70ED,0x70ED --additional-intervals 0x7247,0x7248 --additional-intervals 0x7279,0x7279 --additional-intervals 0x72B6,0x72B6 --additional-intervals 0x7387,0x7387 --additional-intervals 0x73B0,0x73B0 --additional-intervals 0x7406,0x7406 --additional-intervals 0x7528,0x7528 --additional-intervals 0x7535,0x7535 --additional-intervals 0x754C,0x754C --additional-intervals 0x7565,0x7565 --additional-intervals 0x767B,0x767B --additional-intervals 0x767E,0x767E --additional-intervals 0x7684,0x7684 --additional-intervals 0x76D8,0x76D8 --additional-intervals 0x76EE,0x76EE --additional-intervals 0x7720,0x7720 --additional-intervals 0x77ED,0x77ED --additional-intervals 0x7801,0x7801 --additional-intervals 0x786C,0x786C --additional-intervals 0x786E,0x786E --additional-intervals 0x793A,0x793A --additional-intervals 0x7981,0x7981 --additional-intervals 0x79D2,0x79D2 --additional-intervals 0x79F0,0x79F0 --additional-intervals 0x79FB,0x79FB --additional-intervals 0x7A0B,0x7A0B --additional-intervals 0x7A7A,0x7A7A --additional-intervals 0x7ACB,0x7ACB --additional-intervals 0x7AD6,0x7AD6 --additional-intervals 0x7AE0,0x7AE0 --additional-intervals 0x7AEF,0x7AEF --additional-intervals 0x7B26,0x7B26 --additional-intervals 0x7B2C,0x7B2C --additional-intervals 0x7B7E,0x7B7E --additional-intervals 0x7B80,0x7B80 --additional-intervals 0x7B97,0x7B97 --additional-intervals 0x7BA1,0x7BA1 --additional-intervals 0x7C4D,0x7C4D --additional-intervals 0x7C97,0x7C97 --additional-intervals 0x7CFB,0x7CFB --additional-intervals 0x7D22,0x7D22 --additional-intervals 0x7D27,0x7D27 --additional-intervals 0x7D2F,0x7D2F --additional-intervals 0x7EBF,0x7EBF --additional-intervals 0x7EC6,0x7EC6 --additional-intervals 0x7ECF,0x7ECF --additional-intervals 0x7EDC,0x7EDC --additional-intervals 0x7EDF,0x7EDF --additional-intervals 0x7EE7,0x7EE7 --additional-intervals 0x7EEA,0x7EEA --additional-intervals 0x7EED,0x7EED --additional-intervals 0x7EF4,0x7EF4 --additional-intervals 0x7F13,0x7F13 --additional-intervals 0x7F16,0x7F16 --additional-intervals 0x7F51,0x7F51 --additional-intervals 0x7F6E,0x7F6E --additional-intervals 0x7FFB,0x7FFB --additional-intervals 0x8017,0x8017 --additional-intervals 0x80FD,0x80FD --additional-intervals 0x811A,0x811A --additional-intervals 0x81EA,0x81EA --additional-intervals 0x8272,0x8272 --additional-intervals 0x8282,0x8282 --additional-intervals 0x8303,0x8303 --additional-intervals 0x83B7,0x83B7 --additional-intervals 0x843D,0x843D --additional-intervals 0x85CF,0x85CF --additional-intervals 0x884C,0x884C --additional-intervals 0x8868,0x8868 --additional-intervals 0x88AB,0x88AB --additional-intervals 0x88C1,0x88C1 --additional-intervals 0x88C5,0x88C5 --additional-intervals 0x892A,0x892A --additional-intervals 0x8981,0x8981 --additional-intervals 0x89C1,0x89C1 --additional-intervals 0x89C8,0x89C8 --additional-intervals 0x89E3,0x89E3 --additional-intervals 0x8A00,0x8A00 --additional-intervals 0x8BA1,0x8BA1 --additional-intervals 0x8BA4,0x8BA4 --additional-intervals 0x8BB0,0x8BB0 --additional-intervals 0x8BBE,0x8BBE --additional-intervals 0x8BC1,0x8BC1 --additional-intervals 0x8BCA,0x8BCA --additional-intervals 0x8BCD,0x8BCD --additional-intervals 0x8BD5,0x8BD5 --additional-intervals 0x8BE5,0x8BE6 --additional-intervals 0x8BED,0x8BED --additional-intervals 0x8BEF,0x8BEF --additional-intervals 0x8BF7,0x8BF7 --additional-intervals 0x8BFB,0x8BFB --additional-intervals 0x8D25,0x8D26 --additional-intervals 0x8D85,0x8D85 --additional-intervals 0x8DB3,0x8DB3 --additional-intervals 0x8DDD,0x8DDD --additional-intervals 0x8DDF,0x8DDF --additional-intervals 0x8DF3,0x8DF3 --additional-intervals 0x8F6C,0x8F6C --additional-intervals 0x8F7D,0x8F7D --additional-intervals 0x8F91,0x8F91 --additional-intervals 0x8F93,0x8F93 --additional-intervals 0x8FB9,0x8FB9 --additional-intervals 0x8FC7,0x8FC7 --additional-intervals 0x8FD1,0x8FD1 --additional-intervals 0x8FD4,0x8FD4 --additional-intervals 0x8FDB,0x8FDC --additional-intervals 0x8FDE,0x8FDE --additional-intervals 0x9000,0x9002 --additional-intervals 0x9006,0x9006 --additional-intervals 0x9009,0x9009 --additional-intervals 0x901F,0x901F --additional-intervals 0x90E8,0x90E8 --additional-intervals 0x90FD,0x90FD --additional-intervals 0x914D,0x914D --additional-intervals 0x91CD,0x91CD --additional-intervals 0x91CF,0x91CF --additional-intervals 0x9488,0x9488 --additional-intervals 0x949F,0x949F --additional-intervals 0x94FE,0x94FE --additional-intervals 0x9519,0x9519 --additional-intervals 0x952E,0x952F --additional-intervals 0x955C,0x955C --additional-intervals 0x957F,0x957F --additional-intervals 0x95ED,0x95EE --additional-intervals 0x95F4,0x95F4 --additional-intervals 0x9605,0x9605 --additional-intervals 0x9633,0x9633 --additional-intervals 0x9644,0x9644 --additional-intervals 0x9664,0x9664 --additional-intervals 0x968F,0x9690 --additional-intervals 0x9700,0x9700 --additional-intervals 0x9762,0x9762 --additional-intervals 0x9875,0x9876 --additional-intervals 0x9879,0x987A --additional-intervals 0x9884,0x9884 --additional-intervals 0x9891,0x9891 --additional-intervals 0x9898,0x9898 --additional-intervals 0x989D,0x989D --additional-intervals 0x9A8C,0x9A8C --additional-intervals 0x9ED8,0x9ED8 --additional-intervals 0x9F50,0x9F50 --additional-intervals 0x9F7F,0x9F7F --additional-intervals 0xFF01,0xFF01 --additional-intervals 0xFF08,0xFF09 --additional-intervals 0xFF0C,0xFF0C --additional-intervals 0xFF1A,0xFF1A --additional-intervals 0xFF1F,0xFF1F
  */
 #pragma once
 #include "EpdFontData.h"
 
-static const uint8_t ubuntu_10_regularBitmaps[43750] = {
+static const uint8_t ubuntu_10_regularBitmaps[43798] = {
     0xEE, 0xEE, 0xE6, 0x66, 0x66, 0x00, 0xEF, 0xE0, 0xEF, 0xDF, 0xBF, 0x6E, 0xC0, 0x1C, 0x61, 0xCE,
     0x1C, 0xE1, 0x8E, 0xFF, 0xFF, 0xFF, 0x38, 0xC3, 0x9C, 0x31, 0xCF, 0xFF, 0xFF, 0xF7, 0x18, 0x73,
     0x87, 0x38, 0x63, 0x80, 0x0C, 0x03, 0x03, 0xF9, 0xFE, 0xF1, 0xB8, 0x0E, 0x01, 0xE0, 0x7E, 0x07,
@@ -1871,7 +1871,10 @@ static const uint8_t ubuntu_10_regularBitmaps[43750] = {
     0x41, 0x8C, 0x08, 0x71, 0x83, 0x1C, 0x38, 0xEE, 0x07, 0xFF, 0x00, 0x3E, 0x00, 0x00, 0xC0, 0x00,
     0x1C, 0x00, 0x63, 0x86, 0x1F, 0xFF, 0xE3, 0xFF, 0xFC, 0x60, 0x03, 0x18, 0x01, 0x43, 0x7F, 0xF0,
     0x0F, 0xF8, 0x00, 0x1C, 0x00, 0x1B, 0x80, 0x07, 0x7F, 0x00, 0xCF, 0xE0, 0x19, 0x80, 0x07, 0xF0,
-    0x01, 0x9F, 0x00, 0x30, 0xFF, 0x0C, 0x07, 0xFF, 0x00, 0x07, 0x80, 0x00, 0x80, 0x00, 0x18, 0x00,
+    0x01, 0x9F, 0x00, 0x30, 0xFF, 0x0C, 0x07, 0xFF, 0x00, 0x07, 0x80, 0x00, 0xC0, 0x00, 0x1C, 0x00,
+    0x43, 0x80, 0x1F, 0xFF, 0xF3, 0xFF, 0xFC, 0xE0, 0x41, 0x9B, 0x8C, 0x63, 0x3D, 0x88, 0x13, 0xB0,
+    0x03, 0x86, 0x00, 0x39, 0x80, 0x03, 0x30, 0x00, 0x07, 0xFC, 0xFF, 0xFF, 0x9F, 0xF4, 0x00, 0x1D,
+    0xE0, 0x07, 0x0F, 0x03, 0xC0, 0xF1, 0xE0, 0x06, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x18, 0x00,
     0xC3, 0x07, 0x1F, 0xFF, 0xF3, 0xFF, 0x8C, 0xCE, 0x31, 0x9F, 0xFF, 0xE3, 0xFF, 0xF0, 0x03, 0x30,
     0x01, 0xFF, 0xC0, 0x3F, 0xF8, 0x06, 0x63, 0x00, 0xCC, 0x60, 0x19, 0x8C, 0x03, 0x7D, 0x88, 0x6D,
     0xA3, 0x07, 0x30, 0x61, 0xC6, 0x1C, 0xF0, 0xFF, 0xF0, 0x0F, 0xC0, 0x00, 0x00, 0x00, 0x18, 0x00,
@@ -3964,298 +3967,299 @@ static const EpdGlyph ubuntu_10_regularGlyphs[] = {
     { 19, 19, 333, 1, 17, 46, 29665 }, // U+5B89
     { 19, 19, 333, 1, 17, 46, 29711 }, // U+5B8C
     { 19, 19, 333, 1, 17, 46, 29757 }, // U+5B9A
-    { 19, 20, 333, 1, 18, 48, 29803 }, // U+5BBD
-    { 19, 21, 333, 1, 18, 50, 29851 }, // U+5BC6
-    { 21, 19, 333, 0, 17, 50, 29901 }, // U+5BF9
-    { 20, 19, 333, 1, 17, 48, 29951 }, // U+5C01
-    { 21, 20, 333, 0, 18, 53, 29999 }, // U+5C04
-    { 21, 20, 333, 0, 17, 53, 30052 }, // U+5C06
-    { 20, 19, 333, 1, 17, 48, 30105 }, // U+5C0F
-    { 21, 19, 333, 0, 17, 50, 30153 }, // U+5C31
-    { 21, 20, 333, 0, 17, 53, 30203 }, // U+5C3D
-    { 19, 20, 333, 0, 17, 48, 30256 }, // U+5C40
-    { 18, 18, 333, 1, 16, 41, 30304 }, // U+5C45
-    { 20, 19, 333, 0, 17, 48, 30345 }, // U+5C4F
-    { 21, 19, 333, 0, 17, 50, 30393 }, // U+5C55
-    { 17, 20, 333, 1, 18, 43, 30443 }, // U+5D29
-    { 20, 20, 333, 1, 18, 50, 30486 }, // U+5D4C
-    { 19, 19, 333, 1, 18, 46, 30536 }, // U+5DE6
-    { 18, 18, 333, 3, 16, 41, 30582 }, // U+5DF2
-    { 20, 21, 333, 0, 18, 53, 30623 }, // U+5E03
-    { 20, 21, 333, 0, 18, 53, 30676 }, // U+5E0C
-    { 19, 21, 333, 1, 18, 50, 30729 }, // U+5E26
-    { 19, 21, 333, 1, 18, 50, 30779 }, // U+5E38
-    { 19, 19, 333, 1, 17, 46, 30829 }, // U+5E45
-    { 21, 21, 333, 0, 18, 56, 30875 }, // U+5E55
-    { 21, 20, 333, 0, 17, 53, 30931 }, // U+5E73
-    { 21, 21, 333, 0, 18, 56, 30984 }, // U+5E76
-    { 19, 19, 333, 1, 17, 46, 31040 }, // U+5E94
-    { 21, 21, 333, 0, 18, 56, 31086 }, // U+5E95
-    { 20, 21, 333, 0, 18, 53, 31142 }, // U+5EA6
-    { 21, 19, 333, 0, 17, 50, 31195 }, // U+5EFA
-    { 19, 19, 333, 1, 16, 46, 31245 }, // U+5F00
-    { 18, 21, 333, 2, 18, 48, 31291 }, // U+5F0F
-    { 15, 20, 333, 2, 17, 38, 31339 }, // U+5F15
-    { 15, 19, 333, 3, 17, 36, 31377 }, // U+5F53
-    { 19, 20, 333, 1, 17, 48, 31413 }, // U+5F55
-    { 21, 21, 333, 0, 18, 56, 31461 }, // U+5FEB
-    { 19, 20, 333, 1, 18, 48, 31517 }, // U+5FFD
-    { 21, 20, 333, 0, 18, 53, 31565 }, // U+6001
-    { 19, 20, 333, 1, 18, 48, 31618 }, // U+603B
-    { 21, 21, 333, 0, 18, 56, 31666 }, // U+6062
-    { 19, 20, 333, 1, 18, 48, 31722 }, // U+606F
-    { 20, 20, 333, 1, 18, 50, 31770 }, // U+60C5
-    { 20, 20, 333, 0, 18, 50, 31820 }, // U+6210
-    { 20, 21, 333, 1, 18, 53, 31870 }, // U+6216
-    { 21, 20, 333, 0, 18, 53, 31923 }, // U+622A
-    { 18, 20, 333, 0, 17, 45, 31976 }, // U+6237
-    { 21, 19, 333, 0, 17, 50, 32021 }, // U+6240
-    { 21, 20, 333, 0, 17, 53, 32071 }, // U+624B
-    { 21, 19, 333, 0, 17, 50, 32124 }, // U+6253
-    { 20, 19, 333, 0, 17, 48, 32174 }, // U+6269
-    { 20, 19, 333, 0, 17, 48, 32222 }, // U+626B
-    { 21, 20, 333, 0, 18, 53, 32270 }, // U+627E
-    { 21, 19, 333, 0, 17, 50, 32323 }, // U+6297
-    { 21, 19, 333, 0, 17, 50, 32373 }, // U+62A5
-    { 21, 20, 333, 0, 17, 53, 32423 }, // U+62E9
-    { 21, 21, 333, 0, 18, 56, 32476 }, // U+6301
-    { 21, 19, 333, 0, 17, 50, 32532 }, // U+6309
-    { 21, 19, 333, 0, 17, 50, 32582 }, // U+6362
-    { 20, 19, 333, 0, 17, 48, 32632 }, // U+636E
-    { 21, 19, 333, 0, 17, 50, 32680 }, // U+63A5
-    { 21, 19, 333, 0, 17, 50, 32730 }, // U+63CF
-    { 21, 19, 333, 0, 17, 50, 32780 }, // U+63D0
-    { 21, 19, 333, 0, 17, 50, 32830 }, // U+63D2
-    { 21, 20, 333, 0, 18, 53, 32880 }, // U+641C
-    { 21, 19, 333, 0, 17, 50, 32933 }, // U+64CD
-    { 21, 19, 333, 0, 17, 50, 32983 }, // U+6536
-    { 21, 19, 333, 0, 17, 50, 33033 }, // U+653E
-    { 21, 19, 333, 0, 17, 50, 33083 }, // U+6548
-    { 20, 19, 333, 1, 17, 48, 33133 }, // U+6570
-    { 20, 19, 333, 1, 17, 48, 33181 }, // U+6587
-    { 21, 20, 333, 0, 17, 53, 33229 }, // U+659C
-    { 20, 19, 333, 1, 17, 48, 33282 }, // U+65AD
-    { 21, 20, 333, 0, 17, 53, 33330 }, // U+65B0
-    { 19, 19, 333, 1, 17, 46, 33383 }, // U+65B9
-    { 20, 18, 333, 0, 16, 45, 33429 }, // U+65E0
-    { 13, 18, 333, 4, 16, 30, 33474 }, // U+65E5
-    { 20, 19, 333, 1, 17, 48, 33504 }, // U+65F6
-    { 20, 19, 333, 1, 17, 48, 33552 }, // U+6620
-    { 20, 18, 333, 1, 16, 45, 33600 }, // U+662F
-    { 20, 17, 333, 1, 16, 43, 33645 }, // U+663E
-    { 19, 20, 333, 1, 17, 48, 33688 }, // U+6682
-    { 21, 19, 333, 0, 17, 50, 33736 }, // U+66F4
-    { 19, 20, 333, 1, 17, 48, 33786 }, // U+6700
-    { 20, 20, 333, 0, 18, 50, 33834 }, // U+6709
-    { 21, 18, 333, 0, 16, 48, 33884 }, // U+670D
-    { 21, 21, 333, 0, 18, 56, 33932 }, // U+672A
-    { 21, 21, 333, 0, 18, 56, 33988 }, // U+672C
-    { 21, 19, 333, 0, 17, 50, 34044 }, // U+673A
-    { 21, 21, 333, 0, 18, 56, 34094 }, // U+6761
-    { 21, 21, 333, 0, 18, 56, 34150 }, // U+6765
-    { 21, 20, 333, 0, 17, 53, 34206 }, // U+677E
-    { 21, 20, 333, 0, 17, 53, 34259 }, // U+6790
-    { 21, 20, 333, 0, 17, 53, 34312 }, // U+679C
-    { 20, 20, 333, 1, 18, 50, 34365 }, // U+67E5
-    { 21, 20, 333, 0, 17, 53, 34415 }, // U+6807
-    { 21, 19, 333, 0, 17, 50, 34468 }, // U+680F
-    { 21, 19, 333, 0, 17, 50, 34518 }, // U+6821
-    { 21, 20, 333, 0, 17, 53, 34568 }, // U+6837
-    { 21, 19, 333, 0, 17, 50, 34621 }, // U+6839
-    { 21, 20, 333, 0, 17, 53, 34671 }, // U+683C
-    { 20, 19, 333, 0, 17, 48, 34724 }, // U+6863
-    { 21, 19, 333, 0, 17, 50, 34772 }, // U+68C0
-    { 21, 19, 333, 0, 17, 50, 34822 }, // U+6A21
-    { 21, 21, 333, 0, 18, 56, 34872 }, // U+6A2A
-    { 20, 20, 333, 1, 18, 50, 34928 }, // U+6B21
-    { 21, 16, 333, 0, 15, 42, 34978 }, // U+6B63
-    { 19, 19, 333, 1, 17, 46, 35020 }, // U+6B64
-    { 19, 20, 333, 1, 18, 48, 35066 }, // U+6B65
-    { 21, 19, 333, 0, 17, 50, 35114 }, // U+6BB5
-    { 21, 21, 333, 0, 18, 56, 35164 }, // U+6BCF
-    { 20, 19, 333, 1, 17, 48, 35220 }, // U+6BD4
-    { 20, 18, 333, 1, 16, 45, 35268 }, // U+6CA1
-    { 20, 19, 333, 1, 17, 48, 35313 }, // U+6CD5
-    { 20, 19, 333, 1, 18, 48, 35361 }, // U+6CE8
-    { 20, 19, 333, 1, 17, 48, 35409 }, // U+6D45
-    { 19, 20, 333, 0, 17, 48, 35457 }, // U+6D4F
-    { 18, 19, 333, 1, 17, 43, 35505 }, // U+6D88
-    { 20, 20, 333, 1, 17, 50, 35548 }, // U+6DF1
-    { 21, 19, 333, 0, 17, 50, 35598 }, // U+6DFB
-    { 20, 20, 333, 1, 18, 50, 35648 }, // U+6E05
-    { 20, 18, 333, 1, 16, 45, 35698 }, // U+6E29
-    { 21, 18, 333, 0, 16, 48, 35743 }, // U+6E7F
-    { 20, 20, 333, 1, 18, 50, 35791 }, // U+6E83
-    { 20, 18, 333, 0, 16, 45, 35841 }, // U+6E90
-    { 21, 20, 333, 0, 18, 53, 35886 }, // U+6EE4
-    { 21, 19, 333, 0, 17, 50, 35939 }, // U+706F
-    { 19, 20, 333, 1, 17, 48, 35989 }, // U+70B9
-    { 19, 21, 333, 1, 18, 50, 36037 }, // U+70ED
-    { 18, 19, 333, 1, 17, 43, 36087 }, // U+7247
-    { 21, 19, 333, 0, 17, 50, 36130 }, // U+7248
-    { 21, 21, 333, 0, 18, 56, 36180 }, // U+7279
-    { 21, 19, 333, 0, 17, 50, 36236 }, // U+72B6
-    { 20, 21, 333, 1, 18, 53, 36286 }, // U+7387
-    { 21, 18, 333, 0, 16, 48, 36339 }, // U+73B0
-    { 21, 17, 333, 0, 16, 45, 36387 }, // U+7406
-    { 17, 19, 333, 1, 16, 41, 36432 }, // U+7528
-    { 18, 20, 333, 2, 18, 45, 36473 }, // U+7535
-    { 21, 19, 333, 0, 16, 50, 36518 }, // U+754C
-    { 20, 20, 333, 1, 18, 50, 36568 }, // U+7565
-    { 21, 19, 333, 0, 17, 50, 36618 }, // U+767B
-    { 19, 18, 333, 1, 16, 43, 36668 }, // U+767E
-    { 17, 19, 333, 2, 17, 41, 36711 }, // U+7684
-    { 21, 20, 333, 0, 18, 53, 36752 }, // U+76D8
-    { 13, 18, 333, 4, 16, 30, 36805 }, // U+76EE
-    { 20, 18, 333, 1, 16, 45, 36835 }, // U+7720
-    { 21, 18, 333, 0, 17, 48, 36880 }, // U+77ED
-    { 20, 19, 333, 0, 17, 48, 36928 }, // U+7801
-    { 21, 18, 333, 0, 16, 48, 36976 }, // U+786C
-    { 20, 20, 333, 0, 18, 50, 37024 }, // U+786E
-    { 19, 18, 333, 1, 16, 43, 37074 }, // U+793A
-    { 20, 21, 333, 1, 18, 53, 37117 }, // U+7981
-    { 21, 21, 333, 0, 18, 56, 37170 }, // U+79D2
-    { 21, 20, 333, 0, 18, 53, 37226 }, // U+79F0
-    { 20, 19, 333, 0, 17, 48, 37279 }, // U+79FB
-    { 21, 19, 333, 0, 17, 50, 37327 }, // U+7A0B
-    { 19, 20, 333, 1, 18, 48, 37377 }, // U+7A7A
-    { 19, 18, 333, 1, 17, 43, 37425 }, // U+7ACB
-    { 19, 19, 333, 1, 17, 46, 37468 }, // U+7AD6
-    { 19, 21, 333, 1, 18, 50, 37514 }, // U+7AE0
-    { 20, 19, 333, 0, 17, 48, 37564 }, // U+7AEF
-    { 21, 20, 333, 0, 18, 53, 37612 }, // U+7B26
-    { 19, 21, 333, 1, 18, 50, 37665 }, // U+7B2C
-    { 21, 20, 333, 0, 18, 53, 37715 }, // U+7B7E
-    { 19, 20, 333, 1, 18, 48, 37768 }, // U+7B80
-    { 19, 21, 333, 1, 18, 50, 37816 }, // U+7B97
-    { 19, 21, 333, 1, 18, 50, 37866 }, // U+7BA1
-    { 19, 21, 333, 1, 18, 50, 37916 }, // U+7C4D
-    { 21, 19, 333, 0, 17, 50, 37966 }, // U+7C97
-    { 17, 20, 333, 2, 18, 43, 38016 }, // U+7CFB
-    { 18, 21, 333, 2, 18, 48, 38059 }, // U+7D22
-    { 18, 20, 333, 2, 17, 45, 38107 }, // U+7D27
-    { 18, 20, 333, 1, 17, 45, 38152 }, // U+7D2F
-    { 20, 20, 333, 1, 18, 50, 38197 }, // U+7EBF
-    { 19, 18, 333, 1, 17, 43, 38247 }, // U+7EC6
-    { 20, 19, 333, 1, 17, 48, 38290 }, // U+7ECF
-    { 20, 20, 333, 1, 17, 50, 38338 }, // U+7EDC
-    { 20, 19, 333, 1, 17, 48, 38388 }, // U+7EDF
-    { 20, 19, 333, 1, 17, 48, 38436 }, // U+7EE7
-    { 20, 19, 333, 1, 17, 48, 38484 }, // U+7EEA
-    { 19, 20, 333, 1, 17, 48, 38532 }, // U+7EED
-    { 20, 21, 333, 1, 18, 53, 38580 }, // U+7EF4
-    { 20, 19, 333, 1, 17, 48, 38633 }, // U+7F13
-    { 19, 20, 333, 1, 18, 48, 38681 }, // U+7F16
-    { 17, 18, 333, 2, 16, 39, 38729 }, // U+7F51
-    { 19, 19, 333, 1, 17, 46, 38768 }, // U+7F6E
-    { 20, 19, 333, 0, 17, 48, 38814 }, // U+7FFB
-    { 21, 19, 333, 0, 17, 50, 38862 }, // U+8017
-    { 19, 19, 333, 1, 17, 46, 38912 }, // U+80FD
-    { 20, 19, 333, 0, 17, 48, 38958 }, // U+811A
-    { 14, 20, 333, 3, 18, 35, 39006 }, // U+81EA
-    { 19, 20, 333, 1, 18, 48, 39041 }, // U+8272
-    { 19, 20, 333, 1, 17, 48, 39089 }, // U+8282
-    { 19, 19, 333, 1, 17, 46, 39137 }, // U+8303
-    { 20, 20, 333, 1, 18, 50, 39183 }, // U+83B7
-    { 20, 21, 333, 1, 18, 53, 39233 }, // U+843D
-    { 20, 20, 333, 1, 18, 50, 39286 }, // U+85CF
-    { 21, 20, 333, 0, 17, 53, 39336 }, // U+884C
-    { 21, 20, 333, 0, 18, 53, 39389 }, // U+8868
-    { 21, 19, 333, 0, 17, 50, 39442 }, // U+88AB
-    { 20, 20, 333, 1, 18, 50, 39492 }, // U+88C1
-    { 20, 19, 333, 1, 17, 48, 39542 }, // U+88C5
-    { 21, 19, 333, 0, 17, 50, 39590 }, // U+892A
-    { 21, 18, 333, 0, 16, 48, 39640 }, // U+8981
-    { 20, 19, 333, 0, 17, 48, 39688 }, // U+89C1
-    { 19, 20, 333, 1, 18, 48, 39736 }, // U+89C8
-    { 21, 20, 333, 0, 17, 53, 39784 }, // U+89E3
-    { 19, 20, 333, 1, 17, 48, 39837 }, // U+8A00
-    { 20, 21, 333, 1, 18, 53, 39885 }, // U+8BA1
-    { 21, 19, 333, 0, 17, 50, 39938 }, // U+8BA4
-    { 21, 17, 333, 0, 16, 45, 39988 }, // U+8BB0
-    { 20, 18, 333, 1, 16, 45, 40033 }, // U+8BBE
-    { 20, 17, 333, 1, 16, 43, 40078 }, // U+8BC1
-    { 20, 20, 333, 1, 18, 50, 40121 }, // U+8BCA
-    { 18, 18, 333, 1, 16, 41, 40171 }, // U+8BCD
-    { 21, 21, 333, 0, 18, 56, 40212 }, // U+8BD5
-    { 19, 19, 333, 1, 17, 46, 40268 }, // U+8BE5
-    { 20, 20, 333, 1, 17, 50, 40314 }, // U+8BE6
-    { 21, 18, 333, 0, 16, 48, 40364 }, // U+8BED
-    { 20, 19, 333, 1, 17, 48, 40412 }, // U+8BEF
-    { 20, 20, 333, 1, 18, 50, 40460 }, // U+8BF7
-    { 19, 20, 333, 1, 18, 48, 40510 }, // U+8BFB
-    { 20, 19, 333, 1, 17, 48, 40558 }, // U+8D25
-    { 20, 19, 333, 1, 17, 48, 40606 }, // U+8D26
-    { 21, 19, 333, 0, 17, 50, 40654 }, // U+8D85
-    { 21, 18, 333, 0, 16, 48, 40704 }, // U+8DB3
-    { 21, 18, 333, 0, 16, 48, 40752 }, // U+8DDD
-    { 20, 19, 333, 1, 17, 48, 40800 }, // U+8DDF
-    { 21, 19, 333, 0, 17, 50, 40848 }, // U+8DF3
-    { 20, 20, 333, 1, 17, 50, 40898 }, // U+8F6C
-    { 20, 19, 333, 1, 17, 48, 40948 }, // U+8F7D
-    { 20, 20, 333, 1, 17, 50, 40996 }, // U+8F91
-    { 21, 19, 333, 0, 17, 50, 41046 }, // U+8F93
-    { 21, 19, 333, 0, 17, 50, 41096 }, // U+8FB9
-    { 21, 20, 333, 0, 18, 53, 41146 }, // U+8FC7
-    { 21, 19, 333, 0, 17, 50, 41199 }, // U+8FD1
-    { 21, 19, 333, 0, 17, 50, 41249 }, // U+8FD4
-    { 21, 19, 333, 0, 17, 50, 41299 }, // U+8FDB
-    { 21, 19, 333, 0, 17, 50, 41349 }, // U+8FDC
-    { 21, 19, 333, 0, 17, 50, 41399 }, // U+8FDE
-    { 21, 19, 333, 0, 17, 50, 41449 }, // U+9000
-    { 21, 19, 333, 0, 17, 50, 41499 }, // U+9001
-    { 21, 19, 333, 0, 17, 50, 41549 }, // U+9002
-    { 21, 19, 333, 0, 17, 50, 41599 }, // U+9006
-    { 21, 20, 333, 0, 18, 53, 41649 }, // U+9009
-    { 21, 20, 333, 0, 18, 53, 41702 }, // U+901F
-    { 20, 19, 333, 0, 17, 48, 41755 }, // U+90E8
-    { 20, 20, 333, 0, 17, 50, 41803 }, // U+90FD
-    { 20, 17, 333, 1, 16, 43, 41853 }, // U+914D
-    { 19, 19, 333, 1, 17, 46, 41896 }, // U+91CD
-    { 19, 19, 333, 1, 17, 46, 41942 }, // U+91CF
-    { 20, 21, 333, 1, 18, 53, 41988 }, // U+9488
-    { 19, 20, 333, 1, 17, 48, 42041 }, // U+949F
-    { 21, 19, 333, 0, 17, 50, 42089 }, // U+94FE
-    { 21, 20, 333, 0, 18, 53, 42139 }, // U+9519
-    { 21, 19, 333, 0, 17, 50, 42192 }, // U+952E
-    { 21, 19, 333, 0, 17, 50, 42242 }, // U+952F
-    { 21, 19, 333, 0, 17, 50, 42292 }, // U+955C
-    { 20, 19, 333, 1, 17, 48, 42342 }, // U+957F
-    { 17, 20, 333, 2, 17, 43, 42390 }, // U+95ED
-    { 17, 19, 333, 2, 17, 41, 42433 }, // U+95EE
-    { 17, 20, 333, 2, 17, 43, 42474 }, // U+95F4
-    { 17, 19, 333, 2, 17, 41, 42517 }, // U+9605
-    { 17, 18, 333, 2, 16, 39, 42558 }, // U+9633
-    { 19, 19, 333, 2, 17, 46, 42597 }, // U+9644
-    { 19, 20, 333, 2, 17, 48, 42643 }, // U+9664
-    { 20, 19, 333, 1, 17, 48, 42691 }, // U+968F
-    { 19, 19, 333, 2, 17, 46, 42739 }, // U+9690
-    { 19, 20, 333, 1, 17, 48, 42785 }, // U+9700
-    { 18, 18, 333, 1, 16, 41, 42833 }, // U+9762
-    { 18, 19, 333, 2, 17, 43, 42874 }, // U+9875
-    { 19, 19, 333, 1, 16, 46, 42917 }, // U+9876
-    { 20, 20, 333, 0, 17, 50, 42963 }, // U+9879
-    { 20, 19, 333, 0, 16, 48, 43013 }, // U+987A
-    { 20, 19, 333, 0, 16, 48, 43061 }, // U+9884
-    { 21, 21, 333, 0, 18, 56, 43109 }, // U+9891
-    { 21, 19, 333, 0, 17, 50, 43165 }, // U+9898
-    { 21, 20, 333, 0, 17, 53, 43215 }, // U+989D
-    { 21, 19, 333, 0, 17, 50, 43268 }, // U+9A8C
-    { 20, 19, 333, 1, 17, 48, 43318 }, // U+9ED8
-    { 20, 21, 333, 1, 18, 53, 43366 }, // U+9F50
-    { 19, 21, 333, 1, 18, 50, 43419 }, // U+9F7F
-    { 16, 16, 259, 1, 16, 32, 43469 }, // U+FB00
-    { 12, 16, 214, 1, 16, 24, 43501 }, // U+FB01
-    { 13, 16, 221, 1, 16, 26, 43525 }, // U+FB02
-    { 20, 16, 344, 1, 16, 40, 43551 }, // U+FB03
-    { 21, 16, 351, 1, 16, 42, 43591 }, // U+FB04
-    { 3, 16, 333, 3, 15, 6, 43633 }, // U+FF01
-    { 6, 20, 333, 14, 18, 15, 43639 }, // U+FF08
-    { 6, 20, 333, 1, 18, 15, 43654 }, // U+FF09
-    { 3, 6, 333, 2, 3, 3, 43669 }, // U+FF0C
-    { 3, 11, 333, 4, 10, 5, 43672 }, // U+FF1A
-    { 10, 16, 333, 1, 15, 20, 43677 }, // U+FF1F
-    { 21, 20, 333, 0, 18, 53, 43697 }, // U+FFFD
+    { 19, 20, 333, 1, 17, 48, 29803 }, // U+5B9E
+    { 19, 20, 333, 1, 18, 48, 29851 }, // U+5BBD
+    { 19, 21, 333, 1, 18, 50, 29899 }, // U+5BC6
+    { 21, 19, 333, 0, 17, 50, 29949 }, // U+5BF9
+    { 20, 19, 333, 1, 17, 48, 29999 }, // U+5C01
+    { 21, 20, 333, 0, 18, 53, 30047 }, // U+5C04
+    { 21, 20, 333, 0, 17, 53, 30100 }, // U+5C06
+    { 20, 19, 333, 1, 17, 48, 30153 }, // U+5C0F
+    { 21, 19, 333, 0, 17, 50, 30201 }, // U+5C31
+    { 21, 20, 333, 0, 17, 53, 30251 }, // U+5C3D
+    { 19, 20, 333, 0, 17, 48, 30304 }, // U+5C40
+    { 18, 18, 333, 1, 16, 41, 30352 }, // U+5C45
+    { 20, 19, 333, 0, 17, 48, 30393 }, // U+5C4F
+    { 21, 19, 333, 0, 17, 50, 30441 }, // U+5C55
+    { 17, 20, 333, 1, 18, 43, 30491 }, // U+5D29
+    { 20, 20, 333, 1, 18, 50, 30534 }, // U+5D4C
+    { 19, 19, 333, 1, 18, 46, 30584 }, // U+5DE6
+    { 18, 18, 333, 3, 16, 41, 30630 }, // U+5DF2
+    { 20, 21, 333, 0, 18, 53, 30671 }, // U+5E03
+    { 20, 21, 333, 0, 18, 53, 30724 }, // U+5E0C
+    { 19, 21, 333, 1, 18, 50, 30777 }, // U+5E26
+    { 19, 21, 333, 1, 18, 50, 30827 }, // U+5E38
+    { 19, 19, 333, 1, 17, 46, 30877 }, // U+5E45
+    { 21, 21, 333, 0, 18, 56, 30923 }, // U+5E55
+    { 21, 20, 333, 0, 17, 53, 30979 }, // U+5E73
+    { 21, 21, 333, 0, 18, 56, 31032 }, // U+5E76
+    { 19, 19, 333, 1, 17, 46, 31088 }, // U+5E94
+    { 21, 21, 333, 0, 18, 56, 31134 }, // U+5E95
+    { 20, 21, 333, 0, 18, 53, 31190 }, // U+5EA6
+    { 21, 19, 333, 0, 17, 50, 31243 }, // U+5EFA
+    { 19, 19, 333, 1, 16, 46, 31293 }, // U+5F00
+    { 18, 21, 333, 2, 18, 48, 31339 }, // U+5F0F
+    { 15, 20, 333, 2, 17, 38, 31387 }, // U+5F15
+    { 15, 19, 333, 3, 17, 36, 31425 }, // U+5F53
+    { 19, 20, 333, 1, 17, 48, 31461 }, // U+5F55
+    { 21, 21, 333, 0, 18, 56, 31509 }, // U+5FEB
+    { 19, 20, 333, 1, 18, 48, 31565 }, // U+5FFD
+    { 21, 20, 333, 0, 18, 53, 31613 }, // U+6001
+    { 19, 20, 333, 1, 18, 48, 31666 }, // U+603B
+    { 21, 21, 333, 0, 18, 56, 31714 }, // U+6062
+    { 19, 20, 333, 1, 18, 48, 31770 }, // U+606F
+    { 20, 20, 333, 1, 18, 50, 31818 }, // U+60C5
+    { 20, 20, 333, 0, 18, 50, 31868 }, // U+6210
+    { 20, 21, 333, 1, 18, 53, 31918 }, // U+6216
+    { 21, 20, 333, 0, 18, 53, 31971 }, // U+622A
+    { 18, 20, 333, 0, 17, 45, 32024 }, // U+6237
+    { 21, 19, 333, 0, 17, 50, 32069 }, // U+6240
+    { 21, 20, 333, 0, 17, 53, 32119 }, // U+624B
+    { 21, 19, 333, 0, 17, 50, 32172 }, // U+6253
+    { 20, 19, 333, 0, 17, 48, 32222 }, // U+6269
+    { 20, 19, 333, 0, 17, 48, 32270 }, // U+626B
+    { 21, 20, 333, 0, 18, 53, 32318 }, // U+627E
+    { 21, 19, 333, 0, 17, 50, 32371 }, // U+6297
+    { 21, 19, 333, 0, 17, 50, 32421 }, // U+62A5
+    { 21, 20, 333, 0, 17, 53, 32471 }, // U+62E9
+    { 21, 21, 333, 0, 18, 56, 32524 }, // U+6301
+    { 21, 19, 333, 0, 17, 50, 32580 }, // U+6309
+    { 21, 19, 333, 0, 17, 50, 32630 }, // U+6362
+    { 20, 19, 333, 0, 17, 48, 32680 }, // U+636E
+    { 21, 19, 333, 0, 17, 50, 32728 }, // U+63A5
+    { 21, 19, 333, 0, 17, 50, 32778 }, // U+63CF
+    { 21, 19, 333, 0, 17, 50, 32828 }, // U+63D0
+    { 21, 19, 333, 0, 17, 50, 32878 }, // U+63D2
+    { 21, 20, 333, 0, 18, 53, 32928 }, // U+641C
+    { 21, 19, 333, 0, 17, 50, 32981 }, // U+64CD
+    { 21, 19, 333, 0, 17, 50, 33031 }, // U+6536
+    { 21, 19, 333, 0, 17, 50, 33081 }, // U+653E
+    { 21, 19, 333, 0, 17, 50, 33131 }, // U+6548
+    { 20, 19, 333, 1, 17, 48, 33181 }, // U+6570
+    { 20, 19, 333, 1, 17, 48, 33229 }, // U+6587
+    { 21, 20, 333, 0, 17, 53, 33277 }, // U+659C
+    { 20, 19, 333, 1, 17, 48, 33330 }, // U+65AD
+    { 21, 20, 333, 0, 17, 53, 33378 }, // U+65B0
+    { 19, 19, 333, 1, 17, 46, 33431 }, // U+65B9
+    { 20, 18, 333, 0, 16, 45, 33477 }, // U+65E0
+    { 13, 18, 333, 4, 16, 30, 33522 }, // U+65E5
+    { 20, 19, 333, 1, 17, 48, 33552 }, // U+65F6
+    { 20, 19, 333, 1, 17, 48, 33600 }, // U+6620
+    { 20, 18, 333, 1, 16, 45, 33648 }, // U+662F
+    { 20, 17, 333, 1, 16, 43, 33693 }, // U+663E
+    { 19, 20, 333, 1, 17, 48, 33736 }, // U+6682
+    { 21, 19, 333, 0, 17, 50, 33784 }, // U+66F4
+    { 19, 20, 333, 1, 17, 48, 33834 }, // U+6700
+    { 20, 20, 333, 0, 18, 50, 33882 }, // U+6709
+    { 21, 18, 333, 0, 16, 48, 33932 }, // U+670D
+    { 21, 21, 333, 0, 18, 56, 33980 }, // U+672A
+    { 21, 21, 333, 0, 18, 56, 34036 }, // U+672C
+    { 21, 19, 333, 0, 17, 50, 34092 }, // U+673A
+    { 21, 21, 333, 0, 18, 56, 34142 }, // U+6761
+    { 21, 21, 333, 0, 18, 56, 34198 }, // U+6765
+    { 21, 20, 333, 0, 17, 53, 34254 }, // U+677E
+    { 21, 20, 333, 0, 17, 53, 34307 }, // U+6790
+    { 21, 20, 333, 0, 17, 53, 34360 }, // U+679C
+    { 20, 20, 333, 1, 18, 50, 34413 }, // U+67E5
+    { 21, 20, 333, 0, 17, 53, 34463 }, // U+6807
+    { 21, 19, 333, 0, 17, 50, 34516 }, // U+680F
+    { 21, 19, 333, 0, 17, 50, 34566 }, // U+6821
+    { 21, 20, 333, 0, 17, 53, 34616 }, // U+6837
+    { 21, 19, 333, 0, 17, 50, 34669 }, // U+6839
+    { 21, 20, 333, 0, 17, 53, 34719 }, // U+683C
+    { 20, 19, 333, 0, 17, 48, 34772 }, // U+6863
+    { 21, 19, 333, 0, 17, 50, 34820 }, // U+68C0
+    { 21, 19, 333, 0, 17, 50, 34870 }, // U+6A21
+    { 21, 21, 333, 0, 18, 56, 34920 }, // U+6A2A
+    { 20, 20, 333, 1, 18, 50, 34976 }, // U+6B21
+    { 21, 16, 333, 0, 15, 42, 35026 }, // U+6B63
+    { 19, 19, 333, 1, 17, 46, 35068 }, // U+6B64
+    { 19, 20, 333, 1, 18, 48, 35114 }, // U+6B65
+    { 21, 19, 333, 0, 17, 50, 35162 }, // U+6BB5
+    { 21, 21, 333, 0, 18, 56, 35212 }, // U+6BCF
+    { 20, 19, 333, 1, 17, 48, 35268 }, // U+6BD4
+    { 20, 18, 333, 1, 16, 45, 35316 }, // U+6CA1
+    { 20, 19, 333, 1, 17, 48, 35361 }, // U+6CD5
+    { 20, 19, 333, 1, 18, 48, 35409 }, // U+6CE8
+    { 20, 19, 333, 1, 17, 48, 35457 }, // U+6D45
+    { 19, 20, 333, 0, 17, 48, 35505 }, // U+6D4F
+    { 18, 19, 333, 1, 17, 43, 35553 }, // U+6D88
+    { 20, 20, 333, 1, 17, 50, 35596 }, // U+6DF1
+    { 21, 19, 333, 0, 17, 50, 35646 }, // U+6DFB
+    { 20, 20, 333, 1, 18, 50, 35696 }, // U+6E05
+    { 20, 18, 333, 1, 16, 45, 35746 }, // U+6E29
+    { 21, 18, 333, 0, 16, 48, 35791 }, // U+6E7F
+    { 20, 20, 333, 1, 18, 50, 35839 }, // U+6E83
+    { 20, 18, 333, 0, 16, 45, 35889 }, // U+6E90
+    { 21, 20, 333, 0, 18, 53, 35934 }, // U+6EE4
+    { 21, 19, 333, 0, 17, 50, 35987 }, // U+706F
+    { 19, 20, 333, 1, 17, 48, 36037 }, // U+70B9
+    { 19, 21, 333, 1, 18, 50, 36085 }, // U+70ED
+    { 18, 19, 333, 1, 17, 43, 36135 }, // U+7247
+    { 21, 19, 333, 0, 17, 50, 36178 }, // U+7248
+    { 21, 21, 333, 0, 18, 56, 36228 }, // U+7279
+    { 21, 19, 333, 0, 17, 50, 36284 }, // U+72B6
+    { 20, 21, 333, 1, 18, 53, 36334 }, // U+7387
+    { 21, 18, 333, 0, 16, 48, 36387 }, // U+73B0
+    { 21, 17, 333, 0, 16, 45, 36435 }, // U+7406
+    { 17, 19, 333, 1, 16, 41, 36480 }, // U+7528
+    { 18, 20, 333, 2, 18, 45, 36521 }, // U+7535
+    { 21, 19, 333, 0, 16, 50, 36566 }, // U+754C
+    { 20, 20, 333, 1, 18, 50, 36616 }, // U+7565
+    { 21, 19, 333, 0, 17, 50, 36666 }, // U+767B
+    { 19, 18, 333, 1, 16, 43, 36716 }, // U+767E
+    { 17, 19, 333, 2, 17, 41, 36759 }, // U+7684
+    { 21, 20, 333, 0, 18, 53, 36800 }, // U+76D8
+    { 13, 18, 333, 4, 16, 30, 36853 }, // U+76EE
+    { 20, 18, 333, 1, 16, 45, 36883 }, // U+7720
+    { 21, 18, 333, 0, 17, 48, 36928 }, // U+77ED
+    { 20, 19, 333, 0, 17, 48, 36976 }, // U+7801
+    { 21, 18, 333, 0, 16, 48, 37024 }, // U+786C
+    { 20, 20, 333, 0, 18, 50, 37072 }, // U+786E
+    { 19, 18, 333, 1, 16, 43, 37122 }, // U+793A
+    { 20, 21, 333, 1, 18, 53, 37165 }, // U+7981
+    { 21, 21, 333, 0, 18, 56, 37218 }, // U+79D2
+    { 21, 20, 333, 0, 18, 53, 37274 }, // U+79F0
+    { 20, 19, 333, 0, 17, 48, 37327 }, // U+79FB
+    { 21, 19, 333, 0, 17, 50, 37375 }, // U+7A0B
+    { 19, 20, 333, 1, 18, 48, 37425 }, // U+7A7A
+    { 19, 18, 333, 1, 17, 43, 37473 }, // U+7ACB
+    { 19, 19, 333, 1, 17, 46, 37516 }, // U+7AD6
+    { 19, 21, 333, 1, 18, 50, 37562 }, // U+7AE0
+    { 20, 19, 333, 0, 17, 48, 37612 }, // U+7AEF
+    { 21, 20, 333, 0, 18, 53, 37660 }, // U+7B26
+    { 19, 21, 333, 1, 18, 50, 37713 }, // U+7B2C
+    { 21, 20, 333, 0, 18, 53, 37763 }, // U+7B7E
+    { 19, 20, 333, 1, 18, 48, 37816 }, // U+7B80
+    { 19, 21, 333, 1, 18, 50, 37864 }, // U+7B97
+    { 19, 21, 333, 1, 18, 50, 37914 }, // U+7BA1
+    { 19, 21, 333, 1, 18, 50, 37964 }, // U+7C4D
+    { 21, 19, 333, 0, 17, 50, 38014 }, // U+7C97
+    { 17, 20, 333, 2, 18, 43, 38064 }, // U+7CFB
+    { 18, 21, 333, 2, 18, 48, 38107 }, // U+7D22
+    { 18, 20, 333, 2, 17, 45, 38155 }, // U+7D27
+    { 18, 20, 333, 1, 17, 45, 38200 }, // U+7D2F
+    { 20, 20, 333, 1, 18, 50, 38245 }, // U+7EBF
+    { 19, 18, 333, 1, 17, 43, 38295 }, // U+7EC6
+    { 20, 19, 333, 1, 17, 48, 38338 }, // U+7ECF
+    { 20, 20, 333, 1, 17, 50, 38386 }, // U+7EDC
+    { 20, 19, 333, 1, 17, 48, 38436 }, // U+7EDF
+    { 20, 19, 333, 1, 17, 48, 38484 }, // U+7EE7
+    { 20, 19, 333, 1, 17, 48, 38532 }, // U+7EEA
+    { 19, 20, 333, 1, 17, 48, 38580 }, // U+7EED
+    { 20, 21, 333, 1, 18, 53, 38628 }, // U+7EF4
+    { 20, 19, 333, 1, 17, 48, 38681 }, // U+7F13
+    { 19, 20, 333, 1, 18, 48, 38729 }, // U+7F16
+    { 17, 18, 333, 2, 16, 39, 38777 }, // U+7F51
+    { 19, 19, 333, 1, 17, 46, 38816 }, // U+7F6E
+    { 20, 19, 333, 0, 17, 48, 38862 }, // U+7FFB
+    { 21, 19, 333, 0, 17, 50, 38910 }, // U+8017
+    { 19, 19, 333, 1, 17, 46, 38960 }, // U+80FD
+    { 20, 19, 333, 0, 17, 48, 39006 }, // U+811A
+    { 14, 20, 333, 3, 18, 35, 39054 }, // U+81EA
+    { 19, 20, 333, 1, 18, 48, 39089 }, // U+8272
+    { 19, 20, 333, 1, 17, 48, 39137 }, // U+8282
+    { 19, 19, 333, 1, 17, 46, 39185 }, // U+8303
+    { 20, 20, 333, 1, 18, 50, 39231 }, // U+83B7
+    { 20, 21, 333, 1, 18, 53, 39281 }, // U+843D
+    { 20, 20, 333, 1, 18, 50, 39334 }, // U+85CF
+    { 21, 20, 333, 0, 17, 53, 39384 }, // U+884C
+    { 21, 20, 333, 0, 18, 53, 39437 }, // U+8868
+    { 21, 19, 333, 0, 17, 50, 39490 }, // U+88AB
+    { 20, 20, 333, 1, 18, 50, 39540 }, // U+88C1
+    { 20, 19, 333, 1, 17, 48, 39590 }, // U+88C5
+    { 21, 19, 333, 0, 17, 50, 39638 }, // U+892A
+    { 21, 18, 333, 0, 16, 48, 39688 }, // U+8981
+    { 20, 19, 333, 0, 17, 48, 39736 }, // U+89C1
+    { 19, 20, 333, 1, 18, 48, 39784 }, // U+89C8
+    { 21, 20, 333, 0, 17, 53, 39832 }, // U+89E3
+    { 19, 20, 333, 1, 17, 48, 39885 }, // U+8A00
+    { 20, 21, 333, 1, 18, 53, 39933 }, // U+8BA1
+    { 21, 19, 333, 0, 17, 50, 39986 }, // U+8BA4
+    { 21, 17, 333, 0, 16, 45, 40036 }, // U+8BB0
+    { 20, 18, 333, 1, 16, 45, 40081 }, // U+8BBE
+    { 20, 17, 333, 1, 16, 43, 40126 }, // U+8BC1
+    { 20, 20, 333, 1, 18, 50, 40169 }, // U+8BCA
+    { 18, 18, 333, 1, 16, 41, 40219 }, // U+8BCD
+    { 21, 21, 333, 0, 18, 56, 40260 }, // U+8BD5
+    { 19, 19, 333, 1, 17, 46, 40316 }, // U+8BE5
+    { 20, 20, 333, 1, 17, 50, 40362 }, // U+8BE6
+    { 21, 18, 333, 0, 16, 48, 40412 }, // U+8BED
+    { 20, 19, 333, 1, 17, 48, 40460 }, // U+8BEF
+    { 20, 20, 333, 1, 18, 50, 40508 }, // U+8BF7
+    { 19, 20, 333, 1, 18, 48, 40558 }, // U+8BFB
+    { 20, 19, 333, 1, 17, 48, 40606 }, // U+8D25
+    { 20, 19, 333, 1, 17, 48, 40654 }, // U+8D26
+    { 21, 19, 333, 0, 17, 50, 40702 }, // U+8D85
+    { 21, 18, 333, 0, 16, 48, 40752 }, // U+8DB3
+    { 21, 18, 333, 0, 16, 48, 40800 }, // U+8DDD
+    { 20, 19, 333, 1, 17, 48, 40848 }, // U+8DDF
+    { 21, 19, 333, 0, 17, 50, 40896 }, // U+8DF3
+    { 20, 20, 333, 1, 17, 50, 40946 }, // U+8F6C
+    { 20, 19, 333, 1, 17, 48, 40996 }, // U+8F7D
+    { 20, 20, 333, 1, 17, 50, 41044 }, // U+8F91
+    { 21, 19, 333, 0, 17, 50, 41094 }, // U+8F93
+    { 21, 19, 333, 0, 17, 50, 41144 }, // U+8FB9
+    { 21, 20, 333, 0, 18, 53, 41194 }, // U+8FC7
+    { 21, 19, 333, 0, 17, 50, 41247 }, // U+8FD1
+    { 21, 19, 333, 0, 17, 50, 41297 }, // U+8FD4
+    { 21, 19, 333, 0, 17, 50, 41347 }, // U+8FDB
+    { 21, 19, 333, 0, 17, 50, 41397 }, // U+8FDC
+    { 21, 19, 333, 0, 17, 50, 41447 }, // U+8FDE
+    { 21, 19, 333, 0, 17, 50, 41497 }, // U+9000
+    { 21, 19, 333, 0, 17, 50, 41547 }, // U+9001
+    { 21, 19, 333, 0, 17, 50, 41597 }, // U+9002
+    { 21, 19, 333, 0, 17, 50, 41647 }, // U+9006
+    { 21, 20, 333, 0, 18, 53, 41697 }, // U+9009
+    { 21, 20, 333, 0, 18, 53, 41750 }, // U+901F
+    { 20, 19, 333, 0, 17, 48, 41803 }, // U+90E8
+    { 20, 20, 333, 0, 17, 50, 41851 }, // U+90FD
+    { 20, 17, 333, 1, 16, 43, 41901 }, // U+914D
+    { 19, 19, 333, 1, 17, 46, 41944 }, // U+91CD
+    { 19, 19, 333, 1, 17, 46, 41990 }, // U+91CF
+    { 20, 21, 333, 1, 18, 53, 42036 }, // U+9488
+    { 19, 20, 333, 1, 17, 48, 42089 }, // U+949F
+    { 21, 19, 333, 0, 17, 50, 42137 }, // U+94FE
+    { 21, 20, 333, 0, 18, 53, 42187 }, // U+9519
+    { 21, 19, 333, 0, 17, 50, 42240 }, // U+952E
+    { 21, 19, 333, 0, 17, 50, 42290 }, // U+952F
+    { 21, 19, 333, 0, 17, 50, 42340 }, // U+955C
+    { 20, 19, 333, 1, 17, 48, 42390 }, // U+957F
+    { 17, 20, 333, 2, 17, 43, 42438 }, // U+95ED
+    { 17, 19, 333, 2, 17, 41, 42481 }, // U+95EE
+    { 17, 20, 333, 2, 17, 43, 42522 }, // U+95F4
+    { 17, 19, 333, 2, 17, 41, 42565 }, // U+9605
+    { 17, 18, 333, 2, 16, 39, 42606 }, // U+9633
+    { 19, 19, 333, 2, 17, 46, 42645 }, // U+9644
+    { 19, 20, 333, 2, 17, 48, 42691 }, // U+9664
+    { 20, 19, 333, 1, 17, 48, 42739 }, // U+968F
+    { 19, 19, 333, 2, 17, 46, 42787 }, // U+9690
+    { 19, 20, 333, 1, 17, 48, 42833 }, // U+9700
+    { 18, 18, 333, 1, 16, 41, 42881 }, // U+9762
+    { 18, 19, 333, 2, 17, 43, 42922 }, // U+9875
+    { 19, 19, 333, 1, 16, 46, 42965 }, // U+9876
+    { 20, 20, 333, 0, 17, 50, 43011 }, // U+9879
+    { 20, 19, 333, 0, 16, 48, 43061 }, // U+987A
+    { 20, 19, 333, 0, 16, 48, 43109 }, // U+9884
+    { 21, 21, 333, 0, 18, 56, 43157 }, // U+9891
+    { 21, 19, 333, 0, 17, 50, 43213 }, // U+9898
+    { 21, 20, 333, 0, 17, 53, 43263 }, // U+989D
+    { 21, 19, 333, 0, 17, 50, 43316 }, // U+9A8C
+    { 20, 19, 333, 1, 17, 48, 43366 }, // U+9ED8
+    { 20, 21, 333, 1, 18, 53, 43414 }, // U+9F50
+    { 19, 21, 333, 1, 18, 50, 43467 }, // U+9F7F
+    { 16, 16, 259, 1, 16, 32, 43517 }, // U+FB00
+    { 12, 16, 214, 1, 16, 24, 43549 }, // U+FB01
+    { 13, 16, 221, 1, 16, 26, 43573 }, // U+FB02
+    { 20, 16, 344, 1, 16, 40, 43599 }, // U+FB03
+    { 21, 16, 351, 1, 16, 42, 43639 }, // U+FB04
+    { 3, 16, 333, 3, 15, 6, 43681 }, // U+FF01
+    { 6, 20, 333, 14, 18, 15, 43687 }, // U+FF08
+    { 6, 20, 333, 1, 18, 15, 43702 }, // U+FF09
+    { 3, 6, 333, 2, 3, 3, 43717 }, // U+FF0C
+    { 3, 11, 333, 4, 10, 5, 43720 }, // U+FF1A
+    { 10, 16, 333, 1, 15, 20, 43725 }, // U+FF1F
+    { 21, 20, 333, 0, 18, 53, 43745 }, // U+FFFD
 };
 
 static const EpdUnicodeInterval ubuntu_10_regularIntervals[] = {
@@ -4450,278 +4454,279 @@ static const EpdUnicodeInterval ubuntu_10_regularIntervals[] = {
     { 0x5B89, 0x5B89, 0x4BE },
     { 0x5B8C, 0x5B8C, 0x4BF },
     { 0x5B9A, 0x5B9A, 0x4C0 },
-    { 0x5BBD, 0x5BBD, 0x4C1 },
-    { 0x5BC6, 0x5BC6, 0x4C2 },
-    { 0x5BF9, 0x5BF9, 0x4C3 },
-    { 0x5C01, 0x5C01, 0x4C4 },
-    { 0x5C04, 0x5C04, 0x4C5 },
-    { 0x5C06, 0x5C06, 0x4C6 },
-    { 0x5C0F, 0x5C0F, 0x4C7 },
-    { 0x5C31, 0x5C31, 0x4C8 },
-    { 0x5C3D, 0x5C3D, 0x4C9 },
-    { 0x5C40, 0x5C40, 0x4CA },
-    { 0x5C45, 0x5C45, 0x4CB },
-    { 0x5C4F, 0x5C4F, 0x4CC },
-    { 0x5C55, 0x5C55, 0x4CD },
-    { 0x5D29, 0x5D29, 0x4CE },
-    { 0x5D4C, 0x5D4C, 0x4CF },
-    { 0x5DE6, 0x5DE6, 0x4D0 },
-    { 0x5DF2, 0x5DF2, 0x4D1 },
-    { 0x5E03, 0x5E03, 0x4D2 },
-    { 0x5E0C, 0x5E0C, 0x4D3 },
-    { 0x5E26, 0x5E26, 0x4D4 },
-    { 0x5E38, 0x5E38, 0x4D5 },
-    { 0x5E45, 0x5E45, 0x4D6 },
-    { 0x5E55, 0x5E55, 0x4D7 },
-    { 0x5E73, 0x5E73, 0x4D8 },
-    { 0x5E76, 0x5E76, 0x4D9 },
-    { 0x5E94, 0x5E95, 0x4DA },
-    { 0x5EA6, 0x5EA6, 0x4DC },
-    { 0x5EFA, 0x5EFA, 0x4DD },
-    { 0x5F00, 0x5F00, 0x4DE },
-    { 0x5F0F, 0x5F0F, 0x4DF },
-    { 0x5F15, 0x5F15, 0x4E0 },
-    { 0x5F53, 0x5F53, 0x4E1 },
-    { 0x5F55, 0x5F55, 0x4E2 },
-    { 0x5FEB, 0x5FEB, 0x4E3 },
-    { 0x5FFD, 0x5FFD, 0x4E4 },
-    { 0x6001, 0x6001, 0x4E5 },
-    { 0x603B, 0x603B, 0x4E6 },
-    { 0x6062, 0x6062, 0x4E7 },
-    { 0x606F, 0x606F, 0x4E8 },
-    { 0x60C5, 0x60C5, 0x4E9 },
-    { 0x6210, 0x6210, 0x4EA },
-    { 0x6216, 0x6216, 0x4EB },
-    { 0x622A, 0x622A, 0x4EC },
-    { 0x6237, 0x6237, 0x4ED },
-    { 0x6240, 0x6240, 0x4EE },
-    { 0x624B, 0x624B, 0x4EF },
-    { 0x6253, 0x6253, 0x4F0 },
-    { 0x6269, 0x6269, 0x4F1 },
-    { 0x626B, 0x626B, 0x4F2 },
-    { 0x627E, 0x627E, 0x4F3 },
-    { 0x6297, 0x6297, 0x4F4 },
-    { 0x62A5, 0x62A5, 0x4F5 },
-    { 0x62E9, 0x62E9, 0x4F6 },
-    { 0x6301, 0x6301, 0x4F7 },
-    { 0x6309, 0x6309, 0x4F8 },
-    { 0x6362, 0x6362, 0x4F9 },
-    { 0x636E, 0x636E, 0x4FA },
-    { 0x63A5, 0x63A5, 0x4FB },
-    { 0x63CF, 0x63D0, 0x4FC },
-    { 0x63D2, 0x63D2, 0x4FE },
-    { 0x641C, 0x641C, 0x4FF },
-    { 0x64CD, 0x64CD, 0x500 },
-    { 0x6536, 0x6536, 0x501 },
-    { 0x653E, 0x653E, 0x502 },
-    { 0x6548, 0x6548, 0x503 },
-    { 0x6570, 0x6570, 0x504 },
-    { 0x6587, 0x6587, 0x505 },
-    { 0x659C, 0x659C, 0x506 },
-    { 0x65AD, 0x65AD, 0x507 },
-    { 0x65B0, 0x65B0, 0x508 },
-    { 0x65B9, 0x65B9, 0x509 },
-    { 0x65E0, 0x65E0, 0x50A },
-    { 0x65E5, 0x65E5, 0x50B },
-    { 0x65F6, 0x65F6, 0x50C },
-    { 0x6620, 0x6620, 0x50D },
-    { 0x662F, 0x662F, 0x50E },
-    { 0x663E, 0x663E, 0x50F },
-    { 0x6682, 0x6682, 0x510 },
-    { 0x66F4, 0x66F4, 0x511 },
-    { 0x6700, 0x6700, 0x512 },
-    { 0x6709, 0x6709, 0x513 },
-    { 0x670D, 0x670D, 0x514 },
-    { 0x672A, 0x672A, 0x515 },
-    { 0x672C, 0x672C, 0x516 },
-    { 0x673A, 0x673A, 0x517 },
-    { 0x6761, 0x6761, 0x518 },
-    { 0x6765, 0x6765, 0x519 },
-    { 0x677E, 0x677E, 0x51A },
-    { 0x6790, 0x6790, 0x51B },
-    { 0x679C, 0x679C, 0x51C },
-    { 0x67E5, 0x67E5, 0x51D },
-    { 0x6807, 0x6807, 0x51E },
-    { 0x680F, 0x680F, 0x51F },
-    { 0x6821, 0x6821, 0x520 },
-    { 0x6837, 0x6837, 0x521 },
-    { 0x6839, 0x6839, 0x522 },
-    { 0x683C, 0x683C, 0x523 },
-    { 0x6863, 0x6863, 0x524 },
-    { 0x68C0, 0x68C0, 0x525 },
-    { 0x6A21, 0x6A21, 0x526 },
-    { 0x6A2A, 0x6A2A, 0x527 },
-    { 0x6B21, 0x6B21, 0x528 },
-    { 0x6B63, 0x6B65, 0x529 },
-    { 0x6BB5, 0x6BB5, 0x52C },
-    { 0x6BCF, 0x6BCF, 0x52D },
-    { 0x6BD4, 0x6BD4, 0x52E },
-    { 0x6CA1, 0x6CA1, 0x52F },
-    { 0x6CD5, 0x6CD5, 0x530 },
-    { 0x6CE8, 0x6CE8, 0x531 },
-    { 0x6D45, 0x6D45, 0x532 },
-    { 0x6D4F, 0x6D4F, 0x533 },
-    { 0x6D88, 0x6D88, 0x534 },
-    { 0x6DF1, 0x6DF1, 0x535 },
-    { 0x6DFB, 0x6DFB, 0x536 },
-    { 0x6E05, 0x6E05, 0x537 },
-    { 0x6E29, 0x6E29, 0x538 },
-    { 0x6E7F, 0x6E7F, 0x539 },
-    { 0x6E83, 0x6E83, 0x53A },
-    { 0x6E90, 0x6E90, 0x53B },
-    { 0x6EE4, 0x6EE4, 0x53C },
-    { 0x706F, 0x706F, 0x53D },
-    { 0x70B9, 0x70B9, 0x53E },
-    { 0x70ED, 0x70ED, 0x53F },
-    { 0x7247, 0x7248, 0x540 },
-    { 0x7279, 0x7279, 0x542 },
-    { 0x72B6, 0x72B6, 0x543 },
-    { 0x7387, 0x7387, 0x544 },
-    { 0x73B0, 0x73B0, 0x545 },
-    { 0x7406, 0x7406, 0x546 },
-    { 0x7528, 0x7528, 0x547 },
-    { 0x7535, 0x7535, 0x548 },
-    { 0x754C, 0x754C, 0x549 },
-    { 0x7565, 0x7565, 0x54A },
-    { 0x767B, 0x767B, 0x54B },
-    { 0x767E, 0x767E, 0x54C },
-    { 0x7684, 0x7684, 0x54D },
-    { 0x76D8, 0x76D8, 0x54E },
-    { 0x76EE, 0x76EE, 0x54F },
-    { 0x7720, 0x7720, 0x550 },
-    { 0x77ED, 0x77ED, 0x551 },
-    { 0x7801, 0x7801, 0x552 },
-    { 0x786C, 0x786C, 0x553 },
-    { 0x786E, 0x786E, 0x554 },
-    { 0x793A, 0x793A, 0x555 },
-    { 0x7981, 0x7981, 0x556 },
-    { 0x79D2, 0x79D2, 0x557 },
-    { 0x79F0, 0x79F0, 0x558 },
-    { 0x79FB, 0x79FB, 0x559 },
-    { 0x7A0B, 0x7A0B, 0x55A },
-    { 0x7A7A, 0x7A7A, 0x55B },
-    { 0x7ACB, 0x7ACB, 0x55C },
-    { 0x7AD6, 0x7AD6, 0x55D },
-    { 0x7AE0, 0x7AE0, 0x55E },
-    { 0x7AEF, 0x7AEF, 0x55F },
-    { 0x7B26, 0x7B26, 0x560 },
-    { 0x7B2C, 0x7B2C, 0x561 },
-    { 0x7B7E, 0x7B7E, 0x562 },
-    { 0x7B80, 0x7B80, 0x563 },
-    { 0x7B97, 0x7B97, 0x564 },
-    { 0x7BA1, 0x7BA1, 0x565 },
-    { 0x7C4D, 0x7C4D, 0x566 },
-    { 0x7C97, 0x7C97, 0x567 },
-    { 0x7CFB, 0x7CFB, 0x568 },
-    { 0x7D22, 0x7D22, 0x569 },
-    { 0x7D27, 0x7D27, 0x56A },
-    { 0x7D2F, 0x7D2F, 0x56B },
-    { 0x7EBF, 0x7EBF, 0x56C },
-    { 0x7EC6, 0x7EC6, 0x56D },
-    { 0x7ECF, 0x7ECF, 0x56E },
-    { 0x7EDC, 0x7EDC, 0x56F },
-    { 0x7EDF, 0x7EDF, 0x570 },
-    { 0x7EE7, 0x7EE7, 0x571 },
-    { 0x7EEA, 0x7EEA, 0x572 },
-    { 0x7EED, 0x7EED, 0x573 },
-    { 0x7EF4, 0x7EF4, 0x574 },
-    { 0x7F13, 0x7F13, 0x575 },
-    { 0x7F16, 0x7F16, 0x576 },
-    { 0x7F51, 0x7F51, 0x577 },
-    { 0x7F6E, 0x7F6E, 0x578 },
-    { 0x7FFB, 0x7FFB, 0x579 },
-    { 0x8017, 0x8017, 0x57A },
-    { 0x80FD, 0x80FD, 0x57B },
-    { 0x811A, 0x811A, 0x57C },
-    { 0x81EA, 0x81EA, 0x57D },
-    { 0x8272, 0x8272, 0x57E },
-    { 0x8282, 0x8282, 0x57F },
-    { 0x8303, 0x8303, 0x580 },
-    { 0x83B7, 0x83B7, 0x581 },
-    { 0x843D, 0x843D, 0x582 },
-    { 0x85CF, 0x85CF, 0x583 },
-    { 0x884C, 0x884C, 0x584 },
-    { 0x8868, 0x8868, 0x585 },
-    { 0x88AB, 0x88AB, 0x586 },
-    { 0x88C1, 0x88C1, 0x587 },
-    { 0x88C5, 0x88C5, 0x588 },
-    { 0x892A, 0x892A, 0x589 },
-    { 0x8981, 0x8981, 0x58A },
-    { 0x89C1, 0x89C1, 0x58B },
-    { 0x89C8, 0x89C8, 0x58C },
-    { 0x89E3, 0x89E3, 0x58D },
-    { 0x8A00, 0x8A00, 0x58E },
-    { 0x8BA1, 0x8BA1, 0x58F },
-    { 0x8BA4, 0x8BA4, 0x590 },
-    { 0x8BB0, 0x8BB0, 0x591 },
-    { 0x8BBE, 0x8BBE, 0x592 },
-    { 0x8BC1, 0x8BC1, 0x593 },
-    { 0x8BCA, 0x8BCA, 0x594 },
-    { 0x8BCD, 0x8BCD, 0x595 },
-    { 0x8BD5, 0x8BD5, 0x596 },
-    { 0x8BE5, 0x8BE6, 0x597 },
-    { 0x8BED, 0x8BED, 0x599 },
-    { 0x8BEF, 0x8BEF, 0x59A },
-    { 0x8BF7, 0x8BF7, 0x59B },
-    { 0x8BFB, 0x8BFB, 0x59C },
-    { 0x8D25, 0x8D26, 0x59D },
-    { 0x8D85, 0x8D85, 0x59F },
-    { 0x8DB3, 0x8DB3, 0x5A0 },
-    { 0x8DDD, 0x8DDD, 0x5A1 },
-    { 0x8DDF, 0x8DDF, 0x5A2 },
-    { 0x8DF3, 0x8DF3, 0x5A3 },
-    { 0x8F6C, 0x8F6C, 0x5A4 },
-    { 0x8F7D, 0x8F7D, 0x5A5 },
-    { 0x8F91, 0x8F91, 0x5A6 },
-    { 0x8F93, 0x8F93, 0x5A7 },
-    { 0x8FB9, 0x8FB9, 0x5A8 },
-    { 0x8FC7, 0x8FC7, 0x5A9 },
-    { 0x8FD1, 0x8FD1, 0x5AA },
-    { 0x8FD4, 0x8FD4, 0x5AB },
-    { 0x8FDB, 0x8FDC, 0x5AC },
-    { 0x8FDE, 0x8FDE, 0x5AE },
-    { 0x9000, 0x9002, 0x5AF },
-    { 0x9006, 0x9006, 0x5B2 },
-    { 0x9009, 0x9009, 0x5B3 },
-    { 0x901F, 0x901F, 0x5B4 },
-    { 0x90E8, 0x90E8, 0x5B5 },
-    { 0x90FD, 0x90FD, 0x5B6 },
-    { 0x914D, 0x914D, 0x5B7 },
-    { 0x91CD, 0x91CD, 0x5B8 },
-    { 0x91CF, 0x91CF, 0x5B9 },
-    { 0x9488, 0x9488, 0x5BA },
-    { 0x949F, 0x949F, 0x5BB },
-    { 0x94FE, 0x94FE, 0x5BC },
-    { 0x9519, 0x9519, 0x5BD },
-    { 0x952E, 0x952F, 0x5BE },
-    { 0x955C, 0x955C, 0x5C0 },
-    { 0x957F, 0x957F, 0x5C1 },
-    { 0x95ED, 0x95EE, 0x5C2 },
-    { 0x95F4, 0x95F4, 0x5C4 },
-    { 0x9605, 0x9605, 0x5C5 },
-    { 0x9633, 0x9633, 0x5C6 },
-    { 0x9644, 0x9644, 0x5C7 },
-    { 0x9664, 0x9664, 0x5C8 },
-    { 0x968F, 0x9690, 0x5C9 },
-    { 0x9700, 0x9700, 0x5CB },
-    { 0x9762, 0x9762, 0x5CC },
-    { 0x9875, 0x9876, 0x5CD },
-    { 0x9879, 0x987A, 0x5CF },
-    { 0x9884, 0x9884, 0x5D1 },
-    { 0x9891, 0x9891, 0x5D2 },
-    { 0x9898, 0x9898, 0x5D3 },
-    { 0x989D, 0x989D, 0x5D4 },
-    { 0x9A8C, 0x9A8C, 0x5D5 },
-    { 0x9ED8, 0x9ED8, 0x5D6 },
-    { 0x9F50, 0x9F50, 0x5D7 },
-    { 0x9F7F, 0x9F7F, 0x5D8 },
-    { 0xFB00, 0xFB04, 0x5D9 },
-    { 0xFF01, 0xFF01, 0x5DE },
-    { 0xFF08, 0xFF09, 0x5DF },
-    { 0xFF0C, 0xFF0C, 0x5E1 },
-    { 0xFF1A, 0xFF1A, 0x5E2 },
-    { 0xFF1F, 0xFF1F, 0x5E3 },
-    { 0xFFFD, 0xFFFD, 0x5E4 },
+    { 0x5B9E, 0x5B9E, 0x4C1 },
+    { 0x5BBD, 0x5BBD, 0x4C2 },
+    { 0x5BC6, 0x5BC6, 0x4C3 },
+    { 0x5BF9, 0x5BF9, 0x4C4 },
+    { 0x5C01, 0x5C01, 0x4C5 },
+    { 0x5C04, 0x5C04, 0x4C6 },
+    { 0x5C06, 0x5C06, 0x4C7 },
+    { 0x5C0F, 0x5C0F, 0x4C8 },
+    { 0x5C31, 0x5C31, 0x4C9 },
+    { 0x5C3D, 0x5C3D, 0x4CA },
+    { 0x5C40, 0x5C40, 0x4CB },
+    { 0x5C45, 0x5C45, 0x4CC },
+    { 0x5C4F, 0x5C4F, 0x4CD },
+    { 0x5C55, 0x5C55, 0x4CE },
+    { 0x5D29, 0x5D29, 0x4CF },
+    { 0x5D4C, 0x5D4C, 0x4D0 },
+    { 0x5DE6, 0x5DE6, 0x4D1 },
+    { 0x5DF2, 0x5DF2, 0x4D2 },
+    { 0x5E03, 0x5E03, 0x4D3 },
+    { 0x5E0C, 0x5E0C, 0x4D4 },
+    { 0x5E26, 0x5E26, 0x4D5 },
+    { 0x5E38, 0x5E38, 0x4D6 },
+    { 0x5E45, 0x5E45, 0x4D7 },
+    { 0x5E55, 0x5E55, 0x4D8 },
+    { 0x5E73, 0x5E73, 0x4D9 },
+    { 0x5E76, 0x5E76, 0x4DA },
+    { 0x5E94, 0x5E95, 0x4DB },
+    { 0x5EA6, 0x5EA6, 0x4DD },
+    { 0x5EFA, 0x5EFA, 0x4DE },
+    { 0x5F00, 0x5F00, 0x4DF },
+    { 0x5F0F, 0x5F0F, 0x4E0 },
+    { 0x5F15, 0x5F15, 0x4E1 },
+    { 0x5F53, 0x5F53, 0x4E2 },
+    { 0x5F55, 0x5F55, 0x4E3 },
+    { 0x5FEB, 0x5FEB, 0x4E4 },
+    { 0x5FFD, 0x5FFD, 0x4E5 },
+    { 0x6001, 0x6001, 0x4E6 },
+    { 0x603B, 0x603B, 0x4E7 },
+    { 0x6062, 0x6062, 0x4E8 },
+    { 0x606F, 0x606F, 0x4E9 },
+    { 0x60C5, 0x60C5, 0x4EA },
+    { 0x6210, 0x6210, 0x4EB },
+    { 0x6216, 0x6216, 0x4EC },
+    { 0x622A, 0x622A, 0x4ED },
+    { 0x6237, 0x6237, 0x4EE },
+    { 0x6240, 0x6240, 0x4EF },
+    { 0x624B, 0x624B, 0x4F0 },
+    { 0x6253, 0x6253, 0x4F1 },
+    { 0x6269, 0x6269, 0x4F2 },
+    { 0x626B, 0x626B, 0x4F3 },
+    { 0x627E, 0x627E, 0x4F4 },
+    { 0x6297, 0x6297, 0x4F5 },
+    { 0x62A5, 0x62A5, 0x4F6 },
+    { 0x62E9, 0x62E9, 0x4F7 },
+    { 0x6301, 0x6301, 0x4F8 },
+    { 0x6309, 0x6309, 0x4F9 },
+    { 0x6362, 0x6362, 0x4FA },
+    { 0x636E, 0x636E, 0x4FB },
+    { 0x63A5, 0x63A5, 0x4FC },
+    { 0x63CF, 0x63D0, 0x4FD },
+    { 0x63D2, 0x63D2, 0x4FF },
+    { 0x641C, 0x641C, 0x500 },
+    { 0x64CD, 0x64CD, 0x501 },
+    { 0x6536, 0x6536, 0x502 },
+    { 0x653E, 0x653E, 0x503 },
+    { 0x6548, 0x6548, 0x504 },
+    { 0x6570, 0x6570, 0x505 },
+    { 0x6587, 0x6587, 0x506 },
+    { 0x659C, 0x659C, 0x507 },
+    { 0x65AD, 0x65AD, 0x508 },
+    { 0x65B0, 0x65B0, 0x509 },
+    { 0x65B9, 0x65B9, 0x50A },
+    { 0x65E0, 0x65E0, 0x50B },
+    { 0x65E5, 0x65E5, 0x50C },
+    { 0x65F6, 0x65F6, 0x50D },
+    { 0x6620, 0x6620, 0x50E },
+    { 0x662F, 0x662F, 0x50F },
+    { 0x663E, 0x663E, 0x510 },
+    { 0x6682, 0x6682, 0x511 },
+    { 0x66F4, 0x66F4, 0x512 },
+    { 0x6700, 0x6700, 0x513 },
+    { 0x6709, 0x6709, 0x514 },
+    { 0x670D, 0x670D, 0x515 },
+    { 0x672A, 0x672A, 0x516 },
+    { 0x672C, 0x672C, 0x517 },
+    { 0x673A, 0x673A, 0x518 },
+    { 0x6761, 0x6761, 0x519 },
+    { 0x6765, 0x6765, 0x51A },
+    { 0x677E, 0x677E, 0x51B },
+    { 0x6790, 0x6790, 0x51C },
+    { 0x679C, 0x679C, 0x51D },
+    { 0x67E5, 0x67E5, 0x51E },
+    { 0x6807, 0x6807, 0x51F },
+    { 0x680F, 0x680F, 0x520 },
+    { 0x6821, 0x6821, 0x521 },
+    { 0x6837, 0x6837, 0x522 },
+    { 0x6839, 0x6839, 0x523 },
+    { 0x683C, 0x683C, 0x524 },
+    { 0x6863, 0x6863, 0x525 },
+    { 0x68C0, 0x68C0, 0x526 },
+    { 0x6A21, 0x6A21, 0x527 },
+    { 0x6A2A, 0x6A2A, 0x528 },
+    { 0x6B21, 0x6B21, 0x529 },
+    { 0x6B63, 0x6B65, 0x52A },
+    { 0x6BB5, 0x6BB5, 0x52D },
+    { 0x6BCF, 0x6BCF, 0x52E },
+    { 0x6BD4, 0x6BD4, 0x52F },
+    { 0x6CA1, 0x6CA1, 0x530 },
+    { 0x6CD5, 0x6CD5, 0x531 },
+    { 0x6CE8, 0x6CE8, 0x532 },
+    { 0x6D45, 0x6D45, 0x533 },
+    { 0x6D4F, 0x6D4F, 0x534 },
+    { 0x6D88, 0x6D88, 0x535 },
+    { 0x6DF1, 0x6DF1, 0x536 },
+    { 0x6DFB, 0x6DFB, 0x537 },
+    { 0x6E05, 0x6E05, 0x538 },
+    { 0x6E29, 0x6E29, 0x539 },
+    { 0x6E7F, 0x6E7F, 0x53A },
+    { 0x6E83, 0x6E83, 0x53B },
+    { 0x6E90, 0x6E90, 0x53C },
+    { 0x6EE4, 0x6EE4, 0x53D },
+    { 0x706F, 0x706F, 0x53E },
+    { 0x70B9, 0x70B9, 0x53F },
+    { 0x70ED, 0x70ED, 0x540 },
+    { 0x7247, 0x7248, 0x541 },
+    { 0x7279, 0x7279, 0x543 },
+    { 0x72B6, 0x72B6, 0x544 },
+    { 0x7387, 0x7387, 0x545 },
+    { 0x73B0, 0x73B0, 0x546 },
+    { 0x7406, 0x7406, 0x547 },
+    { 0x7528, 0x7528, 0x548 },
+    { 0x7535, 0x7535, 0x549 },
+    { 0x754C, 0x754C, 0x54A },
+    { 0x7565, 0x7565, 0x54B },
+    { 0x767B, 0x767B, 0x54C },
+    { 0x767E, 0x767E, 0x54D },
+    { 0x7684, 0x7684, 0x54E },
+    { 0x76D8, 0x76D8, 0x54F },
+    { 0x76EE, 0x76EE, 0x550 },
+    { 0x7720, 0x7720, 0x551 },
+    { 0x77ED, 0x77ED, 0x552 },
+    { 0x7801, 0x7801, 0x553 },
+    { 0x786C, 0x786C, 0x554 },
+    { 0x786E, 0x786E, 0x555 },
+    { 0x793A, 0x793A, 0x556 },
+    { 0x7981, 0x7981, 0x557 },
+    { 0x79D2, 0x79D2, 0x558 },
+    { 0x79F0, 0x79F0, 0x559 },
+    { 0x79FB, 0x79FB, 0x55A },
+    { 0x7A0B, 0x7A0B, 0x55B },
+    { 0x7A7A, 0x7A7A, 0x55C },
+    { 0x7ACB, 0x7ACB, 0x55D },
+    { 0x7AD6, 0x7AD6, 0x55E },
+    { 0x7AE0, 0x7AE0, 0x55F },
+    { 0x7AEF, 0x7AEF, 0x560 },
+    { 0x7B26, 0x7B26, 0x561 },
+    { 0x7B2C, 0x7B2C, 0x562 },
+    { 0x7B7E, 0x7B7E, 0x563 },
+    { 0x7B80, 0x7B80, 0x564 },
+    { 0x7B97, 0x7B97, 0x565 },
+    { 0x7BA1, 0x7BA1, 0x566 },
+    { 0x7C4D, 0x7C4D, 0x567 },
+    { 0x7C97, 0x7C97, 0x568 },
+    { 0x7CFB, 0x7CFB, 0x569 },
+    { 0x7D22, 0x7D22, 0x56A },
+    { 0x7D27, 0x7D27, 0x56B },
+    { 0x7D2F, 0x7D2F, 0x56C },
+    { 0x7EBF, 0x7EBF, 0x56D },
+    { 0x7EC6, 0x7EC6, 0x56E },
+    { 0x7ECF, 0x7ECF, 0x56F },
+    { 0x7EDC, 0x7EDC, 0x570 },
+    { 0x7EDF, 0x7EDF, 0x571 },
+    { 0x7EE7, 0x7EE7, 0x572 },
+    { 0x7EEA, 0x7EEA, 0x573 },
+    { 0x7EED, 0x7EED, 0x574 },
+    { 0x7EF4, 0x7EF4, 0x575 },
+    { 0x7F13, 0x7F13, 0x576 },
+    { 0x7F16, 0x7F16, 0x577 },
+    { 0x7F51, 0x7F51, 0x578 },
+    { 0x7F6E, 0x7F6E, 0x579 },
+    { 0x7FFB, 0x7FFB, 0x57A },
+    { 0x8017, 0x8017, 0x57B },
+    { 0x80FD, 0x80FD, 0x57C },
+    { 0x811A, 0x811A, 0x57D },
+    { 0x81EA, 0x81EA, 0x57E },
+    { 0x8272, 0x8272, 0x57F },
+    { 0x8282, 0x8282, 0x580 },
+    { 0x8303, 0x8303, 0x581 },
+    { 0x83B7, 0x83B7, 0x582 },
+    { 0x843D, 0x843D, 0x583 },
+    { 0x85CF, 0x85CF, 0x584 },
+    { 0x884C, 0x884C, 0x585 },
+    { 0x8868, 0x8868, 0x586 },
+    { 0x88AB, 0x88AB, 0x587 },
+    { 0x88C1, 0x88C1, 0x588 },
+    { 0x88C5, 0x88C5, 0x589 },
+    { 0x892A, 0x892A, 0x58A },
+    { 0x8981, 0x8981, 0x58B },
+    { 0x89C1, 0x89C1, 0x58C },
+    { 0x89C8, 0x89C8, 0x58D },
+    { 0x89E3, 0x89E3, 0x58E },
+    { 0x8A00, 0x8A00, 0x58F },
+    { 0x8BA1, 0x8BA1, 0x590 },
+    { 0x8BA4, 0x8BA4, 0x591 },
+    { 0x8BB0, 0x8BB0, 0x592 },
+    { 0x8BBE, 0x8BBE, 0x593 },
+    { 0x8BC1, 0x8BC1, 0x594 },
+    { 0x8BCA, 0x8BCA, 0x595 },
+    { 0x8BCD, 0x8BCD, 0x596 },
+    { 0x8BD5, 0x8BD5, 0x597 },
+    { 0x8BE5, 0x8BE6, 0x598 },
+    { 0x8BED, 0x8BED, 0x59A },
+    { 0x8BEF, 0x8BEF, 0x59B },
+    { 0x8BF7, 0x8BF7, 0x59C },
+    { 0x8BFB, 0x8BFB, 0x59D },
+    { 0x8D25, 0x8D26, 0x59E },
+    { 0x8D85, 0x8D85, 0x5A0 },
+    { 0x8DB3, 0x8DB3, 0x5A1 },
+    { 0x8DDD, 0x8DDD, 0x5A2 },
+    { 0x8DDF, 0x8DDF, 0x5A3 },
+    { 0x8DF3, 0x8DF3, 0x5A4 },
+    { 0x8F6C, 0x8F6C, 0x5A5 },
+    { 0x8F7D, 0x8F7D, 0x5A6 },
+    { 0x8F91, 0x8F91, 0x5A7 },
+    { 0x8F93, 0x8F93, 0x5A8 },
+    { 0x8FB9, 0x8FB9, 0x5A9 },
+    { 0x8FC7, 0x8FC7, 0x5AA },
+    { 0x8FD1, 0x8FD1, 0x5AB },
+    { 0x8FD4, 0x8FD4, 0x5AC },
+    { 0x8FDB, 0x8FDC, 0x5AD },
+    { 0x8FDE, 0x8FDE, 0x5AF },
+    { 0x9000, 0x9002, 0x5B0 },
+    { 0x9006, 0x9006, 0x5B3 },
+    { 0x9009, 0x9009, 0x5B4 },
+    { 0x901F, 0x901F, 0x5B5 },
+    { 0x90E8, 0x90E8, 0x5B6 },
+    { 0x90FD, 0x90FD, 0x5B7 },
+    { 0x914D, 0x914D, 0x5B8 },
+    { 0x91CD, 0x91CD, 0x5B9 },
+    { 0x91CF, 0x91CF, 0x5BA },
+    { 0x9488, 0x9488, 0x5BB },
+    { 0x949F, 0x949F, 0x5BC },
+    { 0x94FE, 0x94FE, 0x5BD },
+    { 0x9519, 0x9519, 0x5BE },
+    { 0x952E, 0x952F, 0x5BF },
+    { 0x955C, 0x955C, 0x5C1 },
+    { 0x957F, 0x957F, 0x5C2 },
+    { 0x95ED, 0x95EE, 0x5C3 },
+    { 0x95F4, 0x95F4, 0x5C5 },
+    { 0x9605, 0x9605, 0x5C6 },
+    { 0x9633, 0x9633, 0x5C7 },
+    { 0x9644, 0x9644, 0x5C8 },
+    { 0x9664, 0x9664, 0x5C9 },
+    { 0x968F, 0x9690, 0x5CA },
+    { 0x9700, 0x9700, 0x5CC },
+    { 0x9762, 0x9762, 0x5CD },
+    { 0x9875, 0x9876, 0x5CE },
+    { 0x9879, 0x987A, 0x5D0 },
+    { 0x9884, 0x9884, 0x5D2 },
+    { 0x9891, 0x9891, 0x5D3 },
+    { 0x9898, 0x9898, 0x5D4 },
+    { 0x989D, 0x989D, 0x5D5 },
+    { 0x9A8C, 0x9A8C, 0x5D6 },
+    { 0x9ED8, 0x9ED8, 0x5D7 },
+    { 0x9F50, 0x9F50, 0x5D8 },
+    { 0x9F7F, 0x9F7F, 0x5D9 },
+    { 0xFB00, 0xFB04, 0x5DA },
+    { 0xFF01, 0xFF01, 0x5DF },
+    { 0xFF08, 0xFF09, 0x5E0 },
+    { 0xFF0C, 0xFF0C, 0x5E2 },
+    { 0xFF1A, 0xFF1A, 0x5E3 },
+    { 0xFF1F, 0xFF1F, 0x5E4 },
+    { 0xFFFD, 0xFFFD, 0x5E5 },
 };
 
 static const EpdKernClassEntry ubuntu_10_regularKernLeftClasses[] = {
@@ -5826,7 +5831,7 @@ static const EpdFontData ubuntu_10_regular = {
     ubuntu_10_regularBitmaps,
     ubuntu_10_regularGlyphs,
     ubuntu_10_regularIntervals,
-    463,
+    464,
     24,
     20,
     -4,

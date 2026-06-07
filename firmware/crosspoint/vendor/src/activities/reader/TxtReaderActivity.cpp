@@ -64,6 +64,9 @@ void TxtReaderActivity::onExit() {
 }
 
 void TxtReaderActivity::loop() {
+  // WODLE-PORT: minute-fresh status-bar clock via partial refresh
+  partialClock.tick(renderer, [this] { renderStatusBar(); });
+
   // WODLE-PORT: Confirm opens chapter selection (mirrors XtcReaderActivity)
   if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
     if (initialized && !chapters.empty()) {

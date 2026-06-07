@@ -34,6 +34,18 @@ public:
 
     void displayBuffer(RefreshMode mode = RefreshMode::FAST_REFRESH, bool turnOffScreen = false) {}
     void refreshDisplay(RefreshMode mode = RefreshMode::FAST_REFRESH, bool turnOffScreen = false) {}
+    /* WODLE-PORT: partial refresh no-op; records the rect so tests can pin
+     * the logical->physical window mapping in GfxRenderer::displayWindow. */
+    struct WindowRect
+    {
+        int x = -1, y = -1, w = -1, h = -1;
+    };
+    mutable WindowRect lastWindow;
+    bool refreshWindow(int x, int y, int w, int h)
+    {
+        lastWindow = {x, y, w, h};
+        return true;
+    }
     void deepSleep() {}
 
     uint8_t *getFrameBuffer() const;

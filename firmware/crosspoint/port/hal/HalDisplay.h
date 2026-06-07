@@ -39,6 +39,15 @@ public:
     void displayBuffer(RefreshMode mode = RefreshMode::FAST_REFRESH, bool turnOffScreen = false);
     void refreshDisplay(RefreshMode mode = RefreshMode::FAST_REFRESH, bool turnOffScreen = false);
 
+    /* WODLE-PORT (spi_epd_demo recipe): DU partial-window refresh of the
+     * current framebuffer rect, CONTROLLER coords (x along the 792 source
+     * axis — byte-aligned internally; y = gate row 0..527). Only the window
+     * cells are driven; both controller RAMs stay in sync (0x10 written back
+     * after refresh). Every PARTIALS_PER_GC-th call promotes the window to
+     * the GC waveform to bound local ghosting. False = refused (empty rect,
+     * or controller RAMs hold 4-gray planes after an AA pass). */
+    bool refreshWindow(int x, int y, int w, int h);
+
     void deepSleep();
 
     uint8_t *getFrameBuffer() const;

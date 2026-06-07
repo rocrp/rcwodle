@@ -1223,6 +1223,28 @@ void GfxRenderer::displayBuffer(const HalDisplay::RefreshMode refreshMode) const
   display.displayBuffer(refreshMode, fadingFix);
 }
 
+// WODLE-PORT: partial window refresh of a logical rect. Maps the two corners
+// through the orientation transform and hands the physical bounding box to
+// the backend (which byte-aligns the source axis and refuses when the
+// controller RAMs don't hold a valid BW diff base).
+bool GfxRenderer::displayWindow(const int x, const int y, const int width, const int height) const {
+  if (width <= 0 || height <= 0) return false;
+  int px0, py0, px1, py1;
+  rotateCoordinates(orientation, x, y, &px0, &py0, panelWidth, panelHeight);
+  rotateCoordinates(orientation, x + width - 1, y + height - 1, &px1, &py1, panelWidth, panelHeight);
+  if (px0 > px1) {
+    const int t = px0;
+    px0 = px1;
+    px1 = t;
+  }
+  if (py0 > py1) {
+    const int t = py0;
+    py0 = py1;
+    py1 = t;
+  }
+  return display.refreshWindow(px0, py0, px1 - px0 + 1, py1 - py0 + 1);
+}
+
 std::string GfxRenderer::truncatedText(const int fontId, const char* text, const int maxWidth,
                                        const EpdFontFamily::Style style) const {
   if (!text || maxWidth <= 0) return "";

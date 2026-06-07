@@ -190,6 +190,10 @@ class CrossPointSettings {
   uint8_t xtcStatusBarMode = XTC_STATUS_BAR_HIDE;
   // Clock display in status bar (X3 only, requires DS3231 RTC)
   uint8_t statusBarClock = 0;
+  // WODLE-PORT: minute-fresh status-bar clock via DU partial-window refresh
+  // (spi_epd_demo recipe). EXPERIMENTAL, default off until a HIL soak proves
+  // the partial waveform on this panel (codex-recommended gating).
+  uint8_t clockPartialRefresh = 0;
   // Clock UTC offset in quarter-hour steps, biased by 48 so it fits in uint8_t.
   // Value 48 = UTC+0, 0 = UTC-12:00, 104 = UTC+14:00.
   // Quarter-hour granularity supports oddball zones like Nepal (+5:45) and Chatham (+12:45).

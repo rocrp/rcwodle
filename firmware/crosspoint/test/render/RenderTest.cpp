@@ -310,6 +310,53 @@ TEST(Render, TortureFilenames) {
   dumpPgm("torture_filenames");
 }
 
+// WODLE-PORT: displayWindow maps a LOGICAL rect through the orientation
+// transform to a physical controller window (x = 792 source axis, y = gate
+// row). Portrait is the reading orientation: logical (x,y) -> phy(y, 527-x),
+// so a bottom status-bar strip becomes a narrow full-gate column stripe.
+TEST(Render, DisplayWindowMapsPortraitRect) {
+  renderer.setOrientation(GfxRenderer::Portrait);
+  ASSERT_TRUE(renderer.displayWindow(0, 760, 528, 32));  // logical bottom strip
+  EXPECT_EQ(display.lastWindow.x, 760);
+  EXPECT_EQ(display.lastWindow.y, 0);
+  EXPECT_EQ(display.lastWindow.w, 32);
+  EXPECT_EQ(display.lastWindow.h, 528);
+
+  ASSERT_TRUE(renderer.displayWindow(100, 200, 50, 60));  // interior rect
+  EXPECT_EQ(display.lastWindow.x, 200);                   // phyX = logical y
+  EXPECT_EQ(display.lastWindow.y, 528 - 1 - 149);         // phyY = 527 - (x+w-1)
+  EXPECT_EQ(display.lastWindow.w, 60);
+  EXPECT_EQ(display.lastWindow.h, 50);
+
+  EXPECT_FALSE(renderer.displayWindow(0, 0, 0, 10));  // degenerate refused
+}
+
+// WODLE-PORT: pins the absolute 4-gray plane algebra used by
+// HalDisplay::displayGrayBuffer (spi_epd_demo semantics: 0x10 bit = gray
+// bit1, 0x13 bit = gray bit0; 00=black 01=dark 10=light 11=white) composed
+// from the BW page + the renderer's MSB(any-gray)/LSB(dark-only) flags.
+TEST(Render, Gray4PlaneAlgebra) {
+  struct Case {
+    uint8_t bw, msb, lsb;        // inputs (one bit per pixel)
+    uint8_t plane10, plane13;    // expected gray code bits
+    const char* what;
+  };
+  const Case cases[] = {
+      {1, 0, 0, 1, 1, "white background -> 11"},
+      {0, 0, 0, 0, 0, "black text -> 00"},
+      {0, 1, 1, 0, 1, "dark-gray AA edge -> 01"},
+      {0, 1, 0, 1, 0, "light-gray AA edge -> 10"},
+      {1, 1, 1, 0, 1, "flagged dark wins over white BW -> 01"},
+      {1, 1, 0, 1, 0, "flagged light wins over white BW -> 10"},
+  };
+  for (const auto& c : cases) {
+    const uint8_t p10 = (uint8_t)((c.bw & ~c.msb) | (c.msb & ~c.lsb)) & 1;
+    const uint8_t p13 = (uint8_t)((c.bw & ~c.msb) | (c.msb & c.lsb)) & 1;
+    EXPECT_EQ(p10, c.plane10) << c.what;
+    EXPECT_EQ(p13, c.plane13) << c.what;
+  }
+}
+
 // Mock of the TXT chapter-selection screen — title row + list rows with CJK
 // titles drawn with the SD (reader) font, like TxtReaderChapterSelectionActivity.
 // Uses the production LXGWWenKai font (full CJK coverage) when it has been
