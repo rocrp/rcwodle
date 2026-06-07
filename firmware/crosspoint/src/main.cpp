@@ -41,6 +41,7 @@
 #include "WodleDebugCmds.h"   // WODLE-PORT
 #include "WodleFrontlight.h"  // WODLE-PORT
 #include "WodlePsram.h"       // WODLE-PORT
+#include "WodleUsbCdc.h"      // WODLE-PORT
 #include "WodleUsbMsc.h"      // WODLE-PORT
 #include "util/ButtonNavigator.h"
 #include "util/ScreenshotUtil.h"
@@ -357,6 +358,12 @@ void setup() {
     runUsbTransferMode();  // never returns
     return;
   }
+
+  // WODLE-PORT: USB-CDC console in NORMAL boots (the MSC transfer mode above
+  // is its own boot path and owns the USB controller there). Enumerates as a
+  // serial port whenever the cable is plugged — tools/wodle_console.py works
+  // over the charge cable, no WCH-Link UART needed.
+  WodleUsbCdc::start();
 
   LOG_INF("MAIN", "Hardware detect: %s", gpio.deviceIsX3() ? "X3" : "X4");
 

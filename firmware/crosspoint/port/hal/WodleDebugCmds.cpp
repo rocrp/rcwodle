@@ -4,6 +4,7 @@
 
 #include <rtthread.h>
 
+#include <cstdarg>
 #include <cstdlib>
 #include <cstring>
 
@@ -43,6 +44,22 @@ struct CriticalSection
     ~CriticalSection() { rt_hw_interrupt_enable(level); }
 };
 
+/* WODLE-PORT: replies go to the uart console and, when a USB-CDC console is
+ * up, its sink too (set once at WodleUsbCdc::start). 160B covers the longest
+ * line (dump payload lines are 77 chars). */
+void (*s_replySink)(const char *) = nullptr;
+
+void reply(const char *fmt, ...)
+{
+    char buf[160];
+    va_list ap;
+    va_start(ap, fmt);
+    rt_vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+    rt_kputs(buf);
+    if (s_replySink) s_replySink(buf);
+}
+
 void markDebugSession()
 {
     CriticalSection cs;
@@ -58,13 +75,13 @@ int cmdKey(int argc, char **argv)
 {
     if (argc < 1)
     {
-        rt_kprintf("usage: wodle key <up|down|left|right|confirm|back|power> [holdMs]\n");
+        reply("usage: wodle key <up|down|left|right|confirm|back|power> [holdMs]\n");
         return -1;
     }
     const int btn = WodleDebugCmdCore::parseButtonName(argv[0]);
     if (btn == WodleDebugCmdCore::BTN_INVALID)
     {
-        rt_kprintf("wodle: unknown key '%s'\n", argv[0]);
+        reply("wodle: unknown key '%s'\n", argv[0]);
         return -1;
     }
     long hold = 0;
@@ -73,7 +90,7 @@ int cmdKey(int argc, char **argv)
         hold = std::strtol(argv[1], nullptr, 10);
         if (hold < 0 || hold > 60000)
         {
-            rt_kprintf("wodle: holdMs out of range (0..60000)\n");
+            reply("wodle: holdMs out of range (0..60000)\n");
             return -1;
         }
     }
@@ -89,10 +106,10 @@ int cmdKey(int argc, char **argv)
     }
     if (!ok)
     {
-        rt_kprintf("wodle: key queue full (%d pending) — command DROPPED\n", KeyQueue::CAPACITY);
+        reply("wodle: key queue full (%d pending) — command DROPPED\n", KeyQueue::CAPACITY);
         return -1;
     }
-    rt_kprintf("wodle: key %s hold=%ldms queued\n", argv[0], hold);
+    reply("wodle: key %s hold=%ldms queued\n", argv[0], hold);
     return 0;
 }
 
@@ -100,12 +117,12 @@ int cmdOpen(int argc, char **argv)
 {
     if (argc < 1)
     {
-        rt_kprintf("usage: wodle open </books/foo.epub>\n");
+        reply("usage: wodle open </books/foo.epub>\n");
         return -1;
     }
     if (std::strlen(argv[0]) >= sizeof(s_pendingOpen))
     {
-        rt_kprintf("wodle: path too long\n");
+        reply("wodle: path too long\n");
         return -1;
     }
     markDebugSession();
@@ -119,10 +136,10 @@ int cmdOpen(int argc, char **argv)
     }
     if (busy)
     {
-        rt_kprintf("wodle: an open is already pending — command DROPPED\n");
+        reply("wodle: an open is already pending — command DROPPED\n");
         return -1;
     }
-    rt_kprintf("wodle: open '%s' queued (main thread validates)\n", argv[0]);
+    reply("wodle: open '%s' queued (main thread validates)\n", argv[0]);
     return 0;
 }
 
@@ -133,7 +150,7 @@ int cmdShot()
         CriticalSection cs;
         s_pendingShot = true;
     }
-    rt_kprintf("wodle: screenshot queued (lands as BMP on the SD card)\n");
+    reply("wodle: screenshot queued (lands as BMP on the SD card)\n");
     return 0;
 }
 
@@ -142,7 +159,7 @@ int cmdPartial(int argc, char **argv)
     int v[4] = {0, 0, 0, 0};
     if (argc < 4)
     {
-        rt_kprintf("usage: wodle partial <x> <y> <w> <h>  (panel coords: x=0..791 source, y=0..527 gate)\n");
+        reply("usage: wodle partial <x> <y> <w> <h>  (panel coords: x=0..791 source, y=0..527 gate)\n");
         return -1;
     }
     for (int i = 0; i < 4; i++)
@@ -151,7 +168,7 @@ int cmdPartial(int argc, char **argv)
     }
     if (v[2] <= 0 || v[3] <= 0)
     {
-        rt_kprintf("wodle: width/height must be positive\n");
+        reply("wodle: width/height must be positive\n");
         return -1;
     }
     markDebugSession();
@@ -163,10 +180,10 @@ int cmdPartial(int argc, char **argv)
     }
     if (busy)
     {
-        rt_kprintf("wodle: a partial refresh is already pending — command DROPPED\n");
+        reply("wodle: a partial refresh is already pending — command DROPPED\n");
         return -1;
     }
-    rt_kprintf("wodle: partial %d,%d %dx%d queued (main thread refreshes)\n", v[0], v[1], v[2], v[3]);
+    reply("wodle: partial %d,%d %dx%d queued (main thread refreshes)\n", v[0], v[1], v[2], v[3]);
     return 0;
 }
 
@@ -201,14 +218,14 @@ int cmdStat()
         keysPending = s_keyQueue.size();
     }
 
-    rt_kprintf("wodle: bat=%d%% mv=%d usb=%d heap_free=%u heap_min_free=%u uptime_ms=%u ", WodleBattery::percent(),
+    reply("wodle: bat=%d%% mv=%d usb=%d heap_free=%u heap_min_free=%u uptime_ms=%u ", WodleBattery::percent(),
                WodleBattery::millivolts(), WodleBattery::usbPowered() ? 1 : 0, (unsigned)(total - used),
                (unsigned)(total - maxUsed), (unsigned)rt_tick_get_millisecond());
     if (aht)
     {
-        rt_kprintf("temp_c=%d.%d rh=%d ", (int)tC, ((int)(tC * 10) % 10 + 10) % 10, (int)rh);
+        reply("temp_c=%d.%d rh=%d ", (int)tC, ((int)(tC * 10) % 10 + 10) % 10, (int)rh);
     }
-    rt_kprintf("fl=%d%% clock_utc=%s keys_pending=%d nosleep=%d\n", WodleFrontlight::level(), clock, keysPending,
+    reply("fl=%d%% clock_utc=%s keys_pending=%d nosleep=%d\n", WodleFrontlight::level(), clock, keysPending,
                sleepInhibitedInternal() ? 1 : 0);
     return 0;
 }
@@ -217,7 +234,7 @@ int cmdNoSleep(int argc, char **argv)
 {
     if (argc < 1 || (std::strcmp(argv[0], "on") != 0 && std::strcmp(argv[0], "off") != 0))
     {
-        rt_kprintf("usage: wodle nosleep <on|off>\n");
+        reply("usage: wodle nosleep <on|off>\n");
         return -1;
     }
     const bool on = std::strcmp(argv[0], "on") == 0;
@@ -226,7 +243,7 @@ int cmdNoSleep(int argc, char **argv)
         s_noSleepForced = on;
         if (!on) s_debugSession = false; /* off also ends the implicit inhibit */
     }
-    rt_kprintf("wodle: auto-sleep inhibit %s\n", on ? "ON" : "OFF (debug latch cleared)");
+    reply("wodle: auto-sleep inhibit %s\n", on ? "ON" : "OFF (debug latch cleared)");
     return 0;
 }
 
@@ -238,7 +255,7 @@ static int wodle(int argc, char **argv)
 {
     if (argc < 2)
     {
-        rt_kprintf("wodle <key|open|shot|stat|nosleep> — CrossPoint debug driver\n");
+        reply("wodle <key|open|shot|stat|nosleep> — CrossPoint debug driver\n");
         return -1;
     }
     if (std::strcmp(argv[1], "key") == 0) return cmdKey(argc - 2, argv + 2);
@@ -248,7 +265,7 @@ static int wodle(int argc, char **argv)
     if (std::strcmp(argv[1], "dump") == 0) return cmdDump();
     if (std::strcmp(argv[1], "stat") == 0) return cmdStat();
     if (std::strcmp(argv[1], "nosleep") == 0) return cmdNoSleep(argc - 2, argv + 2);
-    rt_kprintf("wodle: unknown subcommand '%s'\n", argv[1]);
+    reply("wodle: unknown subcommand '%s'\n", argv[1]);
     return -1;
 }
 MSH_CMD_EXPORT(wodle, CrossPoint debug driver - key/open/shot/dump/partial/stat/nosleep);
@@ -306,20 +323,45 @@ void emitFrameDump(const uint8_t *fb, const uint32_t size, const int width, cons
 {
     using WodleDebugCmdCore::BASE64_LINE_BYTES;
     const uint32_t crc = WodleDebugCmdCore::crc32(fb, size);
-    rt_kprintf("WODLE_DUMP_BEGIN w=%d h=%d bytes=%u crc32=%08X\n", width, height, (unsigned)size, (unsigned)crc);
+    reply("WODLE_DUMP_BEGIN w=%d h=%d bytes=%u crc32=%08X\n", width, height, (unsigned)size, (unsigned)crc);
     char line[(BASE64_LINE_BYTES + 2) / 3 * 4 + 1];
     for (uint32_t off = 0; off < size; off += BASE64_LINE_BYTES)
     {
         const int n = (size - off < (uint32_t)BASE64_LINE_BYTES) ? (int)(size - off) : BASE64_LINE_BYTES;
         WodleDebugCmdCore::encodeBase64Line(fb + off, n, line);
-        rt_kprintf("%s\n", line);
+        reply("%s\n", line);
     }
-    rt_kprintf("WODLE_DUMP_END\n");
+    reply("WODLE_DUMP_END\n");
 }
 
 bool sleepInhibited()
 {
     return sleepInhibitedInternal();
+}
+
+void setReplySink(void (*sink)(const char *text))
+{
+    s_replySink = sink;
+}
+
+int runCommandLine(char *line)
+{
+    char *argv[12];
+    int argc = 0;
+    for (char *p = line; *p && argc < 12;)
+    {
+        while (*p == ' ' || *p == '\t' || *p == '\r') *p++ = '\0';
+        if (!*p) break;
+        argv[argc++] = p;
+        while (*p && *p != ' ' && *p != '\t' && *p != '\r') p++;
+    }
+    if (argc == 0) return -1;
+    if (std::strcmp(argv[0], "wodle") == 0) return wodle(argc, argv);
+    /* bare subcommand ("stat") — synthesize the prefix */
+    char *argv2[13];
+    argv2[0] = (char *)"wodle";
+    for (int i = 0; i < argc; i++) argv2[i + 1] = argv[i];
+    return wodle(argc + 1, argv2);
 }
 
 } // namespace WodleDebugCmds

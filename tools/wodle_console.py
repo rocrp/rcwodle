@@ -38,9 +38,13 @@ DUMP_BEGIN = re.compile(rb"WODLE_DUMP_BEGIN w=(\d+) h=(\d+) bytes=(\d+) crc32=([
 def find_port(explicit: str | None) -> str:
     if explicit:
         return explicit
-    candidates = sorted(glob.glob("/dev/cu.usbserial*") + glob.glob("/dev/cu.wchusbserial*"))
+    # Prefer the firmware's own USB-CDC console (VID 0x38F4 PID 0x1003,
+    # /dev/cu.usbmodem*) over a WCH-Link UART; never grab the HVR recovery port.
+    cdc = sorted(p for p in glob.glob("/dev/cu.usbmodem*") if "HVR_RECOVERY" not in p)
+    uart = sorted(glob.glob("/dev/cu.usbserial*") + glob.glob("/dev/cu.wchusbserial*"))
+    candidates = cdc + uart
     if not candidates:
-        typer.echo("No usbserial port found — pass --port", err=True)
+        typer.echo("No console port found (usbmodem/usbserial) — pass --port", err=True)
         raise typer.Exit(1)
     if len(candidates) > 1:
         typer.echo(f"Multiple ports, using {candidates[0]} (override with --port): {candidates}", err=True)

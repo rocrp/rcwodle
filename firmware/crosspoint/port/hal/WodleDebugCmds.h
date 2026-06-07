@@ -40,4 +40,11 @@ bool consumePendingPartial(PartialRect &out); /* loop() */
 void emitFrameDump(const uint8_t *fb, uint32_t size, int width, int height);
 /* True while auto-sleep should be held off (debug session or nosleep on). */
 bool sleepInhibited();
+
+/* WODLE-PORT USB-CDC console plumbing: every command reply (incl. the
+ * `wodle dump` stream) goes to the uart console AND, when set, this sink.
+ * runCommandLine tokenizes in place and accepts both "wodle stat" and bare
+ * "stat" — the CDC rx thread feeds it whole lines. */
+void setReplySink(void (*sink)(const char *text));
+int runCommandLine(char *line);
 } // namespace WodleDebugCmds
