@@ -61,8 +61,9 @@ Upstream ⇒ a custom framework can start from the real XiaoZhi app source, not 
 ## Tools (`tools/`)
 
 - **`wodle_flash.py`** — HVR1 USB-CDC flasher (the Mac-accessible flash channel). `flash`/`write`/`hello`/`reboot`.
-- **`wodle_console.py`** — host driver for the crosspoint firmware's `wodle` MSH debug command (WCH-Link
-  UART @1M): `stat`/`key`/`open`/`nosleep`/`raw`, and `dump screen.png` = CRC-verified live framebuffer → PNG.
+- **`wodle_console.py`** — host driver for the crosspoint firmware's `wodle` debug commands, over the
+  firmware's **USB-CDC console (just the charge cable**, VID 0x38F4 PID 0x1003**)** or the WCH-Link UART:
+  `stat`/`key`/`open`/`nosleep`/`raw`/`partial`, and `dump screen.png` = CRC-verified live framebuffer → PNG.
 - `wodle_ble.py` — bleak BLE CLI (`scan`/`info`/`listen`/`send`); proven, but device not advertising while bonded.
 - `wodle_spp.py` — classic-BT SPP probe (PyObjC, untested).
 - `fw_analyze.py` (pin map) · `fw_xref.py` (I²C) · `fw_res.py` (resolution) · `fw_usbrec.py` (HVR1 decoder) ·
