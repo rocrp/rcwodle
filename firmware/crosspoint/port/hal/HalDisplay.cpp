@@ -121,7 +121,13 @@ static const uint8_t LUT_DU[245] = {
 /* 4-gray waveform LUT, vendor reference — used UNMODIFIED as the absolute
  * full-frame 4-gray waveform, exactly like spi_epd_demo (which describes it
  * as "the verified UC8279 gray reference"). Plane semantics: 0x10 RAM bit =
- * gray bit1, 0x13 RAM bit = gray bit0; 00=black 01=dark 10=light 11=white. */
+ * gray bit1, 0x13 RAM bit = gray bit0; 00=black 01=dark 10=light 11=white.
+ *
+ * HIL knob: refs/xiaodouzi_demo runs the byte-identical LUT with the INVERSE
+ * convention — 0x50=0x00 (DDX flipped) before the gray banks and (0,0)=white
+ * /(1,1)=black planes. Both claim panel-verified; the DDX bits in 0x50 invert
+ * data interpretation, so they're plausibly equivalent. If HIL item 11b shows
+ * inverted/garbled grays, switch to that pair (CDI write + plane inversion). */
 static const uint8_t LUT_GRAY4[245] = {
     /* VCOM */
     0x01,0x08,0x02,0x08,0x03,0x01,0x01, 0x01,0x09,0x03,0x04,0x03,0x01,0x01,

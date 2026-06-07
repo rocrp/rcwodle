@@ -7,8 +7,11 @@
 #include "bf0_hal.h"
 
 #define BQ27220_ADDR 0x55
-#define REG_VOLTAGE 0x08 /* mV */
-#define REG_SOC 0x2C     /* % */
+#define REG_VOLTAGE 0x08         /* mV */
+#define REG_SOC 0x2C             /* % */
+#define REG_REMAINING 0x10       /* RemainingCapacity, mAh */
+#define REG_FULL_CHARGE 0x12     /* FullChargeCapacity, mAh */
+#define REG_DESIGN_CAPACITY 0x3C /* DesignCapacity, mAh */
 
 #define AW32001_ADDR 0x49
 #define AW_REG_STATUS 0x08  /* PG_STAT bit1, CHG_STAT bits4:3 */
@@ -91,6 +94,20 @@ void init()
     s_available = readWord(REG_VOLTAGE, v) && v > 2000 && v < 5000;
     rt_kprintf("[WodleBattery] gauge %s (voltage=%umV)\n",
                s_available ? "OK" : "not responding", v);
+
+    /* Config snapshot for HIL: refs/xiaodouzi_demo found the gauge ships
+     * UNCONFIGURED on this hardware family (it unseals + forces
+     * DesignCapacity=850mAh every boot and computes SOC as RM/FCC instead of
+     * trusting the SOC register). Read-only here — if HIL shows DC far from
+     * the real pack or a nonsense SOC%, adopt the demo's programming recipe. */
+    if (s_available)
+    {
+        uint16_t dc = 0, fcc = 0, rm = 0;
+        readWord(REG_DESIGN_CAPACITY, dc);
+        readWord(REG_FULL_CHARGE, fcc);
+        readWord(REG_REMAINING, rm);
+        rt_kprintf("[WodleBattery] gauge config: design=%umAh fcc=%umAh rm=%umAh\n", dc, fcc, rm);
+    }
 
     /* AW32001 charger: verify chip ID, then seed the USB-presence cache. */
     uint8_t id = 0, status = 0;

@@ -7,10 +7,13 @@
  *   PWR  (PA34) short press  -> BTN_CONFIRM
  *   PWR  (PA34) long press   -> BTN_POWER (sleep; held-time exposed)
  *
- * KEY2/KEY3 polarity = active-high with pulldowns per the vendor-quality
- * spi_epd_demo; PWR stays assumed active-low (PMU wake pin, no evidence) —
- * HIL checkpoint. begin() also latches PWR_EN (PA10) high: without it the
- * device powers off on battery once the boot button press is released. */
+ * ALL THREE keys are active-high with pulldowns. KEY2/KEY3 per the
+ * vendor-quality spi_epd_demo; PWR per four agreeing sources (was assumed
+ * active-low): refs/xiaodouzi_demo reads PA34 with GPIO_PULLDOWN and treats
+ * raw==1 as pressed, arms hibernate wake on AON_PIN_MODE_HIGH, the wodle
+ * schematic's stock pad config for PA34 is PD, and the sibling keys are
+ * proven active-high. begin() also latches PWR_EN (PA10) high: without it
+ * the device powers off on battery once the boot button press is released. */
 #pragma once
 
 #include <Arduino.h>

@@ -55,6 +55,8 @@ Upstream ⇒ a custom framework can start from the real XiaoZhi app source, not 
 | [`docs/framework_plan.md`](docs/framework_plan.md) | Custom-firmware runbook, the no-wire SD dev loop, remaining blockers. |
 | [`refs/schematic/`](refs/schematic/) | **Official schematic pin map** (ground truth) — every net→PAxx. **The pin authority.** |
 | [`refs/epd/`](refs/epd/) | EPD controller reference (**UC8179C** / UC8279 command set + LUTs + decoded notes). |
+| [`refs/spi_epd_demo/`](refs/spi_epd_demo/) | Vendor-quality EPD reference firmware + flashable bin (LCDC transport, partial, gray4) — flash FIRST at HIL. |
+| [`refs/xiaodouzi_demo/`](refs/xiaodouzi_demo/) | Community demo, same hardware family, working device — source of the PWR active-HIGH fix + hibernate recipe; decoded notes inside. |
 | [`board/wodle/`](board/wodle/) | OpenSiFli-SDK custom board def (`ptab.yaml` links HCPU app @ `0x12218000`). |
 | [`firmware/hello_wodle/`](firmware/hello_wodle/) | **Our own validation firmware** — clean-room, simplest-first. S1 (proof-of-life) builds + links @ `0x12218000`; build/flash runbook inside. |
 

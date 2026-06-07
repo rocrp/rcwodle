@@ -36,9 +36,15 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
        → boot splash renders.
 3. [ ] **SD mount**: card with `.txt`/`.epub` inserted → home/browser lists files.
        Fail mode: "SD card error" screen; check `msd_init`/`dfs_mount` on console.
+       If SPI1 itself wedges (xiaodouzi_demo saw HAL polling hang; stock fw
+       proves the hardware path works): emergency bit-bang recipe in
+       refs/xiaodouzi_demo/src/sd_spi.c (same pins) — debug aid only, too slow
+       as primary.
 4. [ ] **Keys**: PA43=DOWN PA44=UP chord=BACK PWR-short=CONFIRM PWR-hold=sleep.
-       KEY2/3 now active-HIGH+pulldown (spi_epd_demo evidence); PWR still
-       assumed active-low — if power press inverted fix `HalGPIO.cpp readRaw`.
+       ALL keys now active-HIGH+pulldown — KEY2/3 per spi_epd_demo, PWR per
+       refs/xiaodouzi_demo + schematic PD pad config (4 agreeing sources;
+       2026-06-07 fix — PWR was assumed active-low, which would have been a
+       dead power button). If still inverted fix `HalGPIO.cpp readRaw`.
        ALSO: battery-only boot must survive button release (PWR_EN PA10 latch).
 4b. [ ] **USB-CDC console**: plug USB in a normal boot → Mac sees
         /dev/cu.usbmodem* (VID 0x38F4 PID 0x1003) → `uv run tools/
@@ -82,9 +88,15 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
        Console logs write/refresh/sync ms — compare the LCDC transport vs the
        demo's stats and the old bit-bang numbers (~25-50ms/plane).
 8b. [ ] **Frontlight curve**: levels now map to duty 50..100% @5kHz (demo
-        pair) — every 20% swipe step should be visibly distinct.
+        pair) — every 20% swipe step should be visibly distinct. If a dimmer
+        night floor is wanted: xiaodouzi_demo's pair is 1kHz + 30..70% duty
+        (knob in WodleFrontlight.cpp).
 9. [ ] **Battery**: boot log `[WodleBattery] gauge OK (voltage=...)`; status bar %
        moves. Fail mode: fixed 100% (I2C2 PA31/32 mux or addr issue).
+       ALSO read the new `gauge config: design=... fcc=... rm=...` line —
+       xiaodouzi_demo evidence says the BQ27220 ships unconfigured on this
+       family (demo forces design=850mAh + computes SOC as RM/FCC). If design
+       is bogus / SOC% nonsense, adopt that recipe (refs/xiaodouzi_demo).
 9b. [ ] **AHT20 temp/humidity**: boot log `[WodleAht20] OK (status=0x..)`; reader
         status bar shows e.g. `23°C 45%` left of the progress text (default on).
         Settings → Status Bar → Temperature (Hide/°C/°F) + Humidity rows appear
@@ -98,15 +110,22 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
         sleep + wake and reboot — time must survive both (RTC is a PMU wake
         source + RTC_BACKUP_INITIALIZED skips re-init; only battery pull
         should reset it → "Not set" reappears). Diagnostics shows the RTC line.
-10. [ ] **Hibernate**: PWR-hold → sleep → PA34 press wakes (edge mode). If no wake:
-        USB recovery still works; revisit `HalGPIO::startDeepSleep` wake polarity.
-        Also: short TAP wake should drop back to hibernate (anti-pocket-wake,
-        unless Settings short-press=sleep); HOLD should boot fully.
+10. [ ] **Hibernate**: PWR-hold → sleep (device waits for the release, then
+        hibernates) → PA34 press wakes (level-HIGH, xiaodouzi_demo recipe:
+        WKUP_CNT 0xF + PA24-44 quiesce + LDOs off). If no wake: USB recovery
+        still works; revisit `HalGPIO::startDeepSleep`. Also: short TAP wake
+        should drop back to hibernate (anti-pocket-wake, unless Settings
+        short-press=sleep); HOLD should boot fully. If a current meter is
+        handy: standby µA-range sanity (quiesce + LDO-off now demo-shaped;
+        PA31/32 deliberately high-Z, not pulled).
 11. [ ] **Screenshot combo** PWR+KEY2 → BMP appears on SD.
 11b. [ ] **4-gray AA**: Settings → Text Anti-Aliasing ON → page turn runs the
          gray pass (console "ERS Page render ... gray_*") → judge AA text edge
          quality + that untouched pixels don't shift; ghosting after the pass
          (next refresh is forced GC). Knob: no-op LUT banks in HalDisplay.cpp.
+         If grays come out INVERTED/garbled: xiaodouzi_demo runs the identical
+         LUT with 0x50=0x00 + inverse plane polarity — switch pair, see the
+         LUT_GRAY4 comment in HalDisplay.cpp.
 12. [ ] (optional) UART console signal-integrity: solid short GND wire to WCH-Link,
         single reader (`pgrep minicom` first!), 1M baud should now read clean.
 13. [ ] **USB file transfer (MSC)**: plug USB → Home → File Transfer → device
@@ -119,10 +138,27 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
 ## Blind-able next (no device needed) — **QUEUE EMPTY as of 2026-06-06 night**
 
-> Waves 1-6 below are all shipped. Every remaining open item in this file is
+> Waves 1-7 below are all shipped. Every remaining open item in this file is
 > physically device-gated (HIL checklist above, or needs on-panel/timing data
 > — see Post-HIL backlog). Next blind work, if any, comes from new HIL
 > findings or new upstream/fork commits.
+
+- [x] **Wave 7 (2026-06-07)** — refs/xiaodouzi_demo mined (user-supplied
+      community demo for the same hardware family, working device):
+      - **PWR button polarity fix**: PA34 active-HIGH + pulldown (4 agreeing
+        sources; was blind-assumed active-low = dead power button + broken
+        anti-pocket-wake). All key handling funnels through readRaw — 1 edit.
+      - **Hibernate rework to the demo-proven recipe**: level-HIGH wake with
+        bounded release-drain (level wake + held button = insta-rewake), demo
+        WKUP_CNT, PA24-44 pulled-down quiesce (clamp-diode leak hygiene; I2C2
+        pads exempted to high-Z — charger-rail pullups would burn ~0.7mA).
+      - **Gauge config snapshot logging** (design/FCC/RM at boot) — demo
+        evidence the BQ27220 ships unconfigured (850mAh recipe ready, HIL 9).
+      - HIL knobs recorded, not adopted: gray4 inverse pair (11b), 1kHz/30%
+        frontlight floor (8b), bit-bang SD rescue (3).
+      - Cross-validation wins: GC/DU/GRAY4 LUTs byte-identical across BOTH
+        independent references + ours; PWR_EN PA10 latch confirmed again;
+        BKP0R/BKP1-4 ownership decoded → no free backup reg for app data.
 
 - [x] **Wave 6 (2026-06-06 night)** — all DONE:
       - SD write-failure warning: HalStorage sticky latch + once-per-boot

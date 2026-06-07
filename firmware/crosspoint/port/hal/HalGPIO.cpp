@@ -52,12 +52,11 @@ WodleDebugCmdCore::InjectionTracker s_injection;
 
 bool readRaw(const RawKey &k)
 {
-    /* KEY2/KEY3 are active-HIGH with pulldowns — the vendor-quality
-     * spi_epd_demo configures them PIN_PULLDOWN and reacts on raw==1
-     * (supersedes our blind active-low assumption). PWR (PA34, the PMU
-     * wake pin) has no demo evidence; stays assumed active-low — HIL
-     * checkpoint if power short-press/hold is inverted. */
-    if (k.pin == PIN_PWR) return rt_pin_read(k.pin) == PIN_LOW;
+    /* All three keys are active-HIGH with pulldowns. KEY2/KEY3 per the
+     * vendor-quality spi_epd_demo; PWR (PA34) per refs/xiaodouzi_demo
+     * (GPIO_PULLDOWN + raw==1 = pressed + hibernate wake on
+     * AON_PIN_MODE_HIGH) and the schematic's stock pad config (PD) —
+     * see HalGPIO.h header for the full evidence chain. */
     return rt_pin_read(k.pin) == PIN_HIGH;
 }
 
@@ -93,11 +92,11 @@ void HalGPIO::begin()
     rt_pin_mode(PIN_PWR_EN, PIN_MODE_OUTPUT);
     rt_pin_write(PIN_PWR_EN, PIN_HIGH);
 
-    HAL_PIN_Set(PAD_PA34, GPIO_A34, PIN_PULLUP, 1);
-    /* KEY2/KEY3 active-HIGH with pulldowns (spi_epd_demo evidence) */
+    /* all keys active-HIGH with pulldowns (see readRaw) */
+    HAL_PIN_Set(PAD_PA34, GPIO_A34, PIN_PULLDOWN, 1);
     HAL_PIN_Set(PAD_PA43, GPIO_A43, PIN_PULLDOWN, 1);
     HAL_PIN_Set(PAD_PA44, GPIO_A44, PIN_PULLDOWN, 1);
-    rt_pin_mode(PIN_PWR, PIN_MODE_INPUT_PULLUP);
+    rt_pin_mode(PIN_PWR, PIN_MODE_INPUT_PULLDOWN);
     rt_pin_mode(PIN_KEY2, PIN_MODE_INPUT_PULLDOWN);
     rt_pin_mode(PIN_KEY3, PIN_MODE_INPUT_PULLDOWN);
 
@@ -258,21 +257,43 @@ unsigned long HalGPIO::getPowerButtonHeldTime() const
 
 void HalGPIO::startDeepSleep()
 {
-    /* SF32LB52x hibernate per SDK example/pm/classical (52x branch): PA34
-     * (power key) -> wake_pin0. NEG_EDGE wake is polarity-robust: a full
-     * press-release cycle produces both edges regardless of active level.
+    /* SF32LB52x hibernate, refs/xiaodouzi_demo power_sleep() recipe (working
+     * hardware): PA34 (power key, active-HIGH) -> wake_pin0, level-HIGH wake.
      * Wake = chip reset -> normal boot. */
-    rt_kprintf("[HalGPIO] entering hibernate (wake: PA34 edge)\n");
+    rt_kprintf("[HalGPIO] entering hibernate (wake: PA34 high)\n");
     WodleFrontlight::set(0);
     rt_thread_mdelay(20); /* let the log out */
 
+    /* Level-HIGH wake on an active-high button: entering hibernate while the
+     * hold-to-sleep press is still down would re-wake instantly — drain the
+     * release first (bounded so a stuck button can't hang us here forever). */
+    for (int ms = 0; rt_pin_read(PIN_PWR) == PIN_HIGH && ms < 10000; ms += 10)
+        rt_thread_mdelay(10);
+
     HAL_PMU_SelectWakeupPin(0, HAL_HPAON_QueryWakeupPin(hwp_gpio1, PIN_PWR));
-    HAL_PMU_EnablePinWakeup(0, AON_PIN_MODE_NEG_EDGE);
-    hwp_pmuc->WKUP_CNT = 0x50005; /* debounce counts for wake pins 0/1 */
+    HAL_PMU_EnablePinWakeup(0, AON_PIN_MODE_HIGH);
+    hwp_pmuc->WKUP_CNT = 0x000F000F; /* wake-pin debounce counts (demo value) */
+
+    /* Quiesce PA24..PA44 as pulled-down GPIOs (demo): a pin left driving HIGH
+     * into a depowered peripheral (SD card, modem, NFC) leaks mA through its
+     * input clamp diodes. PA34 lands on pulldown too — exactly right for the
+     * active-high wake. EXCEPTION: the I2C2 pads (PA31/32) go high-Z instead;
+     * their external pullups hang off an always-on rail (the AW32001 charger
+     * never sleeps), so a pulldown would burn ~2x0.3mA through them for the
+     * whole hibernate. High-Z + external pullup = zero current. */
+    for (uint32_t pad = PAD_PA24; pad <= PAD_PA44; pad++)
+    {
+        const int pull = (pad == PAD_PA31 || pad == PAD_PA32) ? PIN_NOPULL : PIN_PULLDOWN;
+        HAL_PIN_Set(pad, (pin_function)(pad - PAD_PA24 + GPIO_A24), pull, 1);
+    }
+
     rt_hw_interrupt_disable();
-    /* SDK example is C; the enum needs explicit casts under C++ */
-    HAL_PMU_ConfigPeriLdo((PMU_PeriLdoTypeDef)PMUC_PERI_LDO_EN_VDD33_LDO3_Pos, false, false);
-    HAL_PMU_ConfigPeriLdo((PMU_PeriLdoTypeDef)PMUC_PERI_LDO_EN_VDD33_LDO2_Pos, false, false);
+    /* All three peripheral LDOs off (1V8 == LDO18). NOTE for future BKP use:
+     * HAL_PMU_EnterHibernate writes default PD/PU delays into RTC backup reg 0
+     * (BOOTOPT), and drv_rtc owns BKP1..4 — no backup register is free for
+     * app data (refs/xiaodouzi_demo's BKP1 trick would corrupt our clock). */
+    HAL_PMU_ConfigPeriLdo(PMU_PERI_LDO3_3V3, false, false);
+    HAL_PMU_ConfigPeriLdo(PMU_PERI_LDO2_3V3, false, false);
     HAL_PMU_ConfigPeriLdo(PMU_PERI_LDO_1V8, false, false);
     HAL_PMU_EnterHibernate();
     while (1)

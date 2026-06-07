@@ -10,7 +10,12 @@
 /* WODLE-PORT (spi_epd_demo): 5kHz, matching the demo's hardware-tuned pair
  * (200us period + 50..100%% duty floor below). Earlier 100kHz worked at the
  * single HIL-proven point (50%% duty) but the brightness curve was never
- * characterized; the demo's config is. */
+ * characterized; the demo's config is.
+ *
+ * HIL knob (refs/xiaodouzi_demo, second hardware-proven pair): 1kHz PWM with
+ * 30..70%% duty — at the lower frequency the boost lights from ~30%% duty,
+ * i.e. a visibly DIMMER minimum than our 50%% floor allows. If HIL wants a
+ * darker night-reading floor, try BL_FREQ_HZ=1000 + floor 30. */
 #define BL_FREQ_HZ 5000
 #define LEVEL_FILE "/.crosspoint/frontlight"
 
