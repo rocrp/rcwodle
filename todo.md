@@ -2,9 +2,9 @@
 
 Status snapshot 2026-06-06 (eve). Two firmwares: `firmware/hello_wodle/`
 (validation instrument, EPD console) + `firmware/crosspoint/` (the e-reader,
-blind-ported, compiles + 208/208 host tests, ZERO HIL). Verify both:
+blind-ported, compiles + 210/210 host tests, ZERO HIL). Verify both:
 `firmware/crosspoint/run_checks.sh`.
-Flash: 3,484,676 of 3,538,944 B — ~53KB headroom (I18n --strip-unused
+Flash: 3,489,684 of 3,538,944 B — ~49KB headroom (I18n --strip-unused
 reclaimed 82KB; UI-font compression tried + rejected, came out larger).
 Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 
@@ -23,6 +23,12 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 > live screen to a PNG — the complete blind loop is flash → drive → SEE.
 > First console session: run `wodle stat` as item 12's sanity.
 
+0. [ ] **spi_epd_demo bin FIRST** (refs/spi_epd_demo/firmware/spi_epd_demo/
+       dist/): validates the LCDC SPI DCX transport + partial + gray4 on the
+       panel before crosspoint (which now DEFAULTS to LCDC) runs. Over its
+       USB-CDC console: `gc` `du` `partial` `partial` `gray4` `status` —
+       expect bus=lcdc1_spi_dcx, ret=0, timeout=0. If LCDC misbehaves:
+       rebuild crosspoint with -DWODLE_EPD_BITBANG.
 1. [ ] **hello_wodle VRES=600**: flash staged build → "2026" renders contiguous
        (mid-screen dead band gone). 1 flash, 30s.
 2. [ ] **crosspoint first boot**: flash `firmware/crosspoint/.../main.bin` @0x12218000
@@ -31,7 +37,18 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
 3. [ ] **SD mount**: card with `.txt`/`.epub` inserted → home/browser lists files.
        Fail mode: "SD card error" screen; check `msd_init`/`dfs_mount` on console.
 4. [ ] **Keys**: PA43=DOWN PA44=UP chord=BACK PWR-short=CONFIRM PWR-hold=sleep.
-       Polarity assumed active-low+pullup — if dead/inverted fix `HalGPIO.cpp readRaw`.
+       KEY2/3 now active-HIGH+pulldown (spi_epd_demo evidence); PWR still
+       assumed active-low — if power press inverted fix `HalGPIO.cpp readRaw`.
+       ALSO: battery-only boot must survive button release (PWR_EN PA10 latch).
+4b. [ ] **USB-CDC console**: plug USB in a normal boot → Mac sees
+        /dev/cu.usbmodem* (VID 0x38F4 PID 0x1003) → `uv run tools/
+        wodle_console.py stat` works over the charge cable; `dump screen.png`
+        captures the live screen. (wodle_console.py prefers CDC over UART.)
+4c. [ ] **Partial refresh soak**: `wodle partial 700 0 92 528` repeatedly
+        (status-bar stripe) → only that region updates, no full flash; judge
+        ghosting after ~20 reps (21st auto-promotes the window to GC). Then
+        Settings → Status Bar → Live Clock ON → minute tick refreshes the
+        clock without a page-turn flash.
 5. [ ] **Touch**: boot log `[WodleTouch] CST836U OK`; tap zones (L/R third = page,
        center = confirm, top strip = back). If zones land wrong → `TOUCH_SWAP_XY/
        MIRROR_*` flags in `WodleTouch.cpp`. **Long-press** (stationary >400ms):
@@ -62,6 +79,10 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
         (.pxc cache). Interlaced GIFs render but log "caching disabled".
 8. [ ] **DU fast refresh**: page turns use DU LUT (auto-GC every 10th) — judge
        ghosting/quality; tune `FAST_REFRESHES_PER_GC` in `HalDisplay.cpp`.
+       Console logs write/refresh/sync ms — compare the LCDC transport vs the
+       demo's stats and the old bit-bang numbers (~25-50ms/plane).
+8b. [ ] **Frontlight curve**: levels now map to duty 50..100% @5kHz (demo
+        pair) — every 20% swipe step should be visibly distinct.
 9. [ ] **Battery**: boot log `[WodleBattery] gauge OK (voltage=...)`; status bar %
        moves. Fail mode: fixed 100% (I2C2 PA31/32 mux or addr issue).
 9b. [ ] **AHT20 temp/humidity**: boot log `[WodleAht20] OK (status=0x..)`; reader
@@ -232,7 +253,11 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       Caveat for HIL: needs an SD font selected; SD-font rows may look large
       next to UI rows (reader size drives glyph size).
 
-- [ ] **[DEVICE-GATED]** X4-style partial window refresh (`displayWindow`) for status-bar updates
+- [x] **IMPLEMENTED BLIND 2026-06-07** (was DEVICE-GATED; unblocked by the
+      user-supplied refs/spi_epd_demo bundle): partial window refresh —
+      HalDisplay::refreshWindow (demo 0x91/0x90/0x92 recipe) +
+      GfxRenderer::displayWindow + minute-clock consumer (default OFF) +
+      `wodle partial` debug cmd. HIL = checklist 4c. Original note:
       — NOTE: no consumer in vendor snapshot b12839d1 (GfxRenderer::displayWindow
       is commented out upstream); the UC8179 0x90/0x91/0x92 primitive alone
       isn't enough. CONSUMER DESIGN now exists (2026-06-06): with the RTC
@@ -248,7 +273,10 @@ Next reclaim if needed: GBK table → SD, or drop 8pt/10pt-bold CJK subsets.
       refresh to GC (fallback path never calls cleanup). Host: plane invariant
       + 4-level preview test. HIL knobs: no-op banks → all-zero variant if
       untouched pixels shift; AA quality vs 2×52KB heap cost.
-- [ ] **[DEVICE-GATED]** LCDC / hardware-SPI EPD data path — ASSESSED blind 2026-06-06, verdict
+- [x] **IMPLEMENTED BLIND 2026-06-07** (was DEVICE-GATED; demo proved the
+      shape): LCDC1 SPI DCX transport is now the crosspoint DEFAULT,
+      -DWODLE_EPD_BITBANG rebuilds the old path. HIL = checklist 0 + 8
+      timing logs decide which stays. Original assessment:
       **defer until HIL timing data**: bit-bang ≈ 1.2M reg stores/plane
       (~25-50ms, 2 planes per differential update) vs DU refresh ~300-500ms
       → data write is ~10-25% of a page turn, not dominant. LCDC SPI+DMA
