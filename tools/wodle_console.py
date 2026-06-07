@@ -121,6 +121,18 @@ def nosleep(state: str = typer.Argument(..., help="on|off"), port: str = typer.O
 
 
 @app.command()
+def partial(
+    x: int = typer.Argument(..., help="source axis 0..791 (byte-aligned on device)"),
+    y: int = typer.Argument(..., help="gate row 0..527"),
+    w: int = typer.Argument(...),
+    h: int = typer.Argument(...),
+    port: str = typer.Option(None),
+) -> None:
+    """DU partial-window refresh experiment (panel coords)."""
+    run_cmd(port, f"wodle partial {x} {y} {w} {h}")
+
+
+@app.command()
 def dump(
     out: str = typer.Argument("screen.png"),
     port: str = typer.Option(None),
