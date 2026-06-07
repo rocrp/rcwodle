@@ -17,6 +17,7 @@ HalGPIO gpio;
 #define PIN_PWR 34
 #define PIN_KEY2 43
 #define PIN_KEY3 44
+#define PIN_PWR_EN 10
 
 #define NUM_BTNS 7
 #define DEBOUNCE_MS 20
@@ -51,8 +52,13 @@ WodleDebugCmdCore::InjectionTracker s_injection;
 
 bool readRaw(const RawKey &k)
 {
-    /* active-low assumption (pull-up + switch to GND) — HIL checkpoint */
-    return rt_pin_read(k.pin) == PIN_LOW;
+    /* KEY2/KEY3 are active-HIGH with pulldowns — the vendor-quality
+     * spi_epd_demo configures them PIN_PULLDOWN and reacts on raw==1
+     * (supersedes our blind active-low assumption). PWR (PA34, the PMU
+     * wake pin) has no demo evidence; stays assumed active-low — HIL
+     * checkpoint if power short-press/hold is inverted. */
+    if (k.pin == PIN_PWR) return rt_pin_read(k.pin) == PIN_LOW;
+    return rt_pin_read(k.pin) == PIN_HIGH;
 }
 
 /* returns true on debounced state change */
@@ -77,12 +83,23 @@ bool debounce(RawKey &k, unsigned long now)
 
 void HalGPIO::begin()
 {
+    /* WODLE-PORT CRITICAL (spi_epd_demo hold_power / hello_wodle): latch the
+     * system power rail ON. PA10 is PWR_EN — without driving it high the
+     * device only stays up while the power button is physically held (or on
+     * USB power); on battery it would power off the moment the boot press is
+     * released. Left high through hibernate (stock fw manages the same rail;
+     * hibernate behavior = HIL checklist item 10). */
+    HAL_PIN_Set(PAD_PA10, GPIO_A10, PIN_NOPULL, 1);
+    rt_pin_mode(PIN_PWR_EN, PIN_MODE_OUTPUT);
+    rt_pin_write(PIN_PWR_EN, PIN_HIGH);
+
     HAL_PIN_Set(PAD_PA34, GPIO_A34, PIN_PULLUP, 1);
-    HAL_PIN_Set(PAD_PA43, GPIO_A43, PIN_PULLUP, 1);
-    HAL_PIN_Set(PAD_PA44, GPIO_A44, PIN_PULLUP, 1);
+    /* KEY2/KEY3 active-HIGH with pulldowns (spi_epd_demo evidence) */
+    HAL_PIN_Set(PAD_PA43, GPIO_A43, PIN_PULLDOWN, 1);
+    HAL_PIN_Set(PAD_PA44, GPIO_A44, PIN_PULLDOWN, 1);
     rt_pin_mode(PIN_PWR, PIN_MODE_INPUT_PULLUP);
-    rt_pin_mode(PIN_KEY2, PIN_MODE_INPUT_PULLUP);
-    rt_pin_mode(PIN_KEY3, PIN_MODE_INPUT_PULLUP);
+    rt_pin_mode(PIN_KEY2, PIN_MODE_INPUT_PULLDOWN);
+    rt_pin_mode(PIN_KEY3, PIN_MODE_INPUT_PULLDOWN);
 
     WodleTouch::init();
 }

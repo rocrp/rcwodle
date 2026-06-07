@@ -7,7 +7,11 @@
 #include "HalStorage.h"
 #include "bf0_hal.h"
 
-#define BL_FREQ_HZ 100000 /* vendor LCD_PWM_BACKLIGHT period: 10us */
+/* WODLE-PORT (spi_epd_demo): 5kHz, matching the demo's hardware-tuned pair
+ * (200us period + 50..100%% duty floor below). Earlier 100kHz worked at the
+ * single HIL-proven point (50%% duty) but the brightness curve was never
+ * characterized; the demo's config is. */
+#define BL_FREQ_HZ 5000
 #define LEVEL_FILE "/.crosspoint/frontlight"
 
 namespace
@@ -60,7 +64,11 @@ void set(uint8_t percent)
         HAL_GPT_PWM_Stop(&s_tim, GPT_CHANNEL_4);
         return;
     }
-    __HAL_GPT_SET_COMPARE(&s_tim, GPT_CHANNEL_4, (s_counts * s_level) / 100);
+    /* WODLE-PORT (spi_epd_demo MIN_VISIBLE_DUTY): the VBAT boost only lights
+     * at >=~50%% duty — map level 1..100 onto duty 50..100 so every UI step
+     * is actually visible (linear mapping left levels under ~45 dark). */
+    const uint32_t duty = 50u + ((50u * s_level + 50u) / 100u);
+    __HAL_GPT_SET_COMPARE(&s_tim, GPT_CHANNEL_4, (s_counts * duty) / 100u);
     HAL_GPT_PWM_Start(&s_tim, GPT_CHANNEL_4);
 }
 

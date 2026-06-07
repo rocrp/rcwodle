@@ -1,14 +1,16 @@
 /* WODLE-PORT: HalGPIO for the wodle's 3 physical keys + power key.
  * API mirrors upstream lib/hal/HalGPIO.h (7 logical buttons). Mapping:
  *
- *   KEY2 (PA43, active-low)  -> BTN_DOWN  (page forward / move down)
- *   KEY3 (PA44, active-low)  -> BTN_UP    (page back / move up)
+ *   KEY2 (PA43, active-HIGH) -> BTN_DOWN  (page forward / move down)
+ *   KEY3 (PA44, active-HIGH) -> BTN_UP    (page back / move up)
  *   KEY2+KEY3 chord          -> BTN_BACK
  *   PWR  (PA34) short press  -> BTN_CONFIRM
  *   PWR  (PA34) long press   -> BTN_POWER (sleep; held-time exposed)
  *
- * LEFT/RIGHT stay unmapped until CST836U touch lands. Polarities are a HIL
- * checkpoint (assumed active-low with pull-ups). */
+ * KEY2/KEY3 polarity = active-high with pulldowns per the vendor-quality
+ * spi_epd_demo; PWR stays assumed active-low (PMU wake pin, no evidence) —
+ * HIL checkpoint. begin() also latches PWR_EN (PA10) high: without it the
+ * device powers off on battery once the boot button press is released. */
 #pragma once
 
 #include <Arduino.h>
