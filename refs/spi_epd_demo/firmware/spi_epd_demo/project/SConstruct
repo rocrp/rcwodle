@@ -1,0 +1,33 @@
+import os
+import rtconfig
+
+# Check SDK
+SIFLI_SDK = os.getenv('SIFLI_SDK')
+if not SIFLI_SDK:
+    print("Please run export.sh in root folder of SIFLI SDK to set environment.")
+    exit()
+from building import *
+
+# Prepare environment.
+PrepareEnv()
+
+# The device is updated through HVR Recovery with an app-only package. Keep the
+# stock bootloader and flash table in place.
+# AddBootLoader(SIFLI_SDK, rtconfig.CHIP)
+
+# Set default compile options
+SifliEnv()
+
+TARGET = rtconfig.OUTPUT_DIR + rtconfig.TARGET_NAME + '.' + rtconfig.TARGET_EXT
+# Prepare building environment
+objs = PrepareBuilding(None)
+env = GetCurrentEnv()
+
+# Build application.
+DoBuilding(TARGET, objs)
+
+# Add flash table build.
+AddFTAB(SIFLI_SDK, rtconfig.CHIP)
+
+# Generate download script
+GenDownloadScript(env)

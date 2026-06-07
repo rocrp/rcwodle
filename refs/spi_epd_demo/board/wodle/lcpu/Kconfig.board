@@ -1,0 +1,8 @@
+# Own board symbol — see hcpu/Kconfig.board for why (avoids double-linking sf32lb52-lcd_base).
+config BSP_USING_BOARD_WODLE
+    bool
+    select SOC_SF32LB52X
+    select BF0_LCPU
+    default y
+
+rsource "../Kconfig.board"
