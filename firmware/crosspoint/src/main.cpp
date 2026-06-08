@@ -726,8 +726,11 @@ void loop() {
   } else {
     if (millis() - lastActivityTime >= HalPowerManager::IDLE_POWER_SAVING_MS) {
       // If we've been inactive for a while, increase the delay to save power
-      powerManager.setPowerSaving(true);  // Lower CPU frequency after extended inactivity
-      delay(50);
+      powerManager.setPowerSaving(true);  // no-op on wodle (LPM is a separate workstream)
+      // WODLE-PORT: touch is polled once per loop, so a 50ms idle delay dropped
+      // quick taps (finger down+up landed between polls). 20ms keeps taps
+      // responsive; real power saving comes from hibernate, not this delay.
+      delay(20);
     } else {
       // Short delay to prevent tight loop while still being responsive
       delay(10);

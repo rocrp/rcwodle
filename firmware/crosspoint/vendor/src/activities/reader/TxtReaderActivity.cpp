@@ -456,10 +456,13 @@ void TxtReaderActivity::renderPage() {
   renderLines();
   renderStatusBar();
 
-  ReaderUtils::displayWithRefreshCycle(renderer, pagesUntilFullRefresh);
-
+  // WODLE-PORT: with AA on, renderAntiAliased() is the SINGLE on-screen refresh
+  // (its grayscale pass drives every cell). Skipping the BW display avoids the
+  // GC-flash + gray-flash double refresh per page.
   if (SETTINGS.textAntiAliasing) {
     ReaderUtils::renderAntiAliased(renderer, [&renderLines]() { renderLines(); });
+  } else {
+    ReaderUtils::displayWithRefreshCycle(renderer, pagesUntilFullRefresh);
   }
   // scope destructor clears font cache via FontCacheManager
 }

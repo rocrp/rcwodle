@@ -961,9 +961,13 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int or
     // HALF ghost-cleanup path, which drives every pixel to its target
     // regardless of residue.
     pagesUntilFullRefresh = 1;
-  } else {
+  } else if (!SETTINGS.textAntiAliasing) {
     ReaderUtils::displayWithRefreshCycle(renderer, pagesUntilFullRefresh);
   }
+  // WODLE-PORT: with AA on (non-image), the grayscale pass below is the SINGLE
+  // on-screen refresh for this page — its 4-gray waveform drives every cell to
+  // target. Doing a BW display here first caused the GC-flash + gray-flash
+  // double refresh users saw on every page turn.
   const auto tDisplay = millis();
 
   // Tiled grayscale: render each plane band-by-band into a small scratch and
