@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "activities/Activity.h"
+#include "components/themes/BaseTheme.h"  // WODLE-PORT: Rect for listRect()
 #include "util/ButtonNavigator.h"
 
 class EpubReaderMenuActivity final : public Activity {
@@ -41,6 +42,11 @@ class EpubReaderMenuActivity final : public Activity {
   };
 
   static std::vector<MenuItem> buildMenuItems(bool hasFootnotes);
+
+  // WODLE-PORT: single source of truth for the menu-list rect (render + tap hit-test).
+  Rect listRect() const;
+  // WODLE-PORT: shared Confirm/tap activation for the item at selectedIndex.
+  void activateSelected();
 
   // Fixed menu layout
   const std::vector<MenuItem> menuItems;

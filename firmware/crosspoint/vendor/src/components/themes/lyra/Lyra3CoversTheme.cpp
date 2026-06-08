@@ -120,3 +120,19 @@ void Lyra3CoversTheme::drawRecentBookCover(GfxRenderer& renderer, Rect rect, con
     drawEmptyRecents(renderer, rect);
   }
 }
+
+// WODLE-PORT: mirrors the 3-column cover grid to resolve a tap to a recent-book index.
+int Lyra3CoversTheme::hitTestRecentBookCover(const GfxRenderer& renderer, Rect rect, int recentBookCount, int tapX,
+                                             int tapY) const {
+  (void)renderer;
+  if (recentBookCount <= 0) return -1;
+  if (tapY < rect.y || tapY >= rect.y + rect.height) return -1;
+  const int tileWidth = (rect.width - 2 * Lyra3CoversMetrics::values.contentSidePadding) / 3;
+  if (tileWidth <= 0) return -1;
+  const int gridLeft = rect.x + Lyra3CoversMetrics::values.contentSidePadding;
+  const int shown = std::min(recentBookCount, Lyra3CoversMetrics::values.homeRecentBooksCount);
+  if (tapX < gridLeft || tapX >= gridLeft + tileWidth * shown) return -1;
+  const int col = (tapX - gridLeft) / tileWidth;
+  if (col < 0 || col >= shown) return -1;
+  return col;
+}

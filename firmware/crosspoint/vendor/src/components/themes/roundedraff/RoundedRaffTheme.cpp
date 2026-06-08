@@ -114,6 +114,21 @@ void RoundedRaffTheme::drawTabBar(const GfxRenderer& renderer, Rect rect, const 
   renderer.drawLine(rect.x, rect.y + rect.height - 1, rect.x + rect.width - 1, rect.y + rect.height - 1, true);
 }
 
+// WODLE-PORT: mirrors RoundedRaffTheme::drawTabBar's equal-width-slot layout for tap-to-switch.
+int RoundedRaffTheme::hitTestTabBar(const GfxRenderer& renderer, Rect rect, const std::vector<TabInfo>& tabs, int tapX,
+                                    int tapY) const {
+  (void)renderer;
+  if (tabs.empty()) return -1;
+  if (tapY < rect.y || tapY >= rect.y + rect.height) return -1;
+  if (tapX < rect.x || tapX >= rect.x + rect.width) return -1;
+
+  const int slotWidth = rect.width / static_cast<int>(tabs.size());
+  if (slotWidth <= 0) return -1;
+  const int idx = (tapX - rect.x) / slotWidth;
+  if (idx < 0 || idx >= static_cast<int>(tabs.size())) return -1;  // guard the rounding remainder column
+  return idx;
+}
+
 void RoundedRaffTheme::drawRecentBookCover(GfxRenderer& renderer, Rect rect, const std::vector<RecentBook>& recentBooks,
                                            const int selectorIndex, bool& coverRendered, bool& coverBufferStored,
                                            bool& bufferRestored, std::function<bool()> storeCoverBuffer) const {
@@ -230,6 +245,41 @@ void RoundedRaffTheme::drawButtonMenu(GfxRenderer& renderer, Rect rect, int butt
   }
 
   drawScrollBar(renderer, rect, buttonCount, pageStartIndex, pageItems);
+}
+
+// WODLE-PORT: RoundedRaff draws a single vertically-centered "continue reading" card for the
+// most-recent book; the whole tile (one book) is selectable when a recent book exists.
+int RoundedRaffTheme::hitTestRecentBookCover(const GfxRenderer& renderer, Rect rect, int recentBookCount, int tapX,
+                                             int tapY) const {
+  (void)renderer;
+  if (recentBookCount <= 0) return -1;
+  const int tileX = rect.x + RoundedRaffMetrics::values.contentSidePadding;
+  const int tileWidth = rect.width - 2 * RoundedRaffMetrics::values.contentSidePadding;
+  if (tapX < tileX || tapX >= tileX + tileWidth || tapY < rect.y || tapY >= rect.y + rect.height) return -1;
+  return 0;
+}
+
+// WODLE-PORT: mirrors RoundedRaffTheme::drawButtonMenu's paged dynamic-row layout.
+int RoundedRaffTheme::hitTestButtonMenu(const GfxRenderer& renderer, Rect rect, int buttonCount, int selectedIndex,
+                                        int tapX, int tapY) const {
+  if (buttonCount <= 0) return -1;
+  const int sidePadding = RoundedRaffMetrics::values.contentSidePadding;
+  const int rowX = rect.x + sidePadding;
+  const int menuMaxWidth = std::max(0, rect.width - sidePadding * 2);
+  if (tapX < rowX || tapX >= rowX + menuMaxWidth) return -1;
+
+  const int rowHeight = renderer.getLineHeight(kTitleFontId) + 20;  // matches drawButtonMenu
+  const int rowStep = rowHeight + kSelectableRowGap;
+  if (rowStep <= 0) return -1;
+  const int pageItems = std::max(1, rect.height / rowStep);
+  const int safeSelectedIndex = std::max(0, selectedIndex);
+  const int pageStartIndex = (safeSelectedIndex / pageItems) * pageItems;
+  const int menuTop = rect.y;
+  for (int i = pageStartIndex; i < buttonCount && i < pageStartIndex + pageItems; ++i) {
+    const int rowY = menuTop + (i - pageStartIndex) * rowStep;
+    if (tapY >= rowY && tapY < rowY + rowHeight) return i;
+  }
+  return -1;
 }
 
 void RoundedRaffTheme::drawTextField(const GfxRenderer& renderer, Rect rect, const int textWidth, bool cursorMode,

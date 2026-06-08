@@ -457,6 +457,26 @@ void BaseTheme::drawTabBar(const GfxRenderer& renderer, const Rect rect, const s
   }
 }
 
+// WODLE-PORT: mirrors BaseTheme::drawTabBar's left-packed per-tab x-extents for tap-to-switch.
+int BaseTheme::hitTestTabBar(const GfxRenderer& renderer, Rect rect, const std::vector<TabInfo>& tabs, int tapX,
+                             int tapY) const {
+  if (tabs.empty()) return -1;
+  if (tapY < rect.y || tapY >= rect.y + rect.height) return -1;
+
+  int currentX = rect.x + BaseMetrics::values.contentSidePadding;
+  for (size_t i = 0; i < tabs.size(); ++i) {
+    const int textWidth =
+        renderer.getTextWidth(UI_12_FONT_ID, tabs[i].label, tabs[i].selected ? EpdFontFamily::BOLD : EpdFontFamily::REGULAR);
+    // Hit a tab from its text start up to (but excluding) the next tab's start; the
+    // tabSpacing gutter after the last tab is part of that tab's hittable band.
+    if (tapX >= currentX && tapX < currentX + textWidth + BaseMetrics::values.tabSpacing) {
+      return static_cast<int>(i);
+    }
+    currentX += textWidth + BaseMetrics::values.tabSpacing;
+  }
+  return -1;
+}
+
 // Draw the "Recent Book" cover card on the home screen
 // TODO: Refactor method to make it cleaner, split into smaller methods
 void BaseTheme::drawRecentBookCover(GfxRenderer& renderer, Rect rect, const std::vector<RecentBook>& recentBooks,
@@ -718,6 +738,34 @@ void BaseTheme::drawButtonMenu(GfxRenderer& renderer, Rect rect, int buttonCount
     // Invert text when the tile is selected, to contrast with the filled background
     renderer.drawText(UI_10_FONT_ID, textX, textY, label, selectedIndex != i);
   }
+}
+
+// WODLE-PORT: Classic/Base theme draws a single full-rect "continue reading" card for the
+// most-recent book — the whole rect maps to book 0 (when one exists).
+int BaseTheme::hitTestRecentBookCover(const GfxRenderer& renderer, Rect rect, int recentBookCount, int tapX,
+                                      int tapY) const {
+  (void)renderer;
+  if (recentBookCount <= 0) return -1;
+  if (tapX < rect.x || tapX >= rect.x + rect.width || tapY < rect.y || tapY >= rect.y + rect.height) return -1;
+  return 0;
+}
+
+// WODLE-PORT: mirrors BaseTheme::drawButtonMenu's fixed-height non-paged row layout.
+int BaseTheme::hitTestButtonMenu(const GfxRenderer& renderer, Rect rect, int buttonCount, int selectedIndex, int tapX,
+                                 int tapY) const {
+  (void)renderer;
+  (void)selectedIndex;
+  if (buttonCount <= 0) return -1;
+  const int rowLeft = rect.x + BaseMetrics::values.contentSidePadding;
+  const int rowWidth = rect.width - BaseMetrics::values.contentSidePadding * 2;
+  if (tapX < rowLeft || tapX >= rowLeft + rowWidth) return -1;
+  const int rowStep = BaseMetrics::values.menuRowHeight + BaseMetrics::values.menuSpacing;
+  if (rowStep <= 0) return -1;
+  for (int i = 0; i < buttonCount; ++i) {
+    const int tileY = BaseMetrics::values.verticalSpacing + rect.y + i * rowStep;
+    if (tapY >= tileY && tapY < tileY + BaseMetrics::values.menuRowHeight) return i;
+  }
+  return -1;
 }
 
 Rect BaseTheme::drawPopup(const GfxRenderer& renderer, const char* message) const {

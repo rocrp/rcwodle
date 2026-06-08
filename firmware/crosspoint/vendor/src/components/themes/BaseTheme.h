@@ -203,12 +203,24 @@ class BaseTheme {
                              const char* rightLabel = nullptr) const;
   virtual void drawTabBar(const GfxRenderer& renderer, Rect rect, const std::vector<TabInfo>& tabs,
                           bool selected) const;
+  // WODLE-PORT: tap-to-switch-tab. Mirrors drawTabBar's per-tab x-extents to resolve a
+  // logical-portrait tap (tapX,tapY) to the tab index under the finger, or -1 if the tap
+  // is outside the tab-bar rect / falls in inter-tab gutter. No rendering.
+  virtual int hitTestTabBar(const GfxRenderer& renderer, Rect rect, const std::vector<TabInfo>& tabs, int tapX,
+                            int tapY) const;
   virtual void drawRecentBookCover(GfxRenderer& renderer, Rect rect, const std::vector<RecentBook>& recentBooks,
                                    const int selectorIndex, bool& coverRendered, bool& coverBufferStored,
                                    bool& bufferRestored, std::function<bool()> storeCoverBuffer) const;
   virtual void drawButtonMenu(GfxRenderer& renderer, Rect rect, int buttonCount, int selectedIndex,
                               const std::function<std::string(int index)>& buttonLabel,
                               const std::function<UIIcon(int index)>& rowIcon) const;
+  // WODLE-PORT: home-screen tap-to-open. Mirror drawRecentBookCover / drawButtonMenu layout
+  // to resolve a logical-portrait tap to the recent-book index / menu-row index under the
+  // finger (or -1 if outside / in a non-interactive area). No rendering.
+  virtual int hitTestRecentBookCover(const GfxRenderer& renderer, Rect rect, int recentBookCount, int tapX,
+                                     int tapY) const;
+  virtual int hitTestButtonMenu(const GfxRenderer& renderer, Rect rect, int buttonCount, int selectedIndex, int tapX,
+                                int tapY) const;
   virtual Rect drawPopup(const GfxRenderer& renderer, const char* message) const;
   virtual void fillPopupProgress(const GfxRenderer& renderer, const Rect& layout, const int progress) const;
   void drawStatusBar(GfxRenderer& renderer, const float bookProgress, const int currentPage, const int pageCount,

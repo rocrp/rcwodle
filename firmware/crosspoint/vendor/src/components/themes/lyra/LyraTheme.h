@@ -78,6 +78,8 @@ class LyraTheme : public BaseTheme {
                      const char* rightLabel = nullptr) const override;
   void drawTabBar(const GfxRenderer& renderer, Rect rect, const std::vector<TabInfo>& tabs,
                   bool selected) const override;
+  int hitTestTabBar(const GfxRenderer& renderer, Rect rect, const std::vector<TabInfo>& tabs, int tapX,
+                    int tapY) const override;  // WODLE-PORT
   int getListPageItems(int contentHeight, bool hasSubtitle) const override;
   int hitTestList(const GfxRenderer& renderer, Rect rect, int itemCount, int selectedIndex, bool hasSubtitle, int tapX,
                   int tapY) const override;  // WODLE-PORT
@@ -92,9 +94,13 @@ class LyraTheme : public BaseTheme {
   void drawButtonMenu(GfxRenderer& renderer, Rect rect, int buttonCount, int selectedIndex,
                       const std::function<std::string(int index)>& buttonLabel,
                       const std::function<UIIcon(int index)>& rowIcon) const override;
+  int hitTestButtonMenu(const GfxRenderer& renderer, Rect rect, int buttonCount, int selectedIndex, int tapX,
+                        int tapY) const override;  // WODLE-PORT
   void drawRecentBookCover(GfxRenderer& renderer, Rect rect, const std::vector<RecentBook>& recentBooks,
                            const int selectorIndex, bool& coverRendered, bool& coverBufferStored, bool& bufferRestored,
                            std::function<bool()> storeCoverBuffer) const override;
+  int hitTestRecentBookCover(const GfxRenderer& renderer, Rect rect, int recentBookCount, int tapX,
+                             int tapY) const override;  // WODLE-PORT
   void drawEmptyRecents(const GfxRenderer& renderer, const Rect rect) const;
   bool showsFileIcons() const override { return true; }
 };

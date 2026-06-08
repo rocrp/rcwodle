@@ -77,6 +77,12 @@ void SettingsActivity::rebuildSettingsLists() {
   readerSettings.push_back(SettingInfo::Action(StrId::STR_CUSTOMISE_STATUS_BAR, SettingAction::CustomiseStatusBar));
 
   // Update currentSettings pointer and count for the active category
+  selectCategoryPointer();
+}
+
+// WODLE-PORT: point currentSettings/settingsCount at the active category (shared by
+// rebuildSettingsLists, the left/right tab nav, and the tab-bar tap).
+void SettingsActivity::selectCategoryPointer() {
   switch (selectedCategoryIndex) {
     case 0:
       currentSettings = &displaySettings;
@@ -123,10 +129,13 @@ void SettingsActivity::onExit() {
 void SettingsActivity::loop() {
   bool hasChangedCategory = false;
 
-  // WODLE-PORT: direct tap-to-select. Handle the tap coord FIRST. A hit selects+activates
-  // and swallows the tap; a non-top-strip miss is swallowed (so a center-zone miss can't
-  // synthesize Confirm and toggle the highlighted row); a TOP-STRIP miss FALLS THROUGH so
-  // the synthesized BACK zone button reaches the Back handler below (top-strip tap = back).
+  // WODLE-PORT: direct tap-to-select. Handle the tap coord FIRST. Check order: (1) list-row
+  // tap (inside listRect) -> select+activate; (2) tab-bar tap (in the tab-bar region) ->
+  // switch category, same as left/right tab nav; then the swallow rules. The tab-bar check
+  // precedes the top-strip rule because the tab bar straddles TOP_STRIP_PX, so a tab tap must
+  // NOT be mistaken for a top-strip BACK. A non-top-strip miss is swallowed (so a center-zone
+  // miss can't synthesize Confirm and toggle the highlighted row); a TOP-STRIP miss outside
+  // the tab bar FALLS THROUGH so the synthesized BACK zone button reaches the Back handler.
   {
     int tx, ty;
     if (mappedInput.consumeTap(tx, ty)) {
@@ -140,6 +149,22 @@ void SettingsActivity::loop() {
           requestUpdate();
           return;
         }
+      }
+      // Tab-bar tap -> switch to the tapped category (same effect as left/right tab nav).
+      std::vector<TabInfo> tabs;
+      tabs.reserve(categoryCount);
+      for (int i = 0; i < categoryCount; i++) {
+        tabs.push_back({I18N.get(categoryNames[i]), selectedCategoryIndex == i});
+      }
+      const int tab = GUI.hitTestTabBar(renderer, tabBarRect(), tabs, tx, ty);
+      if (tab >= 0) {
+        if (tab != selectedCategoryIndex) {
+          selectedCategoryIndex = tab;
+          selectedSettingIndex = (selectedSettingIndex == 0) ? 0 : 1;  // mirror the nav's row-reset
+          selectCategoryPointer();
+        }
+        requestUpdate();
+        return;  // tab tap consumed — never counts as a top-strip BACK
       }
       if (ty >= TapClassifier::TOP_STRIP_PX) return;  // swallow non-top-strip miss; top-strip falls through to BACK
     }
@@ -194,21 +219,7 @@ void SettingsActivity::loop() {
 
   if (hasChangedCategory) {
     selectedSettingIndex = (selectedSettingIndex == 0) ? 0 : 1;
-    switch (selectedCategoryIndex) {
-      case 0:
-        currentSettings = &displaySettings;
-        break;
-      case 1:
-        currentSettings = &readerSettings;
-        break;
-      case 2:
-        currentSettings = &controlsSettings;
-        break;
-      case 3:
-        currentSettings = &systemSettings;
-        break;
-    }
-    settingsCount = static_cast<int>(currentSettings->size());
+    selectCategoryPointer();
   }
 }
 
@@ -351,6 +362,14 @@ Rect SettingsActivity::listRect() const {
                             metrics.verticalSpacing * 2)};
 }
 
+// WODLE-PORT: single source of truth for the tab-bar rect, shared by render()
+// (drawTabBar) and loop() (tab-bar tap hit-testing) so they stay pixel-identical.
+Rect SettingsActivity::tabBarRect() const {
+  const auto pageWidth = renderer.getScreenWidth();
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  return Rect{0, metrics.topPadding + metrics.headerHeight, pageWidth, metrics.tabBarHeight};
+}
+
 void SettingsActivity::render(RenderLock&&) {
   renderer.clearScreen();
 
@@ -366,7 +385,7 @@ void SettingsActivity::render(RenderLock&&) {
   for (int i = 0; i < categoryCount; i++) {
     tabs.push_back({I18N.get(categoryNames[i]), selectedCategoryIndex == i});
   }
-  GUI.drawTabBar(renderer, Rect{0, metrics.topPadding + metrics.headerHeight, pageWidth, metrics.tabBarHeight}, tabs,
+  GUI.drawTabBar(renderer, tabBarRect(), tabs,  // WODLE-PORT: shared rect (see tabBarRect())
                  selectedSettingIndex == 0);
 
   const auto& settings = *currentSettings;

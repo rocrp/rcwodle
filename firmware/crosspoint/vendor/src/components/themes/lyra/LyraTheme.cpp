@@ -207,6 +207,25 @@ void LyraTheme::drawTabBar(const GfxRenderer& renderer, Rect rect, const std::ve
   renderer.drawLine(rect.x, rect.y + rect.height - 1, rect.x + rect.width - 1, rect.y + rect.height - 1, true);
 }
 
+// WODLE-PORT: mirrors LyraTheme::drawTabBar's left-packed per-tab x-extents for tap-to-switch.
+int LyraTheme::hitTestTabBar(const GfxRenderer& renderer, Rect rect, const std::vector<TabInfo>& tabs, int tapX,
+                             int tapY) const {
+  if (tabs.empty()) return -1;
+  if (tapY < rect.y || tapY >= rect.y + rect.height) return -1;
+
+  int currentX = rect.x + LyraMetrics::values.contentSidePadding;
+  for (size_t i = 0; i < tabs.size(); ++i) {
+    const int textWidth = renderer.getTextWidth(UI_10_FONT_ID, tabs[i].label, EpdFontFamily::REGULAR);
+    // Each tab's slot spans its padded pill plus the trailing tabSpacing gutter.
+    const int slotWidth = textWidth + 2 * hPaddingInSelection + LyraMetrics::values.tabSpacing;
+    if (tapX >= currentX && tapX < currentX + slotWidth) {
+      return static_cast<int>(i);
+    }
+    currentX += slotWidth;
+  }
+  return -1;
+}
+
 int LyraTheme::getListPageItems(int contentHeight, bool hasSubtitle) const {
   int rowHeight = (hasSubtitle) ? LyraMetrics::values.listWithSubtitleRowHeight : LyraMetrics::values.listRowHeight;
   return contentHeight / rowHeight;
@@ -585,4 +604,34 @@ void LyraTheme::drawButtonMenu(GfxRenderer& renderer, Rect rect, int buttonCount
 
     renderer.drawText(UI_12_FONT_ID, textX, textY, label, true);
   }
+}
+
+// WODLE-PORT: Lyra draws a single full-width "continue reading" card for the most-recent
+// book; the whole tile (one book) is selectable when a recent book exists.
+int LyraTheme::hitTestRecentBookCover(const GfxRenderer& renderer, Rect rect, int recentBookCount, int tapX,
+                                      int tapY) const {
+  (void)renderer;
+  if (recentBookCount <= 0) return -1;
+  const int tileX = rect.x + LyraMetrics::values.contentSidePadding;
+  const int tileWidth = rect.width - 2 * LyraMetrics::values.contentSidePadding;
+  if (tapX < tileX || tapX >= tileX + tileWidth || tapY < rect.y || tapY >= rect.y + rect.height) return -1;
+  return 0;
+}
+
+// WODLE-PORT: mirrors LyraTheme::drawButtonMenu's fixed-height non-paged row layout.
+int LyraTheme::hitTestButtonMenu(const GfxRenderer& renderer, Rect rect, int buttonCount, int selectedIndex, int tapX,
+                                 int tapY) const {
+  (void)renderer;
+  (void)selectedIndex;
+  if (buttonCount <= 0) return -1;
+  const int tileX = rect.x + LyraMetrics::values.contentSidePadding;
+  const int tileWidth = rect.width - LyraMetrics::values.contentSidePadding * 2;
+  if (tapX < tileX || tapX >= tileX + tileWidth) return -1;
+  const int rowStep = LyraMetrics::values.menuRowHeight + LyraMetrics::values.menuSpacing;
+  if (rowStep <= 0) return -1;
+  for (int i = 0; i < buttonCount; ++i) {
+    const int tileY = rect.y + i * rowStep;
+    if (tapY >= tileY && tapY < tileY + LyraMetrics::values.menuRowHeight) return i;
+  }
+  return -1;
 }

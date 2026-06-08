@@ -63,6 +63,12 @@ class HomeActivity final : public Activity {
   void onOpdsBrowserOpen();
 
   int getMenuItemCount() const;
+  int renderedMenuItemCount() const;  // WODLE-PORT: rendered button-menu rows (for tap hit-test)
+  // WODLE-PORT: shared Confirm/tap activation for the item at selectorIndex.
+  void activateSelected();
+  // WODLE-PORT: single source of truth for the cover-tile / button-menu rects (render + tap).
+  Rect coverRect() const;
+  Rect menuRect() const;
   bool storeCoverBuffer();    // Store frame buffer for cover image
   bool restoreCoverBuffer();  // Restore frame buffer from stored cover
   void freeCoverBuffer();     // Free the stored cover buffer

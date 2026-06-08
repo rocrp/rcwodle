@@ -75,12 +75,18 @@ class RoundedRaffTheme : public BaseTheme {
                   const char* subtitle = nullptr) const override;
   void drawTabBar(const GfxRenderer& renderer, Rect rect, const std::vector<TabInfo>& tabs,
                   bool selected) const override;
+  int hitTestTabBar(const GfxRenderer& renderer, Rect rect, const std::vector<TabInfo>& tabs, int tapX,
+                    int tapY) const override;  // WODLE-PORT
   void drawRecentBookCover(GfxRenderer& renderer, Rect rect, const std::vector<RecentBook>& recentBooks,
                            int selectorIndex, bool& coverRendered, bool& coverBufferStored, bool& bufferRestored,
                            std::function<bool()> storeCoverBuffer) const override;
+  int hitTestRecentBookCover(const GfxRenderer& renderer, Rect rect, int recentBookCount, int tapX,
+                             int tapY) const override;  // WODLE-PORT
   void drawButtonMenu(GfxRenderer& renderer, Rect rect, int buttonCount, int selectedIndex,
                       const std::function<std::string(int index)>& buttonLabel,
                       const std::function<UIIcon(int index)>& rowIcon) const override;
+  int hitTestButtonMenu(const GfxRenderer& renderer, Rect rect, int buttonCount, int selectedIndex, int tapX,
+                        int tapY) const override;  // WODLE-PORT
   void drawTextField(const GfxRenderer& renderer, Rect rect, int textWidth, bool cursorMode = false,
                      int contentStartX = 0, int contentWidth = 0) const override;
   void drawKeyboardKey(const GfxRenderer& renderer, Rect rect, const char* label, bool isSelected,

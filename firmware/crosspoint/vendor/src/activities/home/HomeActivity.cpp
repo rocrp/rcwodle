@@ -17,6 +17,7 @@
 #include "MappedInputManager.h"
 #include "OpdsServerStore.h"
 #include "RecentBooksStore.h"
+#include "TapClassifier.h"  // WODLE-PORT: TOP_STRIP_PX for top-strip tap-back
 #include "components/UITheme.h"
 #include "fontIds.h"
 
@@ -26,6 +27,22 @@ int HomeActivity::getMenuItemCount() const {
     count += recentBooks.size();
   }
   if (hasOpdsServers) {
+    count++;
+  }
+  return count;
+}
+
+// WODLE-PORT: number of RENDERED button-menu rows — must equal the menuItems
+// vector built in render() (Browse/Recents/FileTransfer/Settings + optional OPDS
+// + optional Continue-Reading). Distinct from getMenuItemCount(), which is
+// selector-space (it also counts the recent-book covers). hitTestButtonMenu must
+// be fed THIS so a tap below the real rows can't map to a phantom row.
+int HomeActivity::renderedMenuItemCount() const {
+  int count = 4;  // Browse, Recents, File Transfer, Settings
+  if (hasOpdsServers) {
+    count++;
+  }
+  if (UITheme::getInstance().getMetrics().homeContinueReadingInMenu && !recentBooks.empty()) {
     count++;
   }
   return count;
@@ -166,8 +183,66 @@ void HomeActivity::freeCoverBuffer() {
   coverBufferStored = false;
 }
 
+// WODLE-PORT: shared Confirm/tap activation. selectorIndex < recentBooks.size() opens that
+// recent book; otherwise it dispatches the corresponding button-menu action — identical to
+// the previous inline Confirm handling.
+void HomeActivity::activateSelected() {
+  if (selectorIndex < recentBooks.size()) {
+    onSelectBook(recentBooks[selectorIndex].path);
+    return;
+  }
+  const int menuIndex = selectorIndex - static_cast<int>(recentBooks.size());
+  switch (indexToMenuItem(menuIndex, hasOpdsServers)) {
+    case HomeMenuItem::FILE_BROWSER:
+      onFileBrowserOpen();
+      break;
+    case HomeMenuItem::RECENTS:
+      onRecentsOpen();
+      break;
+    case HomeMenuItem::OPDS_BROWSER:
+      onOpdsBrowserOpen();
+      break;
+    case HomeMenuItem::FILE_TRANSFER:
+      onFileTransferOpen();
+      break;
+    case HomeMenuItem::SETTINGS_MENU:
+      onSettingsOpen();
+      break;
+    default:
+      break;
+  }
+}
+
 void HomeActivity::loop() {
   const int menuCount = getMenuItemCount();
+
+  // WODLE-PORT: direct tap-to-open. Home is always portrait, so no orientation gate. Check
+  // order: (1) cover tap -> open that recent book; (2) button-menu-row tap -> activate. A hit
+  // sets selectorIndex + activates (same as Confirm) and swallows the tap; any other consumed
+  // tap is swallowed so a center-zone miss can't synthesize Confirm and activate the highlighted
+  // item (Home has no Back zone action, so nothing falls through).
+  {
+    int tx, ty;
+    if (mappedInput.consumeTap(tx, ty)) {
+      const int bookCount = static_cast<int>(recentBooks.size());
+      const int book = GUI.hitTestRecentBookCover(renderer, coverRect(), bookCount, tx, ty);
+      if (book >= 0) {
+        selectorIndex = book;       // recent books occupy selector indices [0, bookCount)
+        activateSelected();         // opens recentBooks[book]
+        return;
+      }
+      const auto& metrics = UITheme::getInstance().getMetrics();
+      const int menuSelected = metrics.homeContinueReadingInMenu ? selectorIndex : selectorIndex - bookCount;
+      const int row = GUI.hitTestButtonMenu(renderer, menuRect(), renderedMenuItemCount(), menuSelected, tx, ty);
+      if (row >= 0) {
+        // Map the rendered menu row back to selectorIndex (inverse of the render's selectedIndex).
+        selectorIndex = metrics.homeContinueReadingInMenu ? row : (bookCount + row);
+        activateSelected();
+        return;
+      }
+      return;  // consumed tap with no hit — swallow (no Back zone action on Home)
+    }
+  }
 
   buttonNavigator.onNext([this, menuCount] {
     selectorIndex = ButtonNavigator::nextIndex(selectorIndex, menuCount);
@@ -180,37 +255,29 @@ void HomeActivity::loop() {
   });
 
   if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
-    if (selectorIndex < recentBooks.size()) {
-      onSelectBook(recentBooks[selectorIndex].path);
-    } else {
-      const int menuIndex = selectorIndex - static_cast<int>(recentBooks.size());
-      switch (indexToMenuItem(menuIndex, hasOpdsServers)) {
-        case HomeMenuItem::FILE_BROWSER:
-          onFileBrowserOpen();
-          break;
-        case HomeMenuItem::RECENTS:
-          onRecentsOpen();
-          break;
-        case HomeMenuItem::OPDS_BROWSER:
-          onOpdsBrowserOpen();
-          break;
-        case HomeMenuItem::FILE_TRANSFER:
-          onFileTransferOpen();
-          break;
-        case HomeMenuItem::SETTINGS_MENU:
-          onSettingsOpen();
-          break;
-        default:
-          break;
-      }
-    }
+    activateSelected();
   }
+}
+
+// WODLE-PORT: single source of truth for the cover tile rect (render + tap hit-test).
+Rect HomeActivity::coverRect() const {
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  return Rect{0, metrics.homeTopPadding, renderer.getScreenWidth(), metrics.homeCoverTileHeight};
+}
+
+// WODLE-PORT: single source of truth for the button-menu rect (render + tap hit-test).
+Rect HomeActivity::menuRect() const {
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  const auto pageWidth = renderer.getScreenWidth();
+  const auto pageHeight = renderer.getScreenHeight();
+  return Rect{0, metrics.homeTopPadding + metrics.homeCoverTileHeight + metrics.homeMenuTopOffset, pageWidth,
+              pageHeight - (metrics.headerHeight + metrics.homeTopPadding + metrics.verticalSpacing +
+                            metrics.homeMenuTopOffset + metrics.buttonHintsHeight)};
 }
 
 void HomeActivity::render(RenderLock&&) {
   const auto& metrics = UITheme::getInstance().getMetrics();
   const auto pageWidth = renderer.getScreenWidth();
-  const auto pageHeight = renderer.getScreenHeight();
 
   renderer.clearScreen();
   bool bufferRestored = coverBufferStored && restoreCoverBuffer();
@@ -221,13 +288,13 @@ void HomeActivity::render(RenderLock&&) {
   // Record the tile rect so storeCoverBuffer (called from the theme) knows
   // which sub-region of the framebuffer to snapshot. ~16 KB in Portrait
   // instead of the 48 KB full framebuffer the previous bind captured.
-  coverRectX = 0;
-  coverRectY = metrics.homeTopPadding;
-  coverRectW = pageWidth;
-  coverRectH = metrics.homeCoverTileHeight;
+  const Rect cover = coverRect();  // WODLE-PORT: shared rect
+  coverRectX = cover.x;
+  coverRectY = cover.y;
+  coverRectW = cover.width;
+  coverRectH = cover.height;
 
-  GUI.drawRecentBookCover(renderer, Rect{0, metrics.homeTopPadding, pageWidth, metrics.homeCoverTileHeight},
-                          recentBooks, selectorIndex, coverRendered, coverBufferStored, bufferRestored,
+  GUI.drawRecentBookCover(renderer, cover, recentBooks, selectorIndex, coverRendered, coverBufferStored, bufferRestored,
                           std::bind(&HomeActivity::storeCoverBuffer, this));
 
   // Build menu items dynamically
@@ -247,10 +314,7 @@ void HomeActivity::render(RenderLock&&) {
   }
 
   GUI.drawButtonMenu(
-      renderer,
-      Rect{0, metrics.homeTopPadding + metrics.homeCoverTileHeight + metrics.homeMenuTopOffset, pageWidth,
-           pageHeight - (metrics.headerHeight + metrics.homeTopPadding + metrics.verticalSpacing +
-                         metrics.homeMenuTopOffset + metrics.buttonHintsHeight)},
+      renderer, menuRect(),  // WODLE-PORT: shared rect (see menuRect())
       static_cast<int>(menuItems.size()),
       metrics.homeContinueReadingInMenu ? selectorIndex : selectorIndex - recentBooks.size(),
       [&menuItems](int index) { return std::string(menuItems[index]); },

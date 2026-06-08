@@ -170,7 +170,9 @@ class SettingsActivity final : public Activity {
   void openSleepTimeoutPicker();
   void rebuildSettingsLists();
   void syncQuickResumeTimeoutForSleepScreen(bool sleepScreenChanged, bool quickResumeTimeoutChanged);
-  Rect listRect() const;  // WODLE-PORT: shared by render() + tap hit-testing
+  Rect listRect() const;    // WODLE-PORT: shared by render() + tap hit-testing
+  Rect tabBarRect() const;  // WODLE-PORT: shared by render() + tab-bar tap hit-testing
+  void selectCategoryPointer();  // WODLE-PORT: point currentSettings/settingsCount at selectedCategoryIndex
 
  public:
   explicit SettingsActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)
