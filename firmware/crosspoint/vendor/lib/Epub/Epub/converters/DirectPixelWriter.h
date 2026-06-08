@@ -47,11 +47,13 @@ struct DirectPixelWriter {
 
     switch (renderer.getOrientation()) {
       case GfxRenderer::Portrait:
-        // phyX = y, phyY = (phyH-1) - x
+        // WODLE-PORT: phyX = y, phyY = x (gate 0 = left, un-mirrored — must
+        // match GfxRenderer::rotateCoordinates). Was phyY = (phyH-1) - x, which
+        // rendered images horizontally mirrored on wodle's UC8179C panel.
         phyXBase = 0;
-        phyYBase = phyH - 1;
+        phyYBase = 0;
         phyXStepX = 0;
-        phyYStepX = -1;
+        phyYStepX = 1;
         phyXStepY = 1;
         phyYStepY = 0;
         break;

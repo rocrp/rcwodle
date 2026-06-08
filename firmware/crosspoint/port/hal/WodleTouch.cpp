@@ -96,10 +96,20 @@ void init()
         return;
     }
 
+    /* Probe a few times — the controller may not answer the very first read
+     * right after power-up. The result is only a boot signal: poll() reads the
+     * I2C status register directly every cycle (like the AHT20/battery do), so
+     * touch works even if this probe misses. */
     bool touching;
     int x, y;
-    s_available = readTouch(touching, x, y);
-    rt_kprintf("[WodleTouch] CST836U %s\n", s_available ? "OK" : "not responding");
+    bool probed = false;
+    for (int i = 0; i < 5 && !probed; i++)
+    {
+        probed = readTouch(touching, x, y);
+        if (!probed) rt_thread_mdelay(5);
+    }
+    s_available = true; /* bus is present; poll regardless of the probe result */
+    rt_kprintf("[WodleTouch] CST836U %s\n", probed ? "OK" : "not responding (polling anyway)");
 }
 
 bool available() { return s_available; }
@@ -107,12 +117,13 @@ bool available() { return s_available; }
 Frame poll()
 {
     Frame frame;
-    if (!s_available) return frame;
+    if (!s_bus) return frame;
 
-    /* INT idles high, pulses/holds low while a finger is down. Skip the I2C
-     * read when idle and no touch is in flight. */
-    if (!s_touching && rt_pin_read(PIN_TP_INT) == PIN_HIGH) return frame;
-
+    /* The CST836U only PULSES INT on a falling edge — it does not hold it low
+     * for the whole touch — so a synchronous main-loop poll almost never
+     * catches INT low (this is why touch appeared dead). Read the I2C status
+     * register every cycle instead; the `fingers` byte is authoritative.
+     * Cost: one ~6-byte I2C read per loop, negligible. */
     bool touching;
     int x, y;
     if (!readTouch(touching, x, y)) return frame;

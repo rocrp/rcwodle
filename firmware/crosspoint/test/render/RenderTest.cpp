@@ -312,8 +312,9 @@ TEST(Render, TortureFilenames) {
 
 // WODLE-PORT: displayWindow maps a LOGICAL rect through the orientation
 // transform to a physical controller window (x = 792 source axis, y = gate
-// row). Portrait is the reading orientation: logical (x,y) -> phy(y, 527-x),
-// so a bottom status-bar strip becomes a narrow full-gate column stripe.
+// row). Portrait is the reading orientation: logical (x,y) -> phy(y, x) (gate
+// 0 = left, un-mirrored), so a bottom status-bar strip becomes a narrow
+// full-gate column stripe.
 TEST(Render, DisplayWindowMapsPortraitRect) {
   renderer.setOrientation(GfxRenderer::Portrait);
   ASSERT_TRUE(renderer.displayWindow(0, 760, 528, 32));  // logical bottom strip
@@ -324,7 +325,7 @@ TEST(Render, DisplayWindowMapsPortraitRect) {
 
   ASSERT_TRUE(renderer.displayWindow(100, 200, 50, 60));  // interior rect
   EXPECT_EQ(display.lastWindow.x, 200);                   // phyX = logical y
-  EXPECT_EQ(display.lastWindow.y, 528 - 1 - 149);         // phyY = 527 - (x+w-1)
+  EXPECT_EQ(display.lastWindow.y, 100);                   // phyY = logical x
   EXPECT_EQ(display.lastWindow.w, 60);
   EXPECT_EQ(display.lastWindow.h, 50);
 

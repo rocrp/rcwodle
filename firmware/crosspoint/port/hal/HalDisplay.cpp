@@ -481,6 +481,10 @@ void HalDisplay::begin(bool seamless)
     if (s_busError) rt_kprintf("[HalDisplay] panel init saw bus errors — expect a dead display\n");
     memset(s_frameBuffer, 0xFF, sizeof(s_frameBuffer));
     s_panelInitialized = true;
+    /* WODLE-PORT: force the first on-screen refresh to a full GC (like the
+     * demo's boot-gc). Otherwise the boot splash paints DU over whatever was on
+     * the panel (recovery/demo page) and its ghost is never cleared. */
+    s_fastSinceGc = FAST_REFRESHES_PER_GC;
 }
 
 void HalDisplay::clearScreen(uint8_t color) const

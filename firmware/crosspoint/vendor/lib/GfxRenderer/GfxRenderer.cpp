@@ -137,10 +137,13 @@ static inline void rotateCoordinates(const GfxRenderer::Orientation orientation,
                                      int* phyY, const uint16_t panelWidth, const uint16_t panelHeight) {
   switch (orientation) {
     case GfxRenderer::Portrait: {
-      // Logical portrait (480x800) → panel (800x480)
-      // Rotation: 90 degrees clockwise
+      // WODLE-PORT: wodle's UC8179C panel scans gate 0 = LEFT (proven by the
+      // known-good spi_epd_demo). The upstream X4 mapping reversed the gate
+      // axis (panelHeight-1-x), which rendered horizontally mirrored on this
+      // panel. The source axis (phyX = y) was already correct — vertical was
+      // fine on hardware, only left/right was flipped.
       *phyX = y;
-      *phyY = panelHeight - 1 - x;
+      *phyY = x;
       break;
     }
     case GfxRenderer::LandscapeClockwise: {
@@ -925,7 +928,10 @@ void GfxRenderer::drawImage(const uint8_t bitmap[], const int x, const int y, co
 }
 
 void GfxRenderer::drawIcon(const uint8_t bitmap[], const int x, const int y, const int width, const int height) const {
-  display.drawImageTransparent(bitmap, y, getScreenWidth() - width - x, height, width);
+  // WODLE-PORT: this open-codes the Portrait transform and must match
+  // rotateCoordinates (gate 0 = left). Was getScreenWidth()-width-x, which kept
+  // icons mirrored after the rotateCoordinates un-mirror fix.
+  display.drawImageTransparent(bitmap, y, x, height, width);
 }
 
 void GfxRenderer::drawBitmap(const Bitmap& bitmap, const int x, const int y, const int maxWidth, const int maxHeight,
