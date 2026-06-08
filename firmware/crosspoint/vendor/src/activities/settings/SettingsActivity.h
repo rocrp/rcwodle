@@ -7,6 +7,7 @@
 
 #include "CrossPointSettings.h"
 #include "activities/Activity.h"
+#include "components/themes/BaseTheme.h"  // WODLE-PORT: Rect for listRect()
 #include "util/ButtonNavigator.h"
 
 enum class SettingType { TOGGLE, ENUM, ACTION, VALUE, STRING };
@@ -169,6 +170,7 @@ class SettingsActivity final : public Activity {
   void openSleepTimeoutPicker();
   void rebuildSettingsLists();
   void syncQuickResumeTimeoutForSleepScreen(bool sleepScreenChanged, bool quickResumeTimeoutChanged);
+  Rect listRect() const;  // WODLE-PORT: shared by render() + tap hit-testing
 
  public:
   explicit SettingsActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)

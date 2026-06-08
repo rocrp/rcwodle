@@ -518,7 +518,7 @@ void HalDisplay::displayBuffer(RefreshMode mode, bool turnOffScreen)
 static uint8_t *s_bwShadow = nullptr;
 static uint8_t *s_bwShadowPsram = nullptr;
 
-static void captureBwShadow()
+static void captureBwShadowFromFb()
 {
     if (!s_bwShadow)
     {
@@ -530,6 +530,11 @@ static void captureBwShadow()
     }
     memcpy(s_bwShadow, s_frameBuffer, HalDisplay::BUFFER_SIZE);
 }
+
+/* WODLE-PORT: public hook so the reader's AA path can stage the BW shadow that
+ * displayGrayBuffer() composes its absolute planes from, without first doing a
+ * visible BW refresh (which is the only other place the shadow is captured). */
+void HalDisplay::captureBwShadow() { captureBwShadowFromFb(); }
 
 void HalDisplay::refreshDisplay(RefreshMode mode, bool)
 {
@@ -576,7 +581,7 @@ void HalDisplay::refreshDisplay(RefreshMode mode, bool)
     /* Both RAMs hold the BW frame again. */
     s_ramsHoldGrayPlanes = false;
     s_partialsSinceGc = 0;
-    captureBwShadow();
+    captureBwShadowFromFb();
 }
 
 /* DU partial-window refresh — spi_epd_demo recipe. x = source axis (0..791,

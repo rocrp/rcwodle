@@ -23,6 +23,11 @@ class TxtReaderChapterSelectionActivity final : public Activity {
   int findChapterIndexForPage(int page) const;
   int findPageForOffset(uint32_t offset) const;
 
+  // WODLE-PORT: this list is custom-rendered (not GUI.drawList), so tap hit-testing
+  // mirrors render()'s own row math here instead of using the theme helper.
+  int hitTestChapter(int tapX, int tapY) const;  // absolute chapter index or -1
+  void activateSelected();                        // shared Confirm/tap activation
+
  public:
   explicit TxtReaderChapterSelectionActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,
                                              const std::vector<TxtChapter>& chapters,

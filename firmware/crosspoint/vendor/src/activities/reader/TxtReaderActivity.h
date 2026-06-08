@@ -17,6 +17,12 @@ class TxtReaderActivity final : public Activity {
   int totalPages = 1;
   int pagesUntilFullRefresh = 0;
 
+  // WODLE-PORT: deferred anti-aliasing. A page turn does a fast DU refresh of the
+  // BW page immediately; the slow 4-gray pass is run once from loop() after the
+  // reader dwells (stops flipping). Cleared on every page turn / nav.
+  bool aaRefinePending = false;
+  unsigned long lastRenderMs = 0UL;
+
   // Streaming text reader - stores file offsets for each page
   std::vector<size_t> pageOffsets;  // File offset for start of each page
   // WODLE-PORT: detected chapter headings (第X章 / Chapter N …) for navigation
@@ -36,6 +42,12 @@ class TxtReaderActivity final : public Activity {
   int cachedOrientedMarginLeft = 0;
 
   void renderPage();
+  // WODLE-PORT: draw the current page's text lines into the framebuffer (no
+  // display). Reused by renderPage() (BW + each grayscale plane) and the deferred
+  // AA pass in loop().
+  void renderPageLines() const;
+  // WODLE-PORT: deferred grayscale AA pass for the current page, run from loop().
+  void refineCurrentPageAA();
   void renderStatusBar() const;
 
   void initializeReader();

@@ -64,12 +64,28 @@ void TxtReaderActivity::onExit() {
 }
 
 void TxtReaderActivity::loop() {
+  // WODLE-PORT: deferred AA. Once the reader has dwelled on the page (stopped
+  // flipping) for DEFERRED_AA_DWELL_MS and no render is in progress, sharpen the
+  // current page to 4-gray exactly once. Done here on the main task under a
+  // RenderLock so it can't race the render task touching the framebuffer.
+  if (aaRefinePending && SETTINGS.textAntiAliasing && !RenderLock::peek() &&
+      (millis() - lastRenderMs) >= ReaderUtils::DEFERRED_AA_DWELL_MS) {
+    aaRefinePending = false;
+    if (txt && initialized && !pageOffsets.empty()) {
+      RenderLock lock(*this);
+      refineCurrentPageAA();
+    }
+  } else if (aaRefinePending && !SETTINGS.textAntiAliasing) {
+    aaRefinePending = false;  // AA turned off after arming; drop the refine
+  }
+
   // WODLE-PORT: minute-fresh status-bar clock via partial refresh
   partialClock.tick(renderer, [this] { renderStatusBar(); });
 
   // WODLE-PORT: Confirm opens chapter selection (mirrors XtcReaderActivity)
   if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
     if (initialized && !chapters.empty()) {
+      aaRefinePending = false;  // WODLE-PORT: nav cancels pending AA refine
       startActivityForResult(std::make_unique<TxtReaderChapterSelectionActivity>(renderer, mappedInput, chapters,
                                                                                  pageOffsets, currentPage),
                              [this](const ActivityResult& result) {
@@ -87,6 +103,7 @@ void TxtReaderActivity::loop() {
 
   // Long press BACK (1s+) goes to file selection
   if (mappedInput.isPressed(MappedInputManager::Button::Back) && mappedInput.getHeldTime() >= ReaderUtils::GO_HOME_MS) {
+    aaRefinePending = false;  // WODLE-PORT: nav cancels pending AA refine
     activityManager.goToFileBrowser(txt ? txt->getPath() : "");
     return;
   }
@@ -94,6 +111,7 @@ void TxtReaderActivity::loop() {
   // Short press BACK goes directly to home
   if (mappedInput.wasReleased(MappedInputManager::Button::Back) &&
       mappedInput.getHeldTime() < ReaderUtils::GO_HOME_MS) {
+    aaRefinePending = false;  // WODLE-PORT: nav cancels pending AA refine
     onGoHome();
     return;
   }
@@ -102,6 +120,11 @@ void TxtReaderActivity::loop() {
   if (!prevTriggered && !nextTriggered) {
     return;
   }
+
+  // WODLE-PORT: a page turn cancels any pending AA refine for the page we are
+  // leaving, so rapid flipping never pays the gray cost (renderPage() re-arms it
+  // for the new page).
+  aaRefinePending = false;
 
   if (prevTriggered && currentPage > 0) {
     currentPage--;
@@ -402,69 +425,93 @@ void TxtReaderActivity::render(RenderLock&&) {
   saveProgress();
 }
 
-void TxtReaderActivity::renderPage() {
+// WODLE-PORT: draw the current page's text lines into the framebuffer. No display.
+// Reused for the BW pass, each grayscale plane, and the deferred AA pass.
+void TxtReaderActivity::renderPageLines() const {
   const int lineHeight = renderer.getLineHeight(cachedFontId);
   const int contentWidth = viewportWidth;
 
-  // Render text lines with alignment
-  auto renderLines = [&]() {
-    int y = cachedOrientedMarginTop;
-    for (const auto& line : currentPageLines) {
-      if (!line.empty()) {
-        int x = cachedOrientedMarginLeft;
-        const bool lineIsRtl = BidiUtils::startsWithRtl(line.c_str(), BidiUtils::RTL_PARAGRAPH_PROBE_DEPTH);
-        uint8_t effectiveAlignment = cachedParagraphAlignment;
-        if (lineIsRtl && (effectiveAlignment == CrossPointSettings::LEFT_ALIGN ||
-                          effectiveAlignment == CrossPointSettings::JUSTIFIED)) {
-          effectiveAlignment = CrossPointSettings::RIGHT_ALIGN;
-        }
-        const int textWidth = renderer.getTextAdvanceX(cachedFontId, line.c_str(), EpdFontFamily::REGULAR);
-
-        // Apply text alignment
-        switch (effectiveAlignment) {
-          case CrossPointSettings::LEFT_ALIGN:
-          default:
-            // x already set to left margin
-            break;
-          case CrossPointSettings::CENTER_ALIGN: {
-            x = cachedOrientedMarginLeft + (contentWidth - textWidth) / 2;
-            break;
-          }
-          case CrossPointSettings::RIGHT_ALIGN: {
-            x = cachedOrientedMarginLeft + contentWidth - textWidth;
-            break;
-          }
-          case CrossPointSettings::JUSTIFIED:
-            // For plain text, justified is treated as left-aligned
-            // (true justification would require word spacing adjustments)
-            break;
-        }
-
-        renderer.drawText(cachedFontId, x, y, line.c_str());
+  int y = cachedOrientedMarginTop;
+  for (const auto& line : currentPageLines) {
+    if (!line.empty()) {
+      int x = cachedOrientedMarginLeft;
+      const bool lineIsRtl = BidiUtils::startsWithRtl(line.c_str(), BidiUtils::RTL_PARAGRAPH_PROBE_DEPTH);
+      uint8_t effectiveAlignment = cachedParagraphAlignment;
+      if (lineIsRtl && (effectiveAlignment == CrossPointSettings::LEFT_ALIGN ||
+                        effectiveAlignment == CrossPointSettings::JUSTIFIED)) {
+        effectiveAlignment = CrossPointSettings::RIGHT_ALIGN;
       }
-      y += lineHeight;
-    }
-  };
+      const int textWidth = renderer.getTextAdvanceX(cachedFontId, line.c_str(), EpdFontFamily::REGULAR);
 
+      // Apply text alignment
+      switch (effectiveAlignment) {
+        case CrossPointSettings::LEFT_ALIGN:
+        default:
+          // x already set to left margin
+          break;
+        case CrossPointSettings::CENTER_ALIGN: {
+          x = cachedOrientedMarginLeft + (contentWidth - textWidth) / 2;
+          break;
+        }
+        case CrossPointSettings::RIGHT_ALIGN: {
+          x = cachedOrientedMarginLeft + contentWidth - textWidth;
+          break;
+        }
+        case CrossPointSettings::JUSTIFIED:
+          // For plain text, justified is treated as left-aligned
+          // (true justification would require word spacing adjustments)
+          break;
+      }
+
+      renderer.drawText(cachedFontId, x, y, line.c_str());
+    }
+    y += lineHeight;
+  }
+}
+
+void TxtReaderActivity::renderPage() {
   // Font prewarm: scan pass accumulates text, then prewarm, then real render
   auto* fcm = renderer.getFontCacheManager();
   auto scope = fcm->createPrewarmScope();
-  renderLines();  // scan pass — text accumulated, no drawing
+  renderPageLines();  // scan pass — text accumulated, no drawing
   scope.endScanAndPrewarm();
 
   // BW rendering
-  renderLines();
+  renderPageLines();
   renderStatusBar();
 
-  // WODLE-PORT: with AA on, renderAntiAliased() is the SINGLE on-screen refresh
-  // (its grayscale pass drives every cell). Skipping the BW display avoids the
-  // GC-flash + gray-flash double refresh per page.
+  // WODLE-PORT: deferred AA. Show the BW page instantly via a fast DU refresh,
+  // then arm the deferred grayscale pass — loop() runs it once the reader dwells
+  // (DEFERRED_AA_DWELL_MS). Rapid flipping cancels the pending refine (see loop())
+  // so it never pays the slow full-frame 4-gray waveform. This same path runs on
+  // boot-resume, so the page is always displayed immediately (never left blank).
   if (SETTINGS.textAntiAliasing) {
-    ReaderUtils::renderAntiAliased(renderer, [&renderLines]() { renderLines(); });
+    renderer.displayBuffer(HalDisplay::FAST_REFRESH);
+    aaRefinePending = true;
+    lastRenderMs = millis();
   } else {
     ReaderUtils::displayWithRefreshCycle(renderer, pagesUntilFullRefresh);
   }
   // scope destructor clears font cache via FontCacheManager
+}
+
+// WODLE-PORT: deferred grayscale AA pass for the current page. Re-renders the BW
+// page first (so storeBwBuffer() captures the correct shadow) then the two
+// grayscale planes, and displays the 4-gray result. Called from loop() under a
+// RenderLock once the dwell timer elapses.
+void TxtReaderActivity::refineCurrentPageAA() {
+  auto* fcm = renderer.getFontCacheManager();
+  auto scope = fcm->createPrewarmScope();
+  renderPageLines();  // scan pass for prewarm
+  scope.endScanAndPrewarm();
+
+  ReaderUtils::renderDeferredAA(
+      renderer,
+      [this]() {
+        renderPageLines();
+        renderStatusBar();
+      },
+      [this]() { renderPageLines(); });
 }
 
 void TxtReaderActivity::renderStatusBar() const {

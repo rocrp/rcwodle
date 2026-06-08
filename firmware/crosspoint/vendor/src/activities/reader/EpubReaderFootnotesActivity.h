@@ -25,4 +25,9 @@ class EpubReaderFootnotesActivity final : public Activity {
   int selectedIndex = 0;
   int scrollOffset = 0;
   ButtonNavigator buttonNavigator;
+
+  // WODLE-PORT: this list is custom-rendered (not GUI.drawList), so tap hit-testing
+  // mirrors render()'s own scrollOffset row math here instead of using the theme helper.
+  int hitTestFootnote(int tapX, int tapY) const;  // absolute footnote index or -1
+  void activateSelected();                         // shared Confirm/tap activation
 };

@@ -238,6 +238,39 @@ int BaseTheme::getListPageItems(int contentHeight, bool hasSubtitle) const {
   return contentHeight / rowHeight;
 }
 
+// WODLE-PORT: mirrors BaseTheme::drawList row layout for tap-to-select.
+// renderer accepted for signature uniformity; BaseTheme row metrics are static.
+int BaseTheme::hitTestList(const GfxRenderer& renderer, Rect rect, int itemCount, int selectedIndex, bool hasSubtitle,
+                           int tapX, int tapY) const {
+  (void)renderer;
+  if (itemCount <= 0) return -1;
+  // Reject taps outside the list rect.
+  if (tapX < rect.x || tapX >= rect.x + rect.width || tapY < rect.y || tapY >= rect.y + rect.height) return -1;
+
+  const int rowHeight =
+      hasSubtitle ? BaseMetrics::values.listWithSubtitleRowHeight : BaseMetrics::values.listRowHeight;
+  if (rowHeight <= 0) return -1;
+  const int pageItems = rect.height / rowHeight;
+  if (pageItems <= 0) return -1;
+
+  // When multiple pages exist drawList reserves a scroll-arrow gutter on the right
+  // (indicatorWidth=20, margin=15 from the right edge). Reject taps that land in it.
+  const int totalPages = (itemCount + pageItems - 1) / pageItems;
+  if (totalPages > 1) {
+    constexpr int indicatorWidth = 20;
+    constexpr int margin = 15;
+    const int gutterLeft = rect.x + rect.width - indicatorWidth - margin;
+    if (tapX >= gutterLeft) return -1;
+  }
+
+  const int pageStartIndex = selectedIndex / pageItems * pageItems;
+  const int row = (tapY - rect.y) / rowHeight;  // visible row [0, pageItems)
+  if (row < 0 || row >= pageItems) return -1;
+  const int index = pageStartIndex + row;
+  if (index < pageStartIndex || index >= itemCount || index >= pageStartIndex + pageItems) return -1;
+  return index;
+}
+
 void BaseTheme::drawList(const GfxRenderer& renderer, Rect rect, int itemCount, int selectedIndex,
                          const std::function<std::string(int index)>& rowTitle,
                          const std::function<std::string(int index)>& rowSubtitle,
@@ -288,12 +321,16 @@ void BaseTheme::drawList(const GfxRenderer& renderer, Rect rect, int itemCount, 
 
     int rowTextWidth = contentWidth - BaseMetrics::values.contentSidePadding * 2;
     std::string valueText;
+    // WODLE-PORT: the row value can be user/SD content (e.g. an SD card font
+    // family name in the Font setting) — route through uiFontFor so CJK renders.
+    int valueFont = UI_10_FONT_ID;
     if (rowValue != nullptr) {
       valueText = rowValue(i);
       if (!valueText.empty()) {
+        valueFont = renderer.uiFontFor(UI_10_FONT_ID, valueText.c_str());
         int maxValW = std::max(0, rowTextWidth - 40 - minValueGap);
-        valueText = renderer.truncatedText(UI_10_FONT_ID, valueText.c_str(), maxValW);
-        int valueWidth = renderer.getTextWidth(UI_10_FONT_ID, valueText.c_str()) + minValueGap;
+        valueText = renderer.truncatedText(valueFont, valueText.c_str(), maxValW);
+        int valueWidth = renderer.getTextWidth(valueFont, valueText.c_str()) + minValueGap;
         rowTextWidth -= valueWidth;
       }
     }
@@ -326,13 +363,13 @@ void BaseTheme::drawList(const GfxRenderer& renderer, Rect rect, int itemCount, 
     }
 
     if (!valueText.empty()) {
-      const auto valueTextWidth = renderer.getTextWidth(UI_10_FONT_ID, valueText.c_str());
+      const auto valueTextWidth = renderer.getTextWidth(valueFont, valueText.c_str());  // WODLE-PORT: valueFont
       int valueY = itemY;
       if (rowSubtitle != nullptr) {
         valueY = itemY + 10;
       }
-      renderer.drawText(UI_10_FONT_ID, rect.x + contentWidth - BaseMetrics::values.contentSidePadding - valueTextWidth,
-                        valueY, valueText.c_str(), i != selectedIndex);
+      renderer.drawText(valueFont, rect.x + contentWidth - BaseMetrics::values.contentSidePadding - valueTextWidth,
+                        valueY, valueText.c_str(), i != selectedIndex);  // WODLE-PORT: valueFont
     }
   }
 }
@@ -352,11 +389,13 @@ void BaseTheme::drawHeader(const GfxRenderer& renderer, Rect rect, const char* t
                    showBatteryPercentage);
 
   if (title) {
+    // WODLE-PORT: header title is the book/folder name (may be CJK) — route through uiFontFor.
+    const auto titleFont = renderer.uiFontFor(UI_12_FONT_ID, title);
     int padding = rect.width - batteryX + BaseMetrics::values.batteryWidth;
-    auto truncatedTitle = renderer.truncatedText(UI_12_FONT_ID, title,
+    auto truncatedTitle = renderer.truncatedText(titleFont, title,
                                                  rect.width - padding * 2 - BaseMetrics::values.contentSidePadding * 2,
                                                  EpdFontFamily::BOLD);
-    renderer.drawCenteredText(UI_12_FONT_ID, rect.y + 5, truncatedTitle.c_str(), true, EpdFontFamily::BOLD);
+    renderer.drawCenteredText(titleFont, rect.y + 5, truncatedTitle.c_str(), true, EpdFontFamily::BOLD);
   }
 
   if (subtitle) {
@@ -877,19 +916,23 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
     int titleMarginLeftAdjusted = std::max(titleMarginLeft, titleMarginRight);
     int availableTitleSpace = rendererableScreenWidth - 2 * titleMarginLeftAdjusted;
 
+    // WODLE-PORT: book/chapter title may be CJK — route through uiFontFor so it
+    // falls back to the loaded SD reading font instead of rendering "?".
+    const auto titleFont = renderer.uiFontFor(SMALL_FONT_ID, title.c_str());
+
     int titleWidth;
-    titleWidth = renderer.getTextWidth(SMALL_FONT_ID, title.c_str());
+    titleWidth = renderer.getTextWidth(titleFont, title.c_str());
     if (titleWidth > availableTitleSpace) {
       // Not enough space to center on the screen, center it within the remaining space instead
       availableTitleSpace = rendererableScreenWidth - titleMarginLeft - titleMarginRight;
       titleMarginLeftAdjusted = titleMarginLeft;
     }
     if (titleWidth > availableTitleSpace) {
-      title = renderer.truncatedText(SMALL_FONT_ID, title.c_str(), availableTitleSpace);
-      titleWidth = renderer.getTextWidth(SMALL_FONT_ID, title.c_str());
+      title = renderer.truncatedText(titleFont, title.c_str(), availableTitleSpace);
+      titleWidth = renderer.getTextWidth(titleFont, title.c_str());
     }
 
-    renderer.drawText(SMALL_FONT_ID,
+    renderer.drawText(titleFont,
                       titleMarginLeftAdjusted + metrics.statusBarHorizontalMargin + orientedMarginLeft +
                           (availableTitleSpace - titleWidth) / 2,
                       textY, title.c_str());

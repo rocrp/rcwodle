@@ -10,6 +10,7 @@
 
 #include "MappedInputManager.h"
 #include "ProgressMapper.h"
+#include "TapClassifier.h"  // WODLE-PORT: TOP_STRIP_PX for top-strip tap-back
 #include "components/UITheme.h"
 #include "fontIds.h"
 
@@ -103,14 +104,31 @@ void EpubReaderBookmarksActivity::loop() {
     }
   }
 
-  if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {  // Open
-    if (bookmarks.empty()) {
-      return;
+  // WODLE-PORT: direct tap-to-open (only in normal mode; the delete-confirm overlay renders
+  // a single-item list at a different rect and must not be tap-selected). consumeTap coords
+  // are logical-PORTRAIT; this reader sub-activity inherits the reader's orientation, so
+  // tap-to-select is gated on Portrait (full rotated-orientation tap mapping is a future
+  // enhancement). A hit opens+swallows; a non-top-strip miss is swallowed (so a center-zone
+  // miss can't synthesize Confirm and open the highlighted bookmark); a TOP-STRIP miss FALLS
+  // THROUGH so the synthesized BACK zone button reaches the Back handler below.
+  if (confirmingDelete == DELETE_MODE_OFF && renderer.getOrientation() == GfxRenderer::Orientation::Portrait) {
+    int tx, ty;
+    if (mappedInput.consumeTap(tx, ty)) {
+      if (!bookmarks.empty()) {
+        const int n = GUI.hitTestList(renderer, listRect(), static_cast<int>(bookmarks.size()), selectorIndex,
+                                      /*hasSubtitle=*/true, tx, ty);
+        if (n >= 0) {
+          selectorIndex = n;
+          openSelected();  // same activation as Confirm
+          return;
+        }
+      }
+      if (ty >= TapClassifier::TOP_STRIP_PX) return;  // swallow non-top-strip miss; top-strip falls through to BACK
     }
-    auto bookmark = bookmarks.at(selectorIndex);
-    CrossPointPosition pos = ProgressMapper::toCrossPoint(epub, {bookmark.xpath, bookmark.percentage}, renderer);
-    setResult(ProgressChangeResult{pos.spineIndex, pos.pageNumber});
-    finish();
+  }
+
+  if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {  // Open
+    openSelected();
     return;
   } else if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
     ActivityResult result;
@@ -151,6 +169,35 @@ void EpubReaderBookmarksActivity::loop() {
   });
 }
 
+// WODLE-PORT: shared Confirm/tap open of the bookmark at selectorIndex.
+void EpubReaderBookmarksActivity::openSelected() {
+  if (bookmarks.empty()) {
+    return;
+  }
+  auto bookmark = bookmarks.at(selectorIndex);
+  CrossPointPosition pos = ProgressMapper::toCrossPoint(epub, {bookmark.xpath, bookmark.percentage}, renderer);
+  setResult(ProgressChangeResult{pos.spineIndex, pos.pageNumber});
+  finish();
+}
+
+// WODLE-PORT: single source of truth for the normal-mode bookmark-list rect (render + tap).
+// Mirrors render()'s gutter/contentX/listY/listHeight math.
+Rect EpubReaderBookmarksActivity::listRect() {
+  const auto pageWidth = renderer.getScreenWidth();
+  const auto orientation = renderer.getOrientation();
+  const bool isLandscapeCw = orientation == GfxRenderer::Orientation::LandscapeClockwise;
+  const bool isLandscapeCcw = orientation == GfxRenderer::Orientation::LandscapeCounterClockwise;
+  const bool isPortraitInverted = orientation == GfxRenderer::Orientation::PortraitInverted;
+  const int hintGutterWidth = (isLandscapeCw || isLandscapeCcw) ? 40 : 0;
+  const int contentX = isLandscapeCw ? hintGutterWidth : 0;
+  const int contentWidth = pageWidth - hintGutterWidth;
+  const int hintGutterHeight = isPortraitInverted ? 50 : 0;
+  const int contentY = hintGutterHeight;
+  const int listY = contentY + LINE_HEIGHT;
+  const int listHeight = getListHeight(renderer);
+  return Rect{contentX, listY, contentWidth, listHeight};
+}
+
 void EpubReaderBookmarksActivity::render(RenderLock&&) {
   renderer.clearScreen();
 
@@ -170,8 +217,7 @@ void EpubReaderBookmarksActivity::render(RenderLock&&) {
   const int hintGutterHeight = isPortraitInverted ? 50 : 0;
   const int hintGutterBottom = getGutterBottom(renderer);
   const int contentY = hintGutterHeight;
-  const int listY = contentY + LINE_HEIGHT;  // Reserve vertical space for title
-  const int listHeight = getListHeight(renderer);
+  // WODLE-PORT: normal-mode list rect now comes from listRect() (shared with tap hit-testing).
   const int numBookmarks = bookmarks.size();
 
   // Manual centering to honor content gutters.
@@ -204,7 +250,7 @@ void EpubReaderBookmarksActivity::render(RenderLock&&) {
       GUI.drawList(renderer, Rect{contentX, pageHeight / 2, contentWidth, LINE_HEIGHT}, 1, 0, getBookmarkTitle,
                    getBookmarkSubtitle, getBookmarkIcon);
     } else {
-      GUI.drawList(renderer, Rect{contentX, listY, contentWidth, listHeight}, numBookmarks, selectorIndex,
+      GUI.drawList(renderer, listRect(), numBookmarks, selectorIndex,  // WODLE-PORT: shared rect
                    getBookmarkTitle, getBookmarkSubtitle, getBookmarkIcon);
 
       GUI.drawHelpText(renderer, Rect{contentX, pageHeight - hintGutterBottom, contentWidth, LINE_HEIGHT},

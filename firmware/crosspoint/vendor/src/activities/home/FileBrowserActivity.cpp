@@ -10,6 +10,7 @@
 
 #include "CrossPointSettings.h"
 #include "MappedInputManager.h"
+#include "TapClassifier.h"  // WODLE-PORT: TOP_STRIP_PX for top-strip tap-back
 #include "activities/util/ConfirmationActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -206,6 +207,26 @@ void FileBrowserActivity::loop() {
   const int pathReserved = renderer.getLineHeight(SMALL_FONT_ID) + UITheme::getInstance().getMetrics().verticalSpacing;
   const int pageItems = UITheme::getNumberOfItemsPerPage(renderer, true, false, true, false, pathReserved);
 
+  // WODLE-PORT: direct tap-to-open. A hit opens+swallows; a non-top-strip miss is swallowed
+  // (so a center-zone miss can't synthesize Confirm and open the highlighted row); a TOP-STRIP
+  // miss FALLS THROUGH so the synthesized BACK zone button reaches the Back handler below.
+  {
+    int tx, ty;
+    if (mappedInput.consumeTap(tx, ty)) {
+      if (!files.empty()) {
+        const int n =
+            GUI.hitTestList(renderer, listRect(), static_cast<int>(files.size()), static_cast<int>(selectorIndex),
+                            /*hasSubtitle=*/false, tx, ty);
+        if (n >= 0) {
+          selectorIndex = static_cast<size_t>(n);
+          openSelectedEntry();  // same activation as a short-press Confirm on the row
+          return;
+        }
+      }
+      if (ty >= TapClassifier::TOP_STRIP_PX) return;  // swallow non-top-strip miss; top-strip falls through to BACK
+    }
+  }
+
   if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
     if (lockNextConfirmRelease) {
       lockNextConfirmRelease = false;
@@ -214,19 +235,10 @@ void FileBrowserActivity::loop() {
     if (files.empty()) return;
 
     const std::string& entry = files[selectorIndex];
-    bool isDirectory = (entry.back() == '/');
 
-    // Firmware picker: select file -> return path; navigate into directories normally.
-    if (mode == Mode::PickFirmware && !isDirectory) {
-      std::string cleanBasePath = basepath;
-      if (cleanBasePath.back() != '/') cleanBasePath += "/";
-      ActivityResult res{FilePathResult{cleanBasePath + entry}};
-      res.isCancelled = false;
-      setResult(std::move(res));
-      finish();
-      return;
-    }
-
+    // Books-mode long-press deletes; everything else (firmware-pick return + short-press
+    // open/navigate) is the shared "open" path used by tap too. PickFirmware mode is never
+    // Books, so this guard already excludes the firmware picker.
     if (mode == Mode::Books && mappedInput.getHeldTime() >= GO_HOME_MS) {
       // --- LONG PRESS ACTION: DELETE FILE OR DIRECTORY ---
       std::string cleanBasePath = basepath;
@@ -259,19 +271,9 @@ void FileBrowserActivity::loop() {
 
       startActivityForResult(std::make_unique<ConfirmationActivity>(renderer, mappedInput, heading, entry), handler);
       return;
-    } else {
-      // --- SHORT PRESS ACTION: OPEN/NAVIGATE ---
-      if (basepath.back() != '/') basepath += "/";
-
-      if (isDirectory) {
-        basepath += entry.substr(0, entry.length() - 1);
-        loadFiles();
-        selectorIndex = 0;
-        requestUpdate();
-      } else {
-        onSelectBook(basepath + entry);
-      }
     }
+
+    openSelectedEntry();
     return;
   }
 
@@ -324,6 +326,54 @@ void FileBrowserActivity::loop() {
   });
 }
 
+// WODLE-PORT: single source of truth for the file-list rect, used by both render()
+// (drawList) and loop() (tap hit-testing). Reserves the bottom path display + button hints.
+Rect FileBrowserActivity::listRect() const {
+  const auto pageWidth = renderer.getScreenWidth();
+  const auto pageHeight = renderer.getScreenHeight();
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  const int pathLineHeight = renderer.getLineHeight(SMALL_FONT_ID);
+  const int pathReserved = pathLineHeight + metrics.verticalSpacing;
+  const int contentTop = metrics.topPadding + metrics.headerHeight + metrics.verticalSpacing;
+  const int contentHeight =
+      pageHeight - contentTop - metrics.buttonHintsHeight - metrics.verticalSpacing - pathReserved;
+  return Rect{0, contentTop, pageWidth, contentHeight};
+}
+
+// WODLE-PORT: shared "open" behavior for the entry at selectorIndex, used by both a
+// short-press Confirm and a direct tap. Mirrors the original short-press path:
+//   - PickFirmware on a file -> return its path to the caller
+//   - directory -> descend
+//   - file -> open as a book
+void FileBrowserActivity::openSelectedEntry() {
+  if (files.empty()) return;
+
+  const std::string& entry = files[selectorIndex];
+  const bool isDirectory = (entry.back() == '/');
+
+  // Firmware picker: select file -> return path; navigate into directories normally.
+  if (mode == Mode::PickFirmware && !isDirectory) {
+    std::string cleanBasePath = basepath;
+    if (cleanBasePath.back() != '/') cleanBasePath += "/";
+    ActivityResult res{FilePathResult{cleanBasePath + entry}};
+    res.isCancelled = false;
+    setResult(std::move(res));
+    finish();
+    return;
+  }
+
+  // --- OPEN/NAVIGATE ---
+  if (basepath.back() != '/') basepath += "/";
+  if (isDirectory) {
+    basepath += entry.substr(0, entry.length() - 1);
+    loadFiles();
+    selectorIndex = 0;
+    requestUpdate();
+  } else {
+    onSelectBook(basepath + entry);
+  }
+}
+
 std::string getFileName(std::string filename) {
   if (filename.back() == '/') {
     filename.pop_back();
@@ -358,16 +408,13 @@ void FileBrowserActivity::render(RenderLock&&) {
   GUI.drawHeader(renderer, Rect{0, metrics.topPadding, pageWidth, metrics.headerHeight}, folderName.c_str());
 
   const int pathLineHeight = renderer.getLineHeight(SMALL_FONT_ID);
-  const int pathReserved = pathLineHeight + metrics.verticalSpacing;
-  const int contentTop = metrics.topPadding + metrics.headerHeight + metrics.verticalSpacing;
-  const int contentHeight =
-      pageHeight - contentTop - metrics.buttonHintsHeight - metrics.verticalSpacing - pathReserved;
+  const Rect list = listRect();  // WODLE-PORT: shared rect (see listRect())
   if (files.empty()) {
     const char* emptyMsg = (mode == Mode::PickFirmware) ? tr(STR_NO_BIN_FILES) : tr(STR_NO_FILES_FOUND);
-    renderer.drawText(UI_10_FONT_ID, metrics.contentSidePadding, contentTop + 20, emptyMsg);
+    renderer.drawText(UI_10_FONT_ID, metrics.contentSidePadding, list.y + 20, emptyMsg);
   } else {
     GUI.drawList(
-        renderer, Rect{0, contentTop, pageWidth, contentHeight}, files.size(), selectorIndex,
+        renderer, list, files.size(), selectorIndex,
         [this](int index) { return getFileName(files[index]); }, nullptr,
         [this](int index) { return UITheme::getFileIcon(files[index]); },
         [this](int index) { return getFileExtension(files[index]); }, false);

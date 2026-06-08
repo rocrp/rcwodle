@@ -5,6 +5,7 @@
 
 #include "CrossPointSettings.h"
 #include "MappedInputManager.h"
+#include "TapClassifier.h"  // WODLE-PORT: TOP_STRIP_PX for top-strip tap-back
 #include "components/UITheme.h"
 #include "fontIds.h"
 
@@ -49,6 +50,25 @@ void FontSelectionActivity::onEnter() {
 void FontSelectionActivity::onExit() { Activity::onExit(); }
 
 void FontSelectionActivity::loop() {
+  // WODLE-PORT: direct tap-to-select. A hit selects+swallows; a non-top-strip miss is
+  // swallowed (so a center-zone miss can't synthesize Confirm and pick the highlighted row);
+  // a TOP-STRIP miss FALLS THROUGH so the synthesized BACK zone button reaches Back below.
+  {
+    int tx, ty;
+    if (mappedInput.consumeTap(tx, ty)) {
+      if (!fonts_.empty()) {
+        const int n = GUI.hitTestList(renderer, listRect(), static_cast<int>(fonts_.size()), selectedIndex_,
+                                      /*hasSubtitle=*/false, tx, ty);
+        if (n >= 0) {
+          selectedIndex_ = n;
+          handleSelection();  // same activation as Confirm: select font + finish
+          return;
+        }
+      }
+      if (ty >= TapClassifier::TOP_STRIP_PX) return;  // swallow non-top-strip miss; top-strip falls through to BACK
+    }
+  }
+
   if (mappedInput.wasPressed(MappedInputManager::Button::Back)) {
     finish();
     return;
@@ -99,17 +119,24 @@ void FontSelectionActivity::handleSelection() {
   finish();
 }
 
+// WODLE-PORT: single source of truth for the font-list rect, used by both render()
+// (drawList) and loop() (tap hit-testing).
+Rect FontSelectionActivity::listRect() const {
+  const auto pageWidth = renderer.getScreenWidth();
+  const auto pageHeight = renderer.getScreenHeight();
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  const int contentTop = metrics.topPadding + metrics.headerHeight + metrics.verticalSpacing;
+  const int contentHeight = pageHeight - contentTop - metrics.buttonHintsHeight - metrics.verticalSpacing;
+  return Rect{0, contentTop, pageWidth, contentHeight};
+}
+
 void FontSelectionActivity::render(RenderLock&&) {
   renderer.clearScreen();
 
   const auto pageWidth = renderer.getScreenWidth();
-  const auto pageHeight = renderer.getScreenHeight();
   const auto& metrics = UITheme::getInstance().getMetrics();
 
   GUI.drawHeader(renderer, Rect{0, metrics.topPadding, pageWidth, metrics.headerHeight}, tr(STR_FONT_FAMILY));
-
-  const int contentTop = metrics.topPadding + metrics.headerHeight + metrics.verticalSpacing;
-  const int contentHeight = pageHeight - contentTop - metrics.buttonHintsHeight - metrics.verticalSpacing;
 
   // Determine which font index is currently active (to mark as "Selected")
   int currentFontIndex = 0;
@@ -126,7 +153,7 @@ void FontSelectionActivity::render(RenderLock&&) {
   }
 
   GUI.drawList(
-      renderer, Rect{0, contentTop, pageWidth, contentHeight}, static_cast<int>(fonts_.size()), selectedIndex_,
+      renderer, listRect(), static_cast<int>(fonts_.size()), selectedIndex_,  // WODLE-PORT: shared rect
       [this](int index) { return fonts_[index].name; }, nullptr, nullptr,
       [this, currentFontIndex](int index) -> std::string { return index == currentFontIndex ? tr(STR_SELECTED) : ""; },
       true);

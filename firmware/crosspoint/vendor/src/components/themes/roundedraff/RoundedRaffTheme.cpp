@@ -74,8 +74,10 @@ void RoundedRaffTheme::drawHeader(const GfxRenderer& renderer, Rect rect, const 
   }
 
   const int maxTitleWidth = std::max(0, batteryGroupLeftX - 20 - titleX);
-  auto headerTitle = renderer.truncatedText(kTitleFontId, title, maxTitleWidth, EpdFontFamily::BOLD);
-  renderer.drawText(kTitleFontId, titleX, titleY, headerTitle.c_str(), true, EpdFontFamily::BOLD);
+  // WODLE-PORT: header title is the book/folder name (may be CJK) — route through uiFontFor.
+  const auto titleFont = renderer.uiFontFor(kTitleFontId, title);
+  auto headerTitle = renderer.truncatedText(titleFont, title, maxTitleWidth, EpdFontFamily::BOLD);
+  renderer.drawText(titleFont, titleX, titleY, headerTitle.c_str(), true, EpdFontFamily::BOLD);
   drawBatteryRight(renderer,
                    Rect{batteryIconX, rect.y + 14, RoundedRaffMetrics::values.batteryWidth,
                         RoundedRaffMetrics::values.batteryHeight},
@@ -340,11 +342,14 @@ void RoundedRaffTheme::drawList(const GfxRenderer& renderer, Rect rect, int item
       if (!valueText.empty()) {
         const int maxValueWidth = std::max(0, rowWidth - kInteractiveInsetX * 2 - kMinValueGap - kMinTitleWidth);
         if (maxValueWidth > 0) {
+          // WODLE-PORT: row value can be user/SD content (e.g. an SD card font
+          // family name) — route through uiFontFor so CJK renders.
+          const auto valueFont = renderer.uiFontFor(kTitleFontId, valueText.c_str());
           const std::string truncatedValue =
-              renderer.truncatedText(kTitleFontId, valueText.c_str(), maxValueWidth, EpdFontFamily::REGULAR);
-          const int valueW = renderer.getTextWidth(kTitleFontId, truncatedValue.c_str(), EpdFontFamily::REGULAR);
-          renderer.drawText(kTitleFontId, rowX + rowWidth - kInteractiveInsetX - valueW,
-                            rowY + (rowHeight - renderer.getLineHeight(kTitleFontId)) / 2, truncatedValue.c_str(),
+              renderer.truncatedText(valueFont, valueText.c_str(), maxValueWidth, EpdFontFamily::REGULAR);
+          const int valueW = renderer.getTextWidth(valueFont, truncatedValue.c_str(), EpdFontFamily::REGULAR);
+          renderer.drawText(valueFont, rowX + rowWidth - kInteractiveInsetX - valueW,
+                            rowY + (rowHeight - renderer.getLineHeight(valueFont)) / 2, truncatedValue.c_str(),
                             !isSelected, EpdFontFamily::REGULAR);
           textAreaWidth = std::max(0, textAreaWidth - valueW - kMinValueGap);
         }
@@ -381,6 +386,48 @@ void RoundedRaffTheme::drawList(const GfxRenderer& renderer, Rect rect, int item
   }
 
   drawScrollBar(renderer, rect, itemCount, pageStartIndex, pageItems);
+}
+
+// WODLE-PORT: mirrors RoundedRaffTheme::drawList row layout for tap-to-select.
+// drawList computes the subtitle row height DYNAMICALLY from renderer line heights, so the
+// hit-test must use the SAME formula (renderer.getLineHeight) — a static metric would drift
+// taps to the wrong row. The non-subtitle row height stays the static metric (drawList uses
+// listRowHeight there too).
+int RoundedRaffTheme::hitTestList(const GfxRenderer& renderer, Rect rect, int itemCount, int selectedIndex,
+                                  bool hasSubtitle, int tapX, int tapY) const {
+  if (itemCount <= 0) return -1;
+  if (tapX < rect.x || tapX >= rect.x + rect.width || tapY < rect.y || tapY >= rect.y + rect.height) return -1;
+
+  // WODLE-PORT: subtitle row height must match RoundedRaffTheme::drawList exactly.
+  const int titleLineHeight = renderer.getLineHeight(kTitleFontId);
+  const int subtitleLineHeight = renderer.getLineHeight(kSubtitleFontId);
+  constexpr int subtitleTopPadding = 10;
+  constexpr int subtitleBottomPadding = 10;
+  constexpr int subtitleInterLineGap = 4;
+  const int subtitleRowHeight =
+      subtitleTopPadding + titleLineHeight + subtitleInterLineGap + subtitleLineHeight + subtitleBottomPadding;
+  const int rowHeight = hasSubtitle ? subtitleRowHeight : RoundedRaffMetrics::values.listRowHeight;
+  const int rowStep = rowHeight + kSelectableRowGap;
+  if (rowStep <= 0) return -1;
+  const int pageItems = std::max(1, rect.height / rowStep);
+
+  // Multiple pages reserve a scrollbar gutter on the right (scrollBarRightOffset + width).
+  const int totalPages = (itemCount + pageItems - 1) / pageItems;
+  if (totalPages > 1) {
+    const int gutterLeft =
+        rect.x + rect.width - (RoundedRaffMetrics::values.scrollBarRightOffset + RoundedRaffMetrics::values.scrollBarWidth);
+    if (tapX >= gutterLeft) return -1;
+  }
+
+  const int pageStartIndex = std::max(0, selectedIndex / pageItems) * pageItems;
+  const int rel = tapY - rect.y;
+  const int row = rel / rowStep;
+  if (row < 0 || row >= pageItems) return -1;
+  // Reject taps that fall in the inter-row gap (dead space below a drawn row).
+  if (rel - row * rowStep >= rowHeight) return -1;
+  const int index = pageStartIndex + row;
+  if (index < pageStartIndex || index >= itemCount || index >= pageStartIndex + pageItems) return -1;
+  return index;
 }
 
 void RoundedRaffTheme::drawButtonHints(GfxRenderer& renderer, const char* btn1, const char* btn2, const char* btn3,

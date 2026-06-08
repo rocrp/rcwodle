@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "activities/Activity.h"
+#include "components/themes/BaseTheme.h"  // WODLE-PORT: Rect for listRect()
 #include "util/ButtonNavigator.h"
 
 class EpubReaderChapterSelectionActivity final : public Activity {
@@ -19,6 +20,10 @@ class EpubReaderChapterSelectionActivity final : public Activity {
 
   // Total TOC items count
   int getTotalItems() const;
+
+  // WODLE-PORT: shared list rect (render + tap) and shared Confirm/tap activation.
+  Rect listRect() const;
+  void activateSelected();
 
  public:
   explicit EpubReaderChapterSelectionActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,

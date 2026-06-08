@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "activities/Activity.h"
+#include "components/themes/BaseTheme.h"  // WODLE-PORT: Rect for listRect()
 #include "util/ButtonNavigator.h"
 
 class FontSelectionActivity final : public Activity {
@@ -20,6 +21,7 @@ class FontSelectionActivity final : public Activity {
 
  private:
   void handleSelection();
+  Rect listRect() const;  // WODLE-PORT: shared by render() + tap hit-testing
 
   struct FontEntry {
     std::string name;

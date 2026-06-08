@@ -127,7 +127,10 @@ void XtcReaderChapterSelectionActivity::render(RenderLock&&) {
   for (int i = pageStartIndex; i < static_cast<int>(chapters.size()) && i < pageStartIndex + pageItems; i++) {
     const auto& chapter = chapters[i];
     const char* title = chapter.name.empty() ? tr(STR_UNNAMED) : chapter.name.c_str();
-    renderer.drawText(UI_10_FONT_ID, contentX + 20, 60 + contentY + (i % pageItems) * 30, title, i != selectorIndex);
+    // WODLE-PORT: chapter name is arbitrary book text (may be CJK) — route through
+    // uiFontFor so it falls back to the SD reading font instead of rendering tofu.
+    const auto titleFont = renderer.uiFontFor(UI_10_FONT_ID, title);
+    renderer.drawText(titleFont, contentX + 20, 60 + contentY + (i % pageItems) * 30, title, i != selectorIndex);
   }
 
   // Skip button hints in landscape CW mode (they overlap content)

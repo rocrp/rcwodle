@@ -5,6 +5,7 @@
 
 #include "../../BookmarkEntry.h"
 #include "../Activity.h"
+#include "components/themes/BaseTheme.h"  // WODLE-PORT: Rect for listRect()
 #include "util/ButtonNavigator.h"
 
 class EpubReaderBookmarksActivity final : public Activity {
@@ -30,4 +31,8 @@ class EpubReaderBookmarksActivity final : public Activity {
 
   // Calculate the height available for the bookmark list based on orientation
   int getListHeight(const GfxRenderer& renderer);
+
+  // WODLE-PORT: shared normal-mode list rect (render + tap) and shared open activation.
+  Rect listRect();
+  void openSelected();
 };

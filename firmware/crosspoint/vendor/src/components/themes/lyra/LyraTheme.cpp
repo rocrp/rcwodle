@@ -115,7 +115,9 @@ void LyraTheme::drawHeader(const GfxRenderer& renderer, Rect rect, const char* t
                    Rect{batteryX, rect.y + 5, LyraMetrics::values.batteryWidth, LyraMetrics::values.batteryHeight},
                    showBatteryPercentage);
 
-  int maxTitleWidth = title != nullptr ? renderer.getTextWidth(UI_12_FONT_ID, title, EpdFontFamily::BOLD) : 0;
+  // WODLE-PORT: header title is the book/folder name (may be CJK) — route through uiFontFor.
+  const auto titleFont = title != nullptr ? renderer.uiFontFor(UI_12_FONT_ID, title) : UI_12_FONT_ID;
+  int maxTitleWidth = title != nullptr ? renderer.getTextWidth(titleFont, title, EpdFontFamily::BOLD) : 0;
   int maxSubtitleWidth =
       subtitle != nullptr ? renderer.getTextWidth(SMALL_FONT_ID, subtitle, EpdFontFamily::REGULAR) : 0;
 
@@ -138,8 +140,8 @@ void LyraTheme::drawHeader(const GfxRenderer& renderer, Rect rect, const char* t
   }
 
   if (title) {
-    auto truncatedTitle = renderer.truncatedText(UI_12_FONT_ID, title, maxTitleWidth, EpdFontFamily::BOLD);
-    renderer.drawText(UI_12_FONT_ID, rect.x + LyraMetrics::values.contentSidePadding,
+    auto truncatedTitle = renderer.truncatedText(titleFont, title, maxTitleWidth, EpdFontFamily::BOLD);
+    renderer.drawText(titleFont, rect.x + LyraMetrics::values.contentSidePadding,
                       rect.y + LyraMetrics::values.batteryBarHeight + 3, truncatedTitle.c_str(), true,
                       EpdFontFamily::BOLD);
     renderer.drawLine(rect.x, rect.y + rect.height - 3, rect.x + rect.width - 1, rect.y + rect.height - 3, 3, true);
@@ -210,6 +212,37 @@ int LyraTheme::getListPageItems(int contentHeight, bool hasSubtitle) const {
   return contentHeight / rowHeight;
 }
 
+// WODLE-PORT: mirrors LyraTheme::drawList row layout for tap-to-select.
+// renderer accepted for signature uniformity; Lyra row metrics are static.
+int LyraTheme::hitTestList(const GfxRenderer& renderer, Rect rect, int itemCount, int selectedIndex, bool hasSubtitle,
+                           int tapX, int tapY) const {
+  (void)renderer;
+  if (itemCount <= 0) return -1;
+  if (tapX < rect.x || tapX >= rect.x + rect.width || tapY < rect.y || tapY >= rect.y + rect.height) return -1;
+
+  const int rowHeight =
+      hasSubtitle ? LyraMetrics::values.listWithSubtitleRowHeight : LyraMetrics::values.listRowHeight;
+  if (rowHeight <= 0) return -1;
+  const int pageItems = rect.height / rowHeight;
+  if (pageItems <= 0) return -1;
+
+  // When multiple pages exist drawList reserves a scrollbar gutter on the right
+  // (scrollBarWidth + scrollBarRightOffset). Reject taps that land in it.
+  const int totalPages = (itemCount + pageItems - 1) / pageItems;
+  if (totalPages > 1) {
+    const int gutterLeft =
+        rect.x + rect.width - (LyraMetrics::values.scrollBarWidth + LyraMetrics::values.scrollBarRightOffset);
+    if (tapX >= gutterLeft) return -1;
+  }
+
+  const int pageStartIndex = selectedIndex / pageItems * pageItems;
+  const int row = (tapY - rect.y) / rowHeight;
+  if (row < 0 || row >= pageItems) return -1;
+  const int index = pageStartIndex + row;
+  if (index < pageStartIndex || index >= itemCount || index >= pageStartIndex + pageItems) return -1;
+  return index;
+}
+
 void LyraTheme::drawList(const GfxRenderer& renderer, Rect rect, int itemCount, int selectedIndex,
                          const std::function<std::string(int index)>& rowTitle,
                          const std::function<std::string(int index)>& rowSubtitle,
@@ -263,10 +296,14 @@ void LyraTheme::drawList(const GfxRenderer& renderer, Rect rect, int itemCount, 
     // Draw name
     int valueWidth = 0;
     std::string valueText = "";
+    // WODLE-PORT: row value can be user/SD content (e.g. an SD card font family
+    // name) — route through uiFontFor so CJK renders instead of tofu.
+    int valueFont = UI_10_FONT_ID;
     if (rowValue != nullptr) {
       valueText = rowValue(i);
-      valueText = renderer.truncatedText(UI_10_FONT_ID, valueText.c_str(), maxListValueWidth);
-      valueWidth = renderer.getTextWidth(UI_10_FONT_ID, valueText.c_str()) + hPaddingInSelection;
+      valueFont = renderer.uiFontFor(UI_10_FONT_ID, valueText.c_str());
+      valueText = renderer.truncatedText(valueFont, valueText.c_str(), maxListValueWidth);
+      valueWidth = renderer.getTextWidth(valueFont, valueText.c_str()) + hPaddingInSelection;
       rowTextWidth -= valueWidth;
     }
 
@@ -297,8 +334,10 @@ void LyraTheme::drawList(const GfxRenderer& renderer, Rect rect, int itemCount, 
     if (rowSubtitle != nullptr) {
       // Draw subtitle
       std::string subtitleText = rowSubtitle(i);
-      auto subtitle = renderer.truncatedText(SMALL_FONT_ID, subtitleText.c_str(), rowTextWidth);
-      renderer.drawText(SMALL_FONT_ID, textX, itemY + 30, subtitle.c_str(), true);
+      // WODLE-PORT: subtitle is user text (book author, chapter title) — route through uiFontFor
+      const auto subFont = renderer.uiFontFor(SMALL_FONT_ID, subtitleText.c_str());
+      auto subtitle = renderer.truncatedText(subFont, subtitleText.c_str(), rowTextWidth);
+      renderer.drawText(subFont, textX, itemY + 30, subtitle.c_str(), true);
     }
 
     // Draw value
@@ -313,8 +352,8 @@ void LyraTheme::drawList(const GfxRenderer& renderer, Rect rect, int itemCount, 
       if (rowSubtitle != nullptr) {
         valueY = itemY + 16;
       }
-      renderer.drawText(UI_10_FONT_ID, rect.x + contentWidth - LyraMetrics::values.contentSidePadding - valueWidth,
-                        valueY, valueText.c_str(), !(i == selectedIndex && highlightValue));
+      renderer.drawText(valueFont, rect.x + contentWidth - LyraMetrics::values.contentSidePadding - valueWidth, valueY,
+                        valueText.c_str(), !(i == selectedIndex && highlightValue));  // WODLE-PORT: valueFont
     }
   }
 }

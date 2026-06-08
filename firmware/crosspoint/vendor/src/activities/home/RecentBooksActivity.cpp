@@ -9,6 +9,7 @@
 
 #include "MappedInputManager.h"
 #include "RecentBooksStore.h"
+#include "TapClassifier.h"  // WODLE-PORT: TOP_STRIP_PX for top-strip tap-back
 #include "activities/util/ConfirmationActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -43,6 +44,25 @@ void RecentBooksActivity::onExit() {
 
 void RecentBooksActivity::loop() {
   const int pageItems = UITheme::getInstance().getNumberOfItemsPerPage(renderer, true, false, true, true);
+
+  // WODLE-PORT: direct tap-to-open. A hit opens+swallows; a non-top-strip miss is swallowed
+  // (so a center-zone miss can't synthesize Confirm and open the highlighted book); a TOP-STRIP
+  // miss FALLS THROUGH so the synthesized BACK zone button reaches the Back handler below.
+  {
+    int tx, ty;
+    if (mappedInput.consumeTap(tx, ty)) {
+      if (!recentBooks.empty()) {
+        const int n = GUI.hitTestList(renderer, listRect(), static_cast<int>(recentBooks.size()),
+                                      static_cast<int>(selectorIndex), /*hasSubtitle=*/true, tx, ty);
+        if (n >= 0) {
+          selectorIndex = static_cast<size_t>(n);
+          onSelectBook(recentBooks[selectorIndex].path);  // same activation as Confirm
+          return;
+        }
+      }
+      if (ty >= TapClassifier::TOP_STRIP_PX) return;  // swallow non-top-strip miss; top-strip falls through to BACK
+    }
+  }
 
   // After a long-press has fired, swallow input until Confirm is physically released
   // (so the release doesn't also open the book; re-arm only once the button is up).
@@ -121,24 +141,33 @@ void RecentBooksActivity::promptRemoveBook(const std::string& path, const std::s
       std::move(handler));
 }
 
+// WODLE-PORT: single source of truth for the recent-books list rect, used by both
+// render() (drawList) and loop() (tap hit-testing).
+Rect RecentBooksActivity::listRect() const {
+  const auto pageWidth = renderer.getScreenWidth();
+  const auto pageHeight = renderer.getScreenHeight();
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  const int contentTop = metrics.topPadding + metrics.headerHeight + metrics.verticalSpacing;
+  const int contentHeight = pageHeight - contentTop - metrics.buttonHintsHeight - metrics.verticalSpacing;
+  return Rect{0, contentTop, pageWidth, contentHeight};
+}
+
 void RecentBooksActivity::render(RenderLock&&) {
   renderer.clearScreen();
 
   const auto pageWidth = renderer.getScreenWidth();
-  const auto pageHeight = renderer.getScreenHeight();
   const auto& metrics = UITheme::getInstance().getMetrics();
 
   GUI.drawHeader(renderer, Rect{0, metrics.topPadding, pageWidth, metrics.headerHeight}, tr(STR_MENU_RECENT_BOOKS));
 
-  const int contentTop = metrics.topPadding + metrics.headerHeight + metrics.verticalSpacing;
-  const int contentHeight = pageHeight - contentTop - metrics.buttonHintsHeight - metrics.verticalSpacing;
+  const Rect list = listRect();  // WODLE-PORT: shared rect
 
   // Recent tab
   if (recentBooks.empty()) {
-    renderer.drawText(UI_10_FONT_ID, metrics.contentSidePadding, contentTop + 20, tr(STR_NO_RECENT_BOOKS));
+    renderer.drawText(UI_10_FONT_ID, metrics.contentSidePadding, list.y + 20, tr(STR_NO_RECENT_BOOKS));
   } else {
     GUI.drawList(
-        renderer, Rect{0, contentTop, pageWidth, contentHeight}, recentBooks.size(), selectorIndex,
+        renderer, list, recentBooks.size(), selectorIndex,
         [this](int index) { return recentBooks[index].title; }, [this](int index) { return recentBooks[index].author; },
         [this](int index) { return UITheme::getFileIcon(recentBooks[index].path); });
   }

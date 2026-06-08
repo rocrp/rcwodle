@@ -42,6 +42,14 @@ bool s_wasPressed[NUM_BTNS];
 bool s_wasReleased[NUM_BTNS];
 unsigned long s_heldStartMs = 0;
 
+/* WODLE-PORT: latest raw tap coordinate (logical portrait) + a one-shot
+ * pending flag, captured from the WodleTouch frame in update(). Additive to
+ * the zone->button synthesis below — both paths fire for the same tap.
+ * Cleared on read by consumeTap() to match the wasPressed/wasReleased edge
+ * model (a tap is a press+release in one frame). */
+int s_lastTapX = -1, s_lastTapY = -1;
+bool s_tapPending = false;
+
 /* chord edge tracking — separate from s_isPressed[BTN_BACK] so a touch
  * long-press holding BACK can't be mistaken for a chord release */
 bool s_chordActive = false;
@@ -111,6 +119,13 @@ void HalGPIO::update()
         s_wasPressed[i] = false;
         s_wasReleased[i] = false;
     }
+    /* WODLE-PORT: the raw-tap latch is a ONE-FRAME edge, exactly like the button
+     * edges above. Clearing it here (before this frame's poll re-sets it) means a
+     * tap that no activity consumes in the same loop() iteration is dropped — so a
+     * tap on a non-consuming screen (reader/home) can't leak into the next list
+     * activity and fire a spurious selection. consumeTap() is called from the
+     * active activity's loop(), which runs right after this update() each frame. */
+    s_tapPending = false;
 
     bool k2Changed = debounce(s_key2, now);
     bool k3Changed = debounce(s_key3, now);
@@ -158,6 +173,16 @@ void HalGPIO::update()
     {
         s_wasPressed[tf.tapButton] = true;
         s_wasReleased[tf.tapButton] = true; /* tap = press+release in one frame */
+    }
+    /* WODLE-PORT: additive raw-tap capture. Latch the tap's logical-portrait
+     * coords for consumeTap() — independent of the button synthesis above, so
+     * activities that don't poll consumeTap() are entirely unaffected. The flag
+     * is edge-style (one tap -> one true), cleared on read. */
+    if (tf.tapX >= 0)
+    {
+        s_lastTapX = tf.tapX;
+        s_lastTapY = tf.tapY;
+        s_tapPending = true;
     }
     if (tf.holdButton >= 0 && tf.holdButton < NUM_BTNS)
     {
@@ -227,6 +252,18 @@ void HalGPIO::update()
 bool HalGPIO::isPressed(uint8_t b) const { return b < NUM_BTNS && s_isPressed[b]; }
 bool HalGPIO::wasPressed(uint8_t b) const { return b < NUM_BTNS && s_wasPressed[b]; }
 bool HalGPIO::wasReleased(uint8_t b) const { return b < NUM_BTNS && s_wasReleased[b]; }
+
+/* WODLE-PORT: clear-on-read raw tap delivery (see HalGPIO.h). Returns the
+ * latched tap coords once per physical tap and clears the pending flag; leaves
+ * x/y untouched and returns false when nothing is pending. */
+bool HalGPIO::consumeTap(int& x, int& y)
+{
+    if (!s_tapPending) return false;
+    x = s_lastTapX;
+    y = s_lastTapY;
+    s_tapPending = false;
+    return true;
+}
 
 bool HalGPIO::wasAnyPressed() const
 {

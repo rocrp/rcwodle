@@ -57,6 +57,9 @@ public:
     void copyGrayscaleMsbBuffers(const uint8_t *msbBuffer);
     void cleanupGrayscaleBuffers(const uint8_t *bwBuffer);
     void displayGrayBuffer(bool turnOffScreen = false);
+    // WODLE-PORT: stage the BW shadow displayGrayBuffer() composes from, without
+    // a visible BW refresh (the AA reader path skips that for a single refresh).
+    void captureBwShadow();
     void writeGrayscalePlaneStrip(bool lsbPlane, const uint8_t *rows, uint16_t yStart,
                                   uint16_t numRows);
     bool supportsStripGrayscale() const;

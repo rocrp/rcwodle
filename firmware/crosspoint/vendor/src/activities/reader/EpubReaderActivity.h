@@ -23,6 +23,15 @@ class EpubReaderActivity final : public Activity {
   int pagesUntilFullRefresh = 0;
   int cachedSpineIndex = 0;
   int cachedChapterTotalPageCount = 0;
+  // WODLE-PORT: deferred anti-aliasing. A page turn does a fast DU refresh of the
+  // BW page immediately; the slow 4-gray pass runs once from loop() after the
+  // reader dwells (stops flipping). Cleared on every page turn / nav / menu.
+  // The oriented margins from the last render are stashed so the deferred pass can
+  // re-render the current page identically without re-deriving them.
+  bool aaRefinePending = false;
+  unsigned long lastRenderMs = 0UL;
+  int aaMarginTop = 0;
+  int aaMarginLeft = 0;
   unsigned long lastPageTurnTime = 0UL;
   unsigned long pageTurnDuration = 0UL;
   // Signals that the next render should reposition within the newly loaded section
@@ -56,6 +65,8 @@ class EpubReaderActivity final : public Activity {
 
   void renderContents(std::unique_ptr<Page> page, int orientedMarginTop, int orientedMarginRight,
                       int orientedMarginBottom, int orientedMarginLeft);
+  // WODLE-PORT: deferred grayscale AA pass for the current page, run from loop().
+  void refineCurrentPageAA();
   void renderStatusBar() const;
   void silentIndexNextChapterIfNeeded(uint16_t viewportWidth, uint16_t viewportHeight);
   bool saveProgress(int spineIndex, int currentPage, int pageCount);

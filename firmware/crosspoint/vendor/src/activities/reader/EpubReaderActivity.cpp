@@ -196,6 +196,26 @@ void EpubReaderActivity::loop() {
     return;
   }
 
+  // WODLE-PORT: deferred AA. Once the reader has dwelled on the page (stopped
+  // flipping) for DEFERRED_AA_DWELL_MS and no render is in progress, sharpen the
+  // current page to 4-gray exactly once. Run here on the main task under a
+  // RenderLock so it can't race the render task touching the framebuffer. Skipped
+  // during auto page-turn (a mid-cycle gray flash would be jarring; those pages
+  // stay fast BW).
+  // WODLE-PORT: hold the refine off while a transient popup ("Bookmark added") is up —
+  // refineCurrentPageAA() repaints page+statusbar without the popup and would wipe the
+  // message ~350ms in. Don't cancel aaRefinePending; it fires once the popup clears.
+  if (aaRefinePending && SETTINGS.textAntiAliasing && !automaticPageTurnActive && !RenderLock::peek() &&
+      !showBookmarkMessage && (millis() - lastRenderMs) >= ReaderUtils::DEFERRED_AA_DWELL_MS) {
+    aaRefinePending = false;
+    if (section) {
+      RenderLock lock(*this);
+      refineCurrentPageAA();
+    }
+  } else if (aaRefinePending && !SETTINGS.textAntiAliasing) {
+    aaRefinePending = false;  // AA turned off after arming; drop the refine
+  }
+
   // WODLE-PORT: minute-fresh status-bar clock via partial refresh (gated in
   // the ticker on the experimental setting; no-op while disabled/unset).
   partialClock.tick(renderer, [this] { renderStatusBar(); });
@@ -265,6 +285,7 @@ void EpubReaderActivity::loop() {
     if (ignoreNextConfirmRelease) {
       ignoreNextConfirmRelease = false;
     } else {
+      aaRefinePending = false;  // WODLE-PORT: menu/nav cancels pending AA refine
       const int currentPage = section ? section->currentPage + 1 : 0;
       const int totalPages = section ? section->pageCount : 0;
       float bookProgress = 0.0f;
@@ -301,6 +322,7 @@ void EpubReaderActivity::loop() {
 
   // Long press BACK (1s+) goes to file selection
   if (mappedInput.isPressed(MappedInputManager::Button::Back) && mappedInput.getHeldTime() >= ReaderUtils::GO_HOME_MS) {
+    aaRefinePending = false;  // WODLE-PORT: nav cancels pending AA refine
     activityManager.goToFileBrowser(epub ? epub->getPath() : "");
     return;
   }
@@ -308,6 +330,7 @@ void EpubReaderActivity::loop() {
   // Short press BACK goes directly to home (or restores position if viewing footnote)
   if (mappedInput.wasReleased(MappedInputManager::Button::Back) &&
       mappedInput.getHeldTime() < ReaderUtils::GO_HOME_MS) {
+    aaRefinePending = false;  // WODLE-PORT: nav cancels pending AA refine
     if (footnoteDepth > 0) {
       restoreSavedPosition();
       return;
@@ -320,6 +343,11 @@ void EpubReaderActivity::loop() {
   if (!prevTriggered && !nextTriggered) {
     return;
   }
+
+  // WODLE-PORT: any page-turn input (normal turn, chapter skip, orientation
+  // change, end-of-book nav) cancels the pending AA refine for the current page;
+  // renderContents() re-arms it for whatever page is rendered next.
+  aaRefinePending = false;
 
   // At end of the book, forward button goes home and back button returns to last page
   if (currentSpineIndex > 0 && currentSpineIndex >= epub->getSpineItemsCount()) {
@@ -664,6 +692,9 @@ void EpubReaderActivity::toggleAutoPageTurn(const uint8_t selectedPageTurnOption
 }
 
 void EpubReaderActivity::pageTurn(bool isForwardTurn) {
+  // WODLE-PORT: cancel any pending AA refine for the page we are leaving so rapid
+  // flipping never pays the gray cost (renderContents() re-arms it per page).
+  aaRefinePending = false;
   if (isForwardTurn) {
     if (section->currentPage < section->pageCount - 1) {
       section->currentPage++;
@@ -955,121 +986,138 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int or
       renderer.displayBuffer(HalDisplay::HALF_REFRESH);
     }
     // The image's own page is handled above and doesn't count toward the full
-    // refresh cadence. But the grayscale pass below leaves gray charge in the
+    // refresh cadence. But a later grayscale pass leaves gray charge in the
     // image region that a plain fast diff on the *next* page can't clear, so
     // text there ghosts gray (#2190). Force the next ordinary page onto the
     // HALF ghost-cleanup path, which drives every pixel to its target
     // regardless of residue.
     pagesUntilFullRefresh = 1;
-  } else if (!SETTINGS.textAntiAliasing) {
+    const auto tEnd = millis();
+    LOG_DBG("ERS", "Page render (image AA): prewarm=%lums bw_render=%lums total=%lums", tPrewarm - t0,
+            tBwRender - tPrewarm, tEnd - t0);
+  } else if (SETTINGS.textAntiAliasing) {
+    // WODLE-PORT: deferred AA. Show the BW page instantly via a fast DU refresh,
+    // then arm the deferred grayscale pass. loop() runs refineCurrentPageAA()
+    // once the reader dwells (DEFERRED_AA_DWELL_MS); a page turn / nav cancels the
+    // pending refine so rapid flipping never pays the slow full-frame 4-gray
+    // waveform. This path also runs on boot-resume, so the page is always shown
+    // immediately (never left blank). The deferred pass re-loads + re-renders the
+    // current page itself, so stash the oriented margins it needs.
+    renderer.displayBuffer(HalDisplay::FAST_REFRESH);
+    aaRefinePending = true;
+    lastRenderMs = millis();
+    aaMarginTop = orientedMarginTop;
+    aaMarginLeft = orientedMarginLeft;
+    const auto tEnd = millis();
+    LOG_DBG("ERS", "Page render (deferred AA armed): prewarm=%lums bw_render=%lums display=%lums total=%lums",
+            tPrewarm - t0, tBwRender - tPrewarm, tEnd - tBwRender, tEnd - t0);
+  } else {
     ReaderUtils::displayWithRefreshCycle(renderer, pagesUntilFullRefresh);
+    const auto tEnd = millis();
+    LOG_DBG("ERS", "Page render: prewarm=%lums bw_render=%lums display=%lums total=%lums", tPrewarm - t0,
+            tBwRender - tPrewarm, tEnd - tBwRender, tEnd - t0);
   }
-  // WODLE-PORT: with AA on (non-image), the grayscale pass below is the SINGLE
-  // on-screen refresh for this page — its 4-gray waveform drives every cell to
-  // target. Doing a BW display here first caused the GC-flash + gray-flash
-  // double refresh users saw on every page turn.
-  const auto tDisplay = millis();
+}
 
-  // Tiled grayscale: render each plane band-by-band into a small scratch and
-  // stream straight to the controller, leaving the BW framebuffer intact so no
-  // full-frame storeBwBuffer is needed; controller RAM is re-synced from the
-  // live framebuffer afterward. The page is re-rendered ceil(H/STRIP_ROWS) times
-  // per plane, but renderCharImpl culls out-of-band glyphs before decode so the
-  // cost stays close to one render. Both text (drawPixel) and images
-  // (DirectPixelWriter) honor the active strip target.
-  if (SETTINGS.textAntiAliasing && renderer.supportsStripGrayscale()) {
+// WODLE-PORT: deferred grayscale AA pass for the current page. Re-loads the page
+// from the section file and re-renders it: first the BW frame (so storeBwBuffer()
+// captures the correct shadow that displayGrayBuffer() composes from), then the
+// two grayscale planes, then displays the 4-gray result. Runs from loop() under a
+// RenderLock once the dwell timer elapses. Supports both the tiled-strip path and
+// the fallback (full-frame storeBwBuffer) path.
+void EpubReaderActivity::refineCurrentPageAA() {
+  if (!section) {
+    return;
+  }
+  const auto page = section->loadPageFromSectionFile();
+  if (!page) {
+    LOG_ERR("ERS", "Deferred AA: failed to load current page; skipping refine");
+    return;
+  }
+  // Image pages have their own non-deferred technique; never refine them here.
+  if (page->hasImages()) {
+    return;
+  }
+
+  const int orientedMarginTop = aaMarginTop;
+  const int orientedMarginLeft = aaMarginLeft;
+
+  // Prewarm fonts for this page (scan pass) before rendering glyphs.
+  auto* fcm = renderer.getFontCacheManager();
+  auto scope = fcm->createPrewarmScope();
+  page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop);  // scan pass
+  scope.endScanAndPrewarm();
+
+  const auto tStart = millis();
+
+  // Re-render the BW page into the framebuffer. The strip path re-syncs controller
+  // RAM from the live framebuffer (cleanupGrayscaleWithFrameBuffer); the fallback
+  // path captures it via storeBwBuffer(). Either way the BW frame must be current
+  // here — other draws (e.g. partial status-bar clock) may have touched it since
+  // the page-turn DU.
+  renderer.setRenderMode(GfxRenderer::BW);
+  renderer.clearScreen();
+  page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop);
+  renderStatusBar();
+
+  // Tiled grayscale: stream each plane band-by-band, leaving the BW framebuffer
+  // intact; re-sync controller RAM from it afterward.
+  if (renderer.supportsStripGrayscale()) {
     constexpr int STRIP_ROWS = 80;
     const int gh = renderer.getDisplayHeight();
     const int gwBytes = renderer.getDisplayWidthBytes();
 
     auto scratch = makeUniqueNoThrow<uint8_t[]>(static_cast<size_t>(gwBytes) * STRIP_ROWS);
     if (!scratch) {
-      LOG_ERR("ERS", "OOM: grayscale strip scratch (%d bytes); skipping AA this page", gwBytes * STRIP_ROWS);
-    } else {
-      // Bands may be streamed in any order: X4 windows each via setRamArea, X3
-      // via PTL.
-      renderer.setRenderMode(GfxRenderer::GRAYSCALE_LSB);
-      for (int y = 0; y < gh; y += STRIP_ROWS) {
-        const int rows = (gh - y < STRIP_ROWS) ? (gh - y) : STRIP_ROWS;
-        renderer.beginStripTarget(scratch.get(), y, rows);
-        renderer.clearScreen(0x00);
-        page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop);
-        renderer.endStripTarget();
-        renderer.writeGrayscalePlaneStrip(true, scratch.get(), y, rows);
-      }
-      const auto tGrayLsb = millis();
-
-      // MSB plane.
-      renderer.setRenderMode(GfxRenderer::GRAYSCALE_MSB);
-      for (int y = 0; y < gh; y += STRIP_ROWS) {
-        const int rows = (gh - y < STRIP_ROWS) ? (gh - y) : STRIP_ROWS;
-        renderer.beginStripTarget(scratch.get(), y, rows);
-        renderer.clearScreen(0x00);
-        page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop);
-        renderer.endStripTarget();
-        renderer.writeGrayscalePlaneStrip(false, scratch.get(), y, rows);
-      }
-      const auto tGrayMsb = millis();
-
-      renderer.setRenderMode(GfxRenderer::BW);
-      renderer.displayGrayBuffer();
-      const auto tGrayDisplay = millis();
-
-      // BW framebuffer is intact; re-sync controller RAM for the next
-      // differential page turn directly from it.
-      renderer.cleanupGrayscaleWithFrameBuffer();
-      const auto tCleanup = millis();
-
-      const auto tEnd = millis();
-      LOG_DBG("ERS",
-              "Page render (tiled): prewarm=%lums bw_render=%lums display=%lums gray_lsb=%lums "
-              "gray_msb=%lums gray_display=%lums cleanup=%lums total=%lums",
-              tPrewarm - t0, tBwRender - tPrewarm, tDisplay - tBwRender, tGrayLsb - tDisplay, tGrayMsb - tGrayLsb,
-              tGrayDisplay - tGrayMsb, tCleanup - tGrayDisplay, tEnd - t0);
+      LOG_ERR("ERS", "Deferred AA OOM: strip scratch (%d bytes); skipping", gwBytes * STRIP_ROWS);
+      return;
     }
-  } else {
-    // Fallback path for a controller without strip support. grayscale rendering
-    // TODO: Only do this if font supports it
-    if (SETTINGS.textAntiAliasing) {
-      // Save the BW frame before the grayscale passes overwrite it, restore
-      // after. Only needed when grayscale actually renders.
-      renderer.storeBwBuffer();
-      const auto tBwStore = millis();
-
+    renderer.setRenderMode(GfxRenderer::GRAYSCALE_LSB);
+    for (int y = 0; y < gh; y += STRIP_ROWS) {
+      const int rows = (gh - y < STRIP_ROWS) ? (gh - y) : STRIP_ROWS;
+      renderer.beginStripTarget(scratch.get(), y, rows);
       renderer.clearScreen(0x00);
-      renderer.setRenderMode(GfxRenderer::GRAYSCALE_LSB);
       page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop);
-      renderer.copyGrayscaleLsbBuffers();
-      const auto tGrayLsb = millis();
-
-      // Render and copy to MSB buffer
-      renderer.clearScreen(0x00);
-      renderer.setRenderMode(GfxRenderer::GRAYSCALE_MSB);
-      page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop);
-      renderer.copyGrayscaleMsbBuffers();
-      const auto tGrayMsb = millis();
-
-      // display grayscale part
-      renderer.displayGrayBuffer();
-      const auto tGrayDisplay = millis();
-      renderer.setRenderMode(GfxRenderer::BW);
-      renderer.restoreBwBuffer();
-      const auto tBwRestore = millis();
-
-      const auto tEnd = millis();
-      LOG_DBG("ERS",
-              "Page render: prewarm=%lums bw_render=%lums display=%lums bw_store=%lums "
-              "gray_lsb=%lums gray_msb=%lums gray_display=%lums bw_restore=%lums total=%lums",
-              tPrewarm - t0, tBwRender - tPrewarm, tDisplay - tBwRender, tBwStore - tDisplay, tGrayLsb - tBwStore,
-              tGrayMsb - tGrayLsb, tGrayDisplay - tGrayMsb, tBwRestore - tGrayDisplay, tEnd - t0);
-    } else {
-      // No anti-aliasing: BW frame already displayed above, no grayscale to
-      // render, so no save/restore.
-      const auto tEnd = millis();
-      LOG_DBG("ERS", "Page render: prewarm=%lums bw_render=%lums display=%lums total=%lums", tPrewarm - t0,
-              tBwRender - tPrewarm, tDisplay - tBwRender, tEnd - t0);
+      renderer.endStripTarget();
+      renderer.writeGrayscalePlaneStrip(true, scratch.get(), y, rows);
     }
+    renderer.setRenderMode(GfxRenderer::GRAYSCALE_MSB);
+    for (int y = 0; y < gh; y += STRIP_ROWS) {
+      const int rows = (gh - y < STRIP_ROWS) ? (gh - y) : STRIP_ROWS;
+      renderer.beginStripTarget(scratch.get(), y, rows);
+      renderer.clearScreen(0x00);
+      page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop);
+      renderer.endStripTarget();
+      renderer.writeGrayscalePlaneStrip(false, scratch.get(), y, rows);
+    }
+    renderer.setRenderMode(GfxRenderer::BW);
+    renderer.displayGrayBuffer();
+    // BW framebuffer is intact; re-sync controller RAM for the next differential
+    // page turn directly from it.
+    renderer.cleanupGrayscaleWithFrameBuffer();
+    LOG_DBG("ERS", "Deferred AA refine (tiled) total=%lums", millis() - tStart);
+    return;
   }
+
+  // Fallback path (no strip support): capture the BW shadow (framebuffer already
+  // holds the current BW page from the re-render above) so displayGrayBuffer()
+  // composes from it, then render both grayscale planes and restore.
+  renderer.storeBwBuffer();
+
+  renderer.clearScreen(0x00);
+  renderer.setRenderMode(GfxRenderer::GRAYSCALE_LSB);
+  page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop);
+  renderer.copyGrayscaleLsbBuffers();
+
+  renderer.clearScreen(0x00);
+  renderer.setRenderMode(GfxRenderer::GRAYSCALE_MSB);
+  page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop);
+  renderer.copyGrayscaleMsbBuffers();
+
+  renderer.displayGrayBuffer();
+  renderer.setRenderMode(GfxRenderer::BW);
+  renderer.restoreBwBuffer();
+  LOG_DBG("ERS", "Deferred AA refine total=%lums", millis() - tStart);
 }
 
 void EpubReaderActivity::renderStatusBar() const {

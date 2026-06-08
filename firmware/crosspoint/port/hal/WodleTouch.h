@@ -29,6 +29,16 @@ struct Frame
     int holdButton = -1;           /* stationary hold in progress -> held this frame */
     bool holdReleased = false;     /* the hold ended this frame */
     unsigned long holdStartMs = 0; /* touch-down time of the active hold */
+    /* WODLE-PORT: raw tap/hold coordinates alongside the synthesized button,
+     * the foundation for direct tap-to-select. -1 = no coordinate this frame.
+     * These are LOGICAL PORTRAIT coordinates (x in [0,SCREEN_W), y in
+     * [0,SCREEN_H)) — already through readTouch's SWAP/MIRROR macros, same
+     * space TapClassifier zones in. Non-portrait orientation mapping (the
+     * reader can rotate) is a later concern for the consumer, not this seam. */
+    int tapX = -1;  /* x of a completed tap (set with tapButton on a Tap) */
+    int tapY = -1;  /* y of a completed tap */
+    int holdX = -1; /* x of touch-down for an active stationary hold */
+    int holdY = -1; /* y of touch-down for an active stationary hold */
 };
 
 /* Poll once per input frame. */

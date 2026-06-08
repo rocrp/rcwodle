@@ -152,6 +152,10 @@ Frame poll()
         {
             frame.holdButton = s_holdBtn;
             frame.holdStartMs = s_downAtMs;
+            /* WODLE-PORT: expose the hold's touch-down coords (logical portrait)
+             * alongside the synthesized button — additive, button path unchanged */
+            frame.holdX = s_downX;
+            frame.holdY = s_downY;
         }
         return frame;
     }
@@ -175,6 +179,11 @@ Frame poll()
     {
     case Gesture::Tap:
         frame.tapButton = TapClassifier::zoneButton(s_downX, s_downY);
+        /* WODLE-PORT: also expose the raw tap coords (logical portrait) so an
+         * activity can do direct tap-to-select; the zone->button synthesis above
+         * is untouched, so button navigation keeps working as before. */
+        frame.tapX = s_downX;
+        frame.tapY = s_downY;
         break;
     case Gesture::SwipeLeft:
     case Gesture::SwipeRight:

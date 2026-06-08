@@ -9,6 +9,7 @@
 
 #include "CrossPointSettings.h"
 #include "MappedInputManager.h"
+#include "TapClassifier.h"  // WODLE-PORT: TOP_STRIP_PX for top-strip tap-back
 #include "components/UITheme.h"
 #include "fontIds.h"
 
@@ -57,15 +58,72 @@ void TxtReaderChapterSelectionActivity::onEnter() {
   requestUpdate();
 }
 
+// WODLE-PORT: shared Confirm/tap activation — resolve the page for the selected chapter.
+void TxtReaderChapterSelectionActivity::activateSelected() {
+  const int totalItems = static_cast<int>(chapters.size());
+  if (!chapters.empty() && selectorIndex >= 0 && selectorIndex < totalItems) {
+    setResult(PageResult{static_cast<uint32_t>(findPageForOffset(chapters[selectorIndex].offset))});
+    finish();
+  }
+}
+
+// WODLE-PORT: bespoke hit-test mirroring render()'s custom row layout (this screen does
+// not use GUI.drawList). Rows start at 60+contentY, each rowHeight() tall, paged by
+// getPageItems(). Returns the absolute chapter index under the tap, or -1.
+int TxtReaderChapterSelectionActivity::hitTestChapter(int tapX, int tapY) const {
+  const int totalItems = static_cast<int>(chapters.size());
+  if (totalItems <= 0) return -1;
+
+  const auto pageWidth = renderer.getScreenWidth();
+  const auto orientation = renderer.getOrientation();
+  const bool isLandscapeCw = orientation == GfxRenderer::Orientation::LandscapeClockwise;
+  const bool isLandscapeCcw = orientation == GfxRenderer::Orientation::LandscapeCounterClockwise;
+  const bool isPortraitInverted = orientation == GfxRenderer::Orientation::PortraitInverted;
+  const int hintGutterWidth = (isLandscapeCw || isLandscapeCcw) ? 30 : 0;
+  const int contentX = isLandscapeCw ? hintGutterWidth : 0;
+  const int contentWidth = pageWidth - hintGutterWidth;
+  const int contentY = isPortraitInverted ? 50 : 0;
+  const int listTop = 60 + contentY;
+  const int row = rowHeight();
+  const int pageItems = getPageItems();
+  if (row <= 0 || pageItems <= 0) return -1;
+
+  if (tapX < contentX || tapX >= contentX + contentWidth) return -1;
+  if (tapY < listTop) return -1;
+  const int visibleRow = (tapY - listTop) / row;
+  if (visibleRow < 0 || visibleRow >= pageItems) return -1;
+
+  const int pageStartIndex = selectorIndex / pageItems * pageItems;
+  const int index = pageStartIndex + visibleRow;
+  if (index < pageStartIndex || index >= totalItems || index >= pageStartIndex + pageItems) return -1;
+  return index;
+}
+
 void TxtReaderChapterSelectionActivity::loop() {
   const int pageItems = getPageItems();
   const int totalItems = static_cast<int>(chapters.size());
 
-  if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
-    if (!chapters.empty() && selectorIndex >= 0 && selectorIndex < totalItems) {
-      setResult(PageResult{static_cast<uint32_t>(findPageForOffset(chapters[selectorIndex].offset))});
-      finish();
+  // WODLE-PORT: direct tap-to-select. consumeTap coords are logical-PORTRAIT; this reader
+  // sub-activity inherits the reader's orientation, so tap-to-select is gated on Portrait
+  // (full rotated-orientation tap mapping is a future enhancement). A hit selects+swallows;
+  // a non-top-strip miss is swallowed (so a center-zone miss can't synthesize Confirm and
+  // open the highlighted chapter); a TOP-STRIP miss FALLS THROUGH so the synthesized BACK
+  // zone button reaches the Back handler below.
+  if (renderer.getOrientation() == GfxRenderer::Orientation::Portrait) {
+    int tx, ty;
+    if (mappedInput.consumeTap(tx, ty)) {
+      const int n = hitTestChapter(tx, ty);
+      if (n >= 0) {
+        selectorIndex = n;
+        activateSelected();  // same activation as Confirm
+        return;
+      }
+      if (ty >= TapClassifier::TOP_STRIP_PX) return;  // swallow non-top-strip miss; top-strip falls through to BACK
     }
+  }
+
+  if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
+    activateSelected();
     return;
   }
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {

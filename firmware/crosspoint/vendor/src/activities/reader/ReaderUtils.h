@@ -5,6 +5,8 @@
 #include <HalTiltSensor.h>
 #include <Logging.h>
 
+#include <utility>  // WODLE-PORT: std::forward in renderDeferredAA
+
 #include "MappedInputManager.h"
 
 namespace ReaderUtils {
@@ -13,6 +15,12 @@ constexpr unsigned long GO_HOME_MS = 1000;
 constexpr unsigned long SKIP_HOLD_MS = 700;
 constexpr unsigned long BOOKMARK_HOLD_MS = 400;
 constexpr unsigned long BOOKMARK_MESSAGE_DURATION_MS = 2500;
+
+// WODLE-PORT: deferred anti-aliasing. A page turn shows the BW page instantly via
+// a fast DU refresh, then sharpens to 4-gray only after the reader has dwelled on
+// the page for this long (i.e. stopped flipping). Rapid flipping never pays the
+// slow full-frame grayscale waveform.
+constexpr unsigned long DEFERRED_AA_DWELL_MS = 350;
 
 inline void applyOrientation(GfxRenderer& renderer, const uint8_t orientation) {
   switch (orientation) {
@@ -96,6 +104,21 @@ void renderAntiAliased(GfxRenderer& renderer, RenderFn&& renderFn) {
   renderer.setRenderMode(GfxRenderer::BW);
 
   renderer.restoreBwBuffer();
+}
+
+// WODLE-PORT: deferred grayscale AA pass, run from loop() after the dwell timer
+// once the reader stops flipping. The framebuffer at this point holds whatever was
+// last drawn, so we MUST re-render the BW page first: renderAntiAliased() calls
+// storeBwBuffer() to capture the BW shadow that displayGrayBuffer() composes its
+// planes from. bwFn draws the page in BW (content + status bar); grayFn re-renders
+// only the page content for each grayscale plane (status bar/overlays excluded,
+// matching renderAntiAliased's contract).
+template <typename BwFn, typename GrayFn>
+void renderDeferredAA(GfxRenderer& renderer, BwFn&& bwFn, GrayFn&& grayFn) {
+  renderer.setRenderMode(GfxRenderer::BW);
+  renderer.clearScreen();
+  bwFn();  // BW page back into the framebuffer so storeBwBuffer() captures it
+  renderAntiAliased(renderer, std::forward<GrayFn>(grayFn));
 }
 
 }  // namespace ReaderUtils

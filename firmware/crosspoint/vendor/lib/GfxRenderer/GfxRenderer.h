@@ -137,6 +137,12 @@ class GfxRenderer {
   void setOrientation(const Orientation o) { orientation = o; }
   Orientation getOrientation() const { return orientation; }
 
+  // WODLE-PORT: single source of truth for the logical->physical (panel)
+  // coordinate transform. Raw writers that precompute their own transform
+  // (DirectPixelWriter) and helpers (drawIcon) derive from this so the mapping
+  // can never drift across copies — that drift was the horizontal-mirror bug.
+  void toPhysical(int x, int y, int& phyX, int& phyY) const;
+
   // Fading fix control
   void setFadingFix(const bool enabled) { fadingFix = enabled; }
 

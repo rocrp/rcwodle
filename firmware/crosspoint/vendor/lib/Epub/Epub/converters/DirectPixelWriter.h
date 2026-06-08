@@ -42,58 +42,21 @@ struct DirectPixelWriter {
     mode = renderer.getRenderMode();
     displayWidthBytes = renderer.getDisplayWidthBytes();
 
-    const int phyW = renderer.getDisplayWidth();
-    const int phyH = renderer.getDisplayHeight();
-
-    switch (renderer.getOrientation()) {
-      case GfxRenderer::Portrait:
-        // WODLE-PORT: phyX = y, phyY = x (gate 0 = left, un-mirrored — must
-        // match GfxRenderer::rotateCoordinates). Was phyY = (phyH-1) - x, which
-        // rendered images horizontally mirrored on wodle's UC8179C panel.
-        phyXBase = 0;
-        phyYBase = 0;
-        phyXStepX = 0;
-        phyYStepX = 1;
-        phyXStepY = 1;
-        phyYStepY = 0;
-        break;
-      case GfxRenderer::LandscapeClockwise:
-        // phyX = (phyW-1) - x, phyY = (phyH-1) - y
-        phyXBase = phyW - 1;
-        phyYBase = phyH - 1;
-        phyXStepX = -1;
-        phyYStepX = 0;
-        phyXStepY = 0;
-        phyYStepY = -1;
-        break;
-      case GfxRenderer::PortraitInverted:
-        // phyX = (phyW-1) - y, phyY = x
-        phyXBase = phyW - 1;
-        phyYBase = 0;
-        phyXStepX = 0;
-        phyYStepX = 1;
-        phyXStepY = -1;
-        phyYStepY = 0;
-        break;
-      case GfxRenderer::LandscapeCounterClockwise:
-        // phyX = x, phyY = y
-        phyXBase = 0;
-        phyYBase = 0;
-        phyXStepX = 1;
-        phyYStepX = 0;
-        phyXStepY = 0;
-        phyYStepY = 1;
-        break;
-      default:
-        // Fallback to LandscapeCounterClockwise (identity transform)
-        phyXBase = 0;
-        phyYBase = 0;
-        phyXStepX = 1;
-        phyYStepX = 0;
-        phyXStepY = 0;
-        phyYStepY = 1;
-        break;
-    }
+    // WODLE-PORT: derive the orientation transform from the single source of
+    // truth (GfxRenderer::toPhysical -> rotateCoordinates) so this precomputed
+    // hot-path copy can never drift from it. (A hand-kept duplicate here was
+    // the third copy of the transform and rendered images mirrored.) The
+    // transform is affine, so three probes give the base + per-axis steps.
+    int x0, y0, xX, yX, xY, yY;
+    renderer.toPhysical(0, 0, x0, y0);
+    renderer.toPhysical(1, 0, xX, yX);
+    renderer.toPhysical(0, 1, xY, yY);
+    phyXBase = x0;
+    phyYBase = y0;
+    phyXStepX = xX - x0;
+    phyYStepX = yX - y0;
+    phyXStepY = xY - x0;
+    phyYStepY = yY - y0;
   }
 
   // Call once per row before the column loop.

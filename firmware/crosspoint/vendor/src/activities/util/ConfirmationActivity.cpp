@@ -19,7 +19,10 @@ void ConfirmationActivity::onEnter() {
     safeHeading = renderer.truncatedText(fontId, heading.c_str(), maxWidth, EpdFontFamily::BOLD);
   }
   if (!body.empty()) {
-    safeBody = renderer.truncatedText(fontId, body.c_str(), maxWidth, EpdFontFamily::REGULAR);
+    // WODLE-PORT: body is the user/book/file name (e.g. "Delete <file>?",
+    // "Remove <title>") — route through uiFontFor so CJK names render.
+    bodyFontId = renderer.uiFontFor(fontId, body.c_str());
+    safeBody = renderer.truncatedText(bodyFontId, body.c_str(), maxWidth, EpdFontFamily::REGULAR);
   }
 
   int totalHeight = 0;
@@ -45,7 +48,8 @@ void ConfirmationActivity::render(RenderLock&& lock) {
 
   // Draw Body
   if (!safeBody.empty()) {
-    renderer.drawCenteredText(fontId, currentY, safeBody.c_str(), true, EpdFontFamily::REGULAR);
+    // WODLE-PORT: bodyFontId may be the SD fallback font (CJK name) — see onEnter.
+    renderer.drawCenteredText(bodyFontId, currentY, safeBody.c_str(), true, EpdFontFamily::REGULAR);
   }
 
   // Draw UI Elements

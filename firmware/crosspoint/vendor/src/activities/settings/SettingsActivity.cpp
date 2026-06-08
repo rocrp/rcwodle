@@ -21,6 +21,7 @@
 #include "SdCardFontSystem.h"
 #include "SettingsList.h"
 #include "StatusBarSettingsActivity.h"
+#include "TapClassifier.h"  // WODLE-PORT: TOP_STRIP_PX for top-strip tap-back
 #include "activities/util/IntervalSelectionActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -121,6 +122,28 @@ void SettingsActivity::onExit() {
 
 void SettingsActivity::loop() {
   bool hasChangedCategory = false;
+
+  // WODLE-PORT: direct tap-to-select. Handle the tap coord FIRST. A hit selects+activates
+  // and swallows the tap; a non-top-strip miss is swallowed (so a center-zone miss can't
+  // synthesize Confirm and toggle the highlighted row); a TOP-STRIP miss FALLS THROUGH so
+  // the synthesized BACK zone button reaches the Back handler below (top-strip tap = back).
+  {
+    int tx, ty;
+    if (mappedInput.consumeTap(tx, ty)) {
+      if (currentSettings != nullptr) {
+        const int n =
+            GUI.hitTestList(renderer, listRect(), settingsCount, selectedSettingIndex - 1, /*hasSubtitle=*/false, tx, ty);
+        if (n >= 0) {
+          // n is the absolute list index; the activity's selection is offset by 1 (index 0 = tab bar).
+          selectedSettingIndex = n + 1;
+          toggleCurrentSetting();  // same activation as Confirm on a list row
+          requestUpdate();
+          return;
+        }
+      }
+      if (ty >= TapClassifier::TOP_STRIP_PX) return;  // swallow non-top-strip miss; top-strip falls through to BACK
+    }
+  }
 
   // Handle actions with early return
   if (mappedInput.wasPressed(MappedInputManager::Button::Confirm)) {
@@ -317,11 +340,21 @@ void SettingsActivity::openSleepTimeoutPicker() {
       });
 }
 
+// WODLE-PORT: single source of truth for the settings list rect, used by both
+// render() (drawList) and loop() (tap hit-testing) so they stay pixel-identical.
+Rect SettingsActivity::listRect() const {
+  const auto pageWidth = renderer.getScreenWidth();
+  const auto pageHeight = renderer.getScreenHeight();
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  return Rect{0, metrics.topPadding + metrics.headerHeight + metrics.tabBarHeight + metrics.verticalSpacing, pageWidth,
+              pageHeight - (metrics.topPadding + metrics.headerHeight + metrics.tabBarHeight + metrics.buttonHintsHeight +
+                            metrics.verticalSpacing * 2)};
+}
+
 void SettingsActivity::render(RenderLock&&) {
   renderer.clearScreen();
 
   const auto pageWidth = renderer.getScreenWidth();
-  const auto pageHeight = renderer.getScreenHeight();
 
   const auto& metrics = UITheme::getInstance().getMetrics();
 
@@ -338,10 +371,7 @@ void SettingsActivity::render(RenderLock&&) {
 
   const auto& settings = *currentSettings;
   GUI.drawList(
-      renderer,
-      Rect{0, metrics.topPadding + metrics.headerHeight + metrics.tabBarHeight + metrics.verticalSpacing, pageWidth,
-           pageHeight - (metrics.topPadding + metrics.headerHeight + metrics.tabBarHeight + metrics.buttonHintsHeight +
-                         metrics.verticalSpacing * 2)},
+      renderer, listRect(),  // WODLE-PORT: shared rect (see listRect())
       settingsCount, selectedSettingIndex - 1,
       [&settings](int index) { return std::string(I18N.get(settings[index].nameId)); }, nullptr, nullptr,
       [&settings](int i) {

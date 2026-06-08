@@ -17,6 +17,9 @@ class ConfirmationActivity : public Activity {
 
   std::string safeHeading;
   std::string safeBody;
+  // WODLE-PORT: body is user/book/file text (filename, book title) — may be CJK
+  // the builtin UI font lacks. Resolved once in onEnter via uiFontFor.
+  int bodyFontId = UI_10_FONT_ID;
   int startY = 0;
   int lineHeight = 0;
 

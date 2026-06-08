@@ -392,6 +392,11 @@ void KeyboardEntryActivity::render(RenderLock&&) {
   }
 
   const bool isPassword = (inputType == InputType::Password);
+  // WODLE-PORT: the field content can be seeded with an existing value (filename,
+  // server URL) that contains CJK the builtin UI font lacks. Resolve one font for
+  // the whole contiguous display string (keeps the cursor/kerning math single-font)
+  // so it falls back to the SD reading font instead of rendering tofu.
+  const int fieldFont = renderer.uiFontFor(UI_12_FONT_ID, displayText.c_str());
   int availableWidth = pageWidth;
   if (gpio.deviceIsX3()) {
     availableWidth -= 2 * metrics.sideButtonHintsWidth;
@@ -408,7 +413,7 @@ void KeyboardEntryActivity::render(RenderLock&&) {
 
   int cursorCharWidth = 6;
   if (cursorPos < text.length()) {
-    int w = renderer.getTextWidth(UI_12_FONT_ID, text.substr(cursorPos, 1).c_str());
+    int w = renderer.getTextWidth(fieldFont, text.substr(cursorPos, 1).c_str());  // WODLE-PORT: fieldFont
     if (w > cursorCharWidth) cursorCharWidth = w;
   }
 
@@ -421,7 +426,7 @@ void KeyboardEntryActivity::render(RenderLock&&) {
 
   while (true) {
     std::string lineText = displayText.substr(lineStartIdx, lineEndIdx - lineStartIdx);
-    textWidth = renderer.getTextAdvanceX(UI_12_FONT_ID, lineText.c_str(), EpdFontFamily::REGULAR);
+    textWidth = renderer.getTextAdvanceX(fieldFont, lineText.c_str(), EpdFontFamily::REGULAR);  // WODLE-PORT: fieldFont
     if (textWidth <= maxLineWidth) {
       const bool isLastLine = (lineEndIdx == static_cast<int>(displayText.length()));
       bool isCursorLine = false;
@@ -433,14 +438,14 @@ void KeyboardEntryActivity::render(RenderLock&&) {
         } else {
           beforeCursor = displayText.substr(lineStartIdx, cursorPos - lineStartIdx);
         }
-        int beforeWidth = renderer.getTextAdvanceX(UI_12_FONT_ID, beforeCursor.c_str(), EpdFontFamily::REGULAR);
+        int beforeWidth = renderer.getTextAdvanceX(fieldFont, beforeCursor.c_str(), EpdFontFamily::REGULAR);
         int kernOffset = 0;
         if (cursorPos < displayText.length()) {
           std::string beforeAndCursor = beforeCursor + displayText.substr(cursorPos, 1);
           int beforeAndCursorWidth =
-              renderer.getTextAdvanceX(UI_12_FONT_ID, beforeAndCursor.c_str(), EpdFontFamily::REGULAR);
+              renderer.getTextAdvanceX(fieldFont, beforeAndCursor.c_str(), EpdFontFamily::REGULAR);
           int charAdvance =
-              renderer.getTextAdvanceX(UI_12_FONT_ID, displayText.substr(cursorPos, 1).c_str(), EpdFontFamily::REGULAR);
+              renderer.getTextAdvanceX(fieldFont, displayText.substr(cursorPos, 1).c_str(), EpdFontFamily::REGULAR);
           kernOffset = beforeAndCursorWidth - beforeWidth - charAdvance;
         }
         if (centerText) {
@@ -459,17 +464,18 @@ void KeyboardEntryActivity::render(RenderLock&&) {
         // displayText uses '*' for all chars; actual char may be wider than '*'.
         // Part 1: chars before cursor position
         const std::string part1 = displayText.substr(lineStartIdx, cursorPos - lineStartIdx);
-        renderer.drawText(UI_12_FONT_ID, lineStartX, inputStartY + inputHeight, part1.c_str());
+        renderer.drawText(fieldFont, lineStartX, inputStartY + inputHeight, part1.c_str());  // WODLE-PORT: fieldFont
         // Part 2: skip cursor slot (block + actual char drawn later)
         // Part 3: chars after cursor position (skip char under cursor), starting at cursorPixelX + cursorCharWidth
         const int afterStart = static_cast<int>(cursorPos) + (cursorPos < text.length() ? 1 : 0);
         const int afterEnd = lineEndIdx;
         if (afterStart < afterEnd) {
           const std::string part3 = displayText.substr(afterStart, afterEnd - afterStart);
-          renderer.drawText(UI_12_FONT_ID, cursorPixelX + cursorCharWidth, inputStartY + inputHeight, part3.c_str());
+          renderer.drawText(fieldFont, cursorPixelX + cursorCharWidth, inputStartY + inputHeight,
+                            part3.c_str());  // WODLE-PORT: fieldFont
         }
       } else {
-        renderer.drawText(UI_12_FONT_ID, lineStartX, inputStartY + inputHeight, lineText.c_str());
+        renderer.drawText(fieldFont, lineStartX, inputStartY + inputHeight, lineText.c_str());  // WODLE-PORT: fieldFont
       }
       if (lineEndIdx == displayText.length()) {
         break;
@@ -493,7 +499,7 @@ void KeyboardEntryActivity::render(RenderLock&&) {
     renderer.fillRect(cursorPixelX - blockPadding, cursorLineY, cursorCharWidth + blockPadding * 2, lineHeight, true);
     if (cursorPos < text.length()) {
       const char buf[2] = {text[cursorPos], '\0'};
-      renderer.drawText(UI_12_FONT_ID, cursorPixelX, cursorLineY, buf, false);
+      renderer.drawText(fieldFont, cursorPixelX, cursorLineY, buf, false);  // WODLE-PORT: fieldFont
     }
   } else if (cursorPos <= displayText.length()) {
     static constexpr int serifW = 3;

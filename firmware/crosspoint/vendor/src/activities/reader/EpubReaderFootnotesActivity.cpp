@@ -6,6 +6,7 @@
 #include <algorithm>
 
 #include "MappedInputManager.h"
+#include "TapClassifier.h"  // WODLE-PORT: TOP_STRIP_PX for top-strip tap-back
 #include "components/UITheme.h"
 #include "fontIds.h"
 
@@ -17,7 +18,59 @@ void EpubReaderFootnotesActivity::onEnter() {
 
 void EpubReaderFootnotesActivity::onExit() { Activity::onExit(); }
 
+// WODLE-PORT: shared Confirm/tap activation — return the selected footnote href.
+void EpubReaderFootnotesActivity::activateSelected() {
+  if (selectedIndex >= 0 && selectedIndex < static_cast<int>(footnotes.size())) {
+    setResult(FootnoteResult{footnotes[selectedIndex].href});
+    finish();
+  }
+}
+
+// WODLE-PORT: bespoke hit-test mirroring render()'s custom scrollOffset layout (this
+// screen does not use GUI.drawList). Rows start at 60+contentY, lineHeight=36, the first
+// visible row is footnotes[scrollOffset]. Returns the absolute footnote index, or -1.
+int EpubReaderFootnotesActivity::hitTestFootnote(int tapX, int tapY) const {
+  const int total = static_cast<int>(footnotes.size());
+  if (total <= 0) return -1;
+
+  const auto orientation = renderer.getOrientation();
+  const bool isPortraitInverted = orientation == GfxRenderer::Orientation::PortraitInverted;
+  const int contentY = isPortraitInverted ? 50 : 0;
+  constexpr int lineHeight = 36;
+  const int listTop = 60 + contentY;
+  const int visibleCount = std::max(1, (renderer.getScreenHeight() - contentY) / lineHeight);
+
+  // Selection highlight spans the full screen width, so accept any X within the screen.
+  if (tapX < 0 || tapX >= renderer.getScreenWidth()) return -1;
+  if (tapY < listTop) return -1;
+  const int visibleRow = (tapY - listTop) / lineHeight;
+  if (visibleRow < 0 || visibleRow >= visibleCount) return -1;
+
+  const int index = scrollOffset + visibleRow;
+  if (index < scrollOffset || index >= total || index >= scrollOffset + visibleCount) return -1;
+  return index;
+}
+
 void EpubReaderFootnotesActivity::loop() {
+  // WODLE-PORT: direct tap-to-select. consumeTap coords are logical-PORTRAIT; this reader
+  // sub-activity inherits the reader's orientation, so tap-to-select is gated on Portrait
+  // (full rotated-orientation tap mapping is a future enhancement). A hit selects+swallows;
+  // a non-top-strip miss is swallowed (so a center-zone miss can't synthesize Confirm and
+  // open the highlighted footnote); a TOP-STRIP miss FALLS THROUGH so the synthesized BACK
+  // zone button reaches the Back handler below.
+  if (renderer.getOrientation() == GfxRenderer::Orientation::Portrait) {
+    int tx, ty;
+    if (mappedInput.consumeTap(tx, ty)) {
+      const int n = hitTestFootnote(tx, ty);
+      if (n >= 0) {
+        selectedIndex = n;
+        activateSelected();  // same activation as Confirm
+        return;
+      }
+      if (ty >= TapClassifier::TOP_STRIP_PX) return;  // swallow non-top-strip miss; top-strip falls through to BACK
+    }
+  }
+
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
     ActivityResult result;
     result.isCancelled = true;
@@ -27,10 +80,7 @@ void EpubReaderFootnotesActivity::loop() {
   }
 
   if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
-    if (selectedIndex >= 0 && selectedIndex < static_cast<int>(footnotes.size())) {
-      setResult(FootnoteResult{footnotes[selectedIndex].href});
-      finish();
-    }
+    activateSelected();
     return;
   }
 
@@ -100,7 +150,9 @@ void EpubReaderFootnotesActivity::render(RenderLock&&) {
     if (label.empty()) {
       label = tr(STR_LINK);
     }
-    renderer.drawText(UI_10_FONT_ID, marginLeft, y + 4, label.c_str(), !isSelected);
+    // WODLE-PORT: footnote link text may be CJK — builtin UI font lacks the glyphs.
+    const auto font = renderer.uiFontFor(UI_10_FONT_ID, label.c_str());
+    renderer.drawText(font, marginLeft, y + 4, label.c_str(), !isSelected);
   }
 
   const auto labels = mappedInput.mapLabels(tr(STR_BACK), tr(STR_SELECT), "", "");

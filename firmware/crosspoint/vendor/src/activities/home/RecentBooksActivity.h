@@ -7,6 +7,7 @@
 
 #include "RecentBooksStore.h"
 #include "activities/Activity.h"
+#include "components/themes/BaseTheme.h"  // WODLE-PORT: Rect for listRect()
 #include "util/ButtonNavigator.h"
 
 class RecentBooksActivity final : public Activity {
@@ -27,6 +28,8 @@ class RecentBooksActivity final : public Activity {
 
   // Show an OK/Cancel prompt to remove the given book from the Recent Books list.
   void promptRemoveBook(const std::string& path, const std::string& title);
+
+  Rect listRect() const;  // WODLE-PORT: shared by render() + tap hit-testing
 
  public:
   explicit RecentBooksActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)

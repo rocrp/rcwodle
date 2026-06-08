@@ -183,6 +183,14 @@ class BaseTheme {
                                const char* btn4) const;
   virtual void drawSideButtonHints(const GfxRenderer& renderer, const char* topBtn, const char* bottomBtn) const;
   virtual int getListPageItems(int contentHeight, bool hasSubtitle) const;
+  // WODLE-PORT: tap-to-select. Mirrors drawList's row layout math (rowHeight/pageItems/
+  // pageStartIndex) to resolve a logical-portrait tap (tapX,tapY) to the ABSOLUTE item
+  // index under the finger, or -1 if the tap is outside the list rect / below the last
+  // visible row / past itemCount / in a reserved gutter. No rendering.
+  // WODLE-PORT: takes renderer so themes with renderer-derived (dynamic) row heights can
+  // mirror drawList exactly; themes with static metrics may ignore it.
+  virtual int hitTestList(const GfxRenderer& renderer, Rect rect, int itemCount, int selectedIndex, bool hasSubtitle,
+                          int tapX, int tapY) const;
   virtual void drawList(const GfxRenderer& renderer, Rect rect, int itemCount, int selectedIndex,
                         const std::function<std::string(int index)>& rowTitle,
                         const std::function<std::string(int index)>& rowSubtitle = nullptr,

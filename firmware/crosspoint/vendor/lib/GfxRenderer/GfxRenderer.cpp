@@ -168,6 +168,10 @@ static inline void rotateCoordinates(const GfxRenderer::Orientation orientation,
   }
 }
 
+void GfxRenderer::toPhysical(const int x, const int y, int& phyX, int& phyY) const {
+  rotateCoordinates(orientation, x, y, &phyX, &phyY, panelWidth, panelHeight);
+}
+
 enum class TextRotation { None, Rotated90CW };
 
 // Shared glyph rendering logic for normal and rotated text.
@@ -928,10 +932,18 @@ void GfxRenderer::drawImage(const uint8_t bitmap[], const int x, const int y, co
 }
 
 void GfxRenderer::drawIcon(const uint8_t bitmap[], const int x, const int y, const int width, const int height) const {
-  // WODLE-PORT: this open-codes the Portrait transform and must match
-  // rotateCoordinates (gate 0 = left). Was getScreenWidth()-width-x, which kept
-  // icons mirrored after the rotateCoordinates un-mirror fix.
-  display.drawImageTransparent(bitmap, y, x, height, width);
+  // WODLE-PORT: derive the physical rect from the single transform source
+  // (toPhysical) instead of open-coding it — keeps icons consistent with all
+  // other rendering and correct in every orientation. (Was getScreenWidth()-
+  // width-x, which rendered icons mirrored on this panel.)
+  int px0, py0, px1, py1;
+  toPhysical(x, y, px0, py0);
+  toPhysical(x + width - 1, y + height - 1, px1, py1);
+  const int pxMin = px0 < px1 ? px0 : px1;
+  const int pyMin = py0 < py1 ? py0 : py1;
+  const int pw = (px0 < px1 ? px1 - px0 : px0 - px1) + 1;
+  const int ph = (py0 < py1 ? py1 - py0 : py0 - py1) + 1;
+  display.drawImageTransparent(bitmap, pxMin, pyMin, pw, ph);
 }
 
 void GfxRenderer::drawBitmap(const Bitmap& bitmap, const int x, const int y, const int maxWidth, const int maxHeight,
@@ -1699,6 +1711,12 @@ bool GfxRenderer::storeBwBuffer() {
   }
 
   LOG_DBG("GFX", "Stored BW buffer in %zu chunks (%zu bytes each)", bwBufferChunks.size(), BW_BUFFER_CHUNK_SIZE);
+  // WODLE-PORT: stage the HalDisplay BW shadow that displayGrayBuffer() composes
+  // its absolute gray planes from. The AA reader path now skips the visible BW
+  // refresh (single gray refresh per page), and that refresh was the only other
+  // place the shadow was captured — so capture it here, while the framebuffer
+  // still holds the BW page (every AA path calls storeBwBuffer() at that point).
+  display.captureBwShadow();
   return true;
 }
 

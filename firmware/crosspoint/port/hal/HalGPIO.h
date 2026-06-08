@@ -44,6 +44,16 @@ public:
     bool wasReleased(uint8_t buttonIndex) const;
     bool wasAnyReleased() const;
     unsigned long getHeldTime() const;
+
+    /* WODLE-PORT: raw tap coordinate delivery, additive to the zone->button
+     * synthesis (a tap STILL produces its button edge). Edge semantics matching
+     * wasPressed/wasReleased: returns true at most once per physical tap
+     * (clear-on-read) and writes the tap's logical-portrait (x,y) into the out
+     * params; returns false (leaving x/y untouched) when no tap is pending.
+     * Coordinates are logical portrait (x in [0,528), y in [0,792)); mapping for
+     * non-portrait orientations (the reader can rotate) is a later concern for
+     * the caller. Foundation for direct tap-to-select. */
+    bool consumeTap(int& x, int& y);
     unsigned long getPowerButtonHeldTime() const;
 
     void startDeepSleep();

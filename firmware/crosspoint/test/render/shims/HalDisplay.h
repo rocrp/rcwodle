@@ -56,6 +56,7 @@ public:
     void copyGrayscaleMsbBuffers(const uint8_t *) {}
     void cleanupGrayscaleBuffers(const uint8_t *) {}
     void displayGrayBuffer(bool = false) {}
+    void captureBwShadow() {}
     void writeGrayscalePlaneStrip(bool, const uint8_t *, uint16_t, uint16_t) {}
     bool supportsStripGrayscale() const { return false; }
 
