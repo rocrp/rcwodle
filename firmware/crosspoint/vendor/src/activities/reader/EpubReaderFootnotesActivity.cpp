@@ -137,6 +137,17 @@ void EpubReaderFootnotesActivity::render(RenderLock&&) {
   if (selectedIndex < scrollOffset) scrollOffset = selectedIndex;
   if (selectedIndex >= scrollOffset + visibleCount) scrollOffset = selectedIndex - visibleCount + 1;
 
+  // WODLE-PORT: pick ONE font for the whole list. Resolving uiFontFor per row
+  // gave rows mixed sizes (UI_10 for ASCII/covered-CJK rows vs the larger SD
+  // reading font for uncovered-CJK rows) — the size inconsistency the user saw.
+  // Resolve over all visible labels so the entire list is uniform: if ANY label
+  // needs the SD fallback, every row uses it.
+  std::string allLabels;
+  for (int i = scrollOffset; i < static_cast<int>(footnotes.size()) && i < scrollOffset + visibleCount; i++) {
+    allLabels += (footnotes[i].number[0] == '\0') ? tr(STR_LINK) : footnotes[i].number;
+  }
+  const auto listFont = renderer.uiFontFor(UI_10_FONT_ID, allLabels.c_str());
+
   for (int i = scrollOffset; i < static_cast<int>(footnotes.size()) && i < scrollOffset + visibleCount; i++) {
     const int y = 60 + contentY + (i - scrollOffset) * lineHeight;
     const bool isSelected = (i == selectedIndex);
@@ -150,9 +161,7 @@ void EpubReaderFootnotesActivity::render(RenderLock&&) {
     if (label.empty()) {
       label = tr(STR_LINK);
     }
-    // WODLE-PORT: footnote link text may be CJK — builtin UI font lacks the glyphs.
-    const auto font = renderer.uiFontFor(UI_10_FONT_ID, label.c_str());
-    renderer.drawText(font, marginLeft, y + 4, label.c_str(), !isSelected);
+    renderer.drawText(listFont, marginLeft, y + 4, label.c_str(), !isSelected);
   }
 
   const auto labels = mappedInput.mapLabels(tr(STR_BACK), tr(STR_SELECT), "", "");

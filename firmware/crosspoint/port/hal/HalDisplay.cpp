@@ -801,7 +801,17 @@ void HalDisplay::cleanupGrayscaleBuffers(const uint8_t *bwBuffer)
     epdWriteBuf(bwBuffer, BUFFER_SIZE);
     epdCmd(0x10);
     epdWriteBuf(bwBuffer, BUFFER_SIZE);
-    if (!s_busError) s_ramsHoldGrayPlanes = false;
+    if (!s_busError)
+    {
+        s_ramsHoldGrayPlanes = false;
+        /* WODLE-PORT: both RAMs now hold the BW frame again (valid DU base), so
+         * the next page turn can be a true fast DU. displayGrayBuffer() pinned
+         * s_fastSinceGc at the cap (correct only when no cleanup follows); on the
+         * reader's deferred-AA path cleanup ALWAYS follows, so clear the pin —
+         * otherwise the next turn's FAST_REFRESH is silently promoted to a full
+         * GC, giving the "two full refreshes per page" the user reported. */
+        s_fastSinceGc = 0;
+    }
 }
 
 void HalDisplay::writeGrayscalePlaneStrip(bool, const uint8_t *, uint16_t, uint16_t) {}

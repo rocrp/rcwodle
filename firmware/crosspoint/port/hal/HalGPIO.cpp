@@ -157,7 +157,17 @@ void HalGPIO::update()
     {
         unsigned long held = now - s_pwr.pressedAtMs;
         if (held < PWR_SHORT_MAX_MS)
+        {
+            /* WODLE-PORT: emit BOTH a press AND a release edge for CONFIRM, the
+             * same as a touch tap (see below). The reader/home activities read
+             * wasReleased(Confirm) while the settings family reads
+             * wasPressed(Confirm); the PWR button previously emitted only the
+             * press edge, so physical Select was dead across the entire
+             * reader+home navigation (touch worked because it emits both). A PWR
+             * short-press is one discrete "confirm" event, exactly like a tap. */
             s_wasPressed[BTN_CONFIRM] = true;
+            s_wasReleased[BTN_CONFIRM] = true;
+        }
         s_wasReleased[BTN_POWER] = true;
     }
     if (pwrChanged && s_pwr.stable)
