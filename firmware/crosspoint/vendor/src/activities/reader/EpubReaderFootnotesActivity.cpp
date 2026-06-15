@@ -5,6 +5,7 @@
 
 #include <algorithm>
 
+#include "CrossPointSettings.h"  // WODLE-PORT: SETTINGS.getReaderFontId()
 #include "MappedInputManager.h"
 #include "TapClassifier.h"  // WODLE-PORT: TOP_STRIP_PX for top-strip tap-back
 #include "components/UITheme.h"
@@ -137,16 +138,11 @@ void EpubReaderFootnotesActivity::render(RenderLock&&) {
   if (selectedIndex < scrollOffset) scrollOffset = selectedIndex;
   if (selectedIndex >= scrollOffset + visibleCount) scrollOffset = selectedIndex - visibleCount + 1;
 
-  // WODLE-PORT: pick ONE font for the whole list. Resolving uiFontFor per row
-  // gave rows mixed sizes (UI_10 for ASCII/covered-CJK rows vs the larger SD
-  // reading font for uncovered-CJK rows) — the size inconsistency the user saw.
-  // Resolve over all visible labels so the entire list is uniform: if ANY label
-  // needs the SD fallback, every row uses it.
-  std::string allLabels;
-  for (int i = scrollOffset; i < static_cast<int>(footnotes.size()) && i < scrollOffset + visibleCount; i++) {
-    allLabels += (footnotes[i].number[0] == '\0') ? tr(STR_LINK) : footnotes[i].number;
-  }
-  const auto listFont = renderer.uiFontFor(UI_10_FONT_ID, allLabels.c_str());
+  // WODLE-PORT: use the SD READER font (the same one the book body uses) for the
+  // whole list. uiFontFor mixed the small builtin UI font (ASCII rows) with the
+  // larger SD font (CJK rows) at two sizes; the reader font renders CJK+Latin at
+  // the body's consistent proportions, which the user already reads fine.
+  const int listFont = SETTINGS.getReaderFontId();
 
   for (int i = scrollOffset; i < static_cast<int>(footnotes.size()) && i < scrollOffset + visibleCount; i++) {
     const int y = 60 + contentY + (i - scrollOffset) * lineHeight;
