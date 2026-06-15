@@ -14,6 +14,10 @@
 #include "WodleBattery.h"
 #include "WodleFrontlight.h"
 
+// WODLE-PORT: section-prefetch diagnostic, defined in vendor/src SectionPrefetcher.cpp.
+// Declared at file scope (external linkage) so the anon-namespace `wodle` handler links it.
+uint32_t wodlePrefetchBuildsDone();
+
 using WodleDebugCmdCore::KeyInject;
 using WodleDebugCmdCore::KeyQueue;
 
@@ -240,8 +244,8 @@ int cmdStat()
     {
         reply("temp_c=%d.%d rh=%d ", (int)tC, ((int)(tC * 10) % 10 + 10) % 10, (int)rh);
     }
-    reply("fl=%d%% clock_utc=%s keys_pending=%d nosleep=%d\n", WodleFrontlight::level(), clock, keysPending,
-               sleepInhibitedInternal() ? 1 : 0);
+    reply("fl=%d%% clock_utc=%s keys_pending=%d nosleep=%d prefetch=%u\n", WodleFrontlight::level(), clock, keysPending,
+               sleepInhibitedInternal() ? 1 : 0, (unsigned)wodlePrefetchBuildsDone());
     return 0;
 }
 

@@ -204,7 +204,12 @@ bool Section::createSectionFile(const int fontId, const float lineCompression, c
 
   LOG_DBG("SCT", "Streamed temp HTML to %s (%d bytes)", tmpHtmlPath.c_str(), fileSize);
 
-  if (!Storage.openFileForWrite("SCT", filePath, file)) {
+  // WODLE-PORT: write to a temp file and atomically rename on success, so a concurrent
+  // reader (e.g. the background SectionPrefetcher building the next chapter) never sees a
+  // partial .bin — only the complete old cache, nothing, or the complete new one. Also
+  // makes the cache crash-safe.
+  const std::string tmpBinPath = filePath + ".tmp";
+  if (!Storage.openFileForWrite("SCT", tmpBinPath, file)) {
     return false;
   }
   writeSectionFileHeader(fontId, lineCompression, extraParagraphSpacing, paragraphAlignment, viewportWidth,
@@ -254,7 +259,7 @@ bool Section::createSectionFile(const int fontId, const float lineCompression, c
     LOG_ERR("SCT", "Failed to parse XML and build pages");
     // Explicitly close() file before calling Storage.remove()
     file.close();
-    Storage.remove(filePath.c_str());
+    Storage.remove(tmpBinPath.c_str());
     if (cssParser) {
       cssParser->clear();
     }
@@ -276,7 +281,7 @@ bool Section::createSectionFile(const int fontId, const float lineCompression, c
     LOG_ERR("SCT", "Failed to write LUT due to invalid page positions");
     // Explicitly close() file before calling Storage.remove()
     file.close();
-    Storage.remove(filePath.c_str());
+    Storage.remove(tmpBinPath.c_str());
     return false;
   }
 
@@ -311,6 +316,16 @@ bool Section::createSectionFile(const int fontId, const float lineCompression, c
   file.close();
   if (cssParser) {
     cssParser->clear();
+  }
+  // Atomically publish the cache, overwriting any stale .bin. The common prefetch
+  // case (no prior cache) renames straight in; a rebuild removes the stale file first.
+  if (!Storage.rename(tmpBinPath.c_str(), filePath.c_str())) {
+    Storage.remove(filePath.c_str());
+    if (!Storage.rename(tmpBinPath.c_str(), filePath.c_str())) {
+      LOG_ERR("SCT", "Failed to publish section cache: %s", filePath.c_str());
+      Storage.remove(tmpBinPath.c_str());
+      return false;
+    }
   }
   return true;
 }

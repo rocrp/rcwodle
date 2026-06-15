@@ -25,6 +25,7 @@
 #include "EpubReaderFootnotesActivity.h"
 #include "EpubReaderPercentSelectionActivity.h"
 #include "EpubReaderUtils.h"
+#include "SectionPrefetcher.h"  // WODLE-PORT
 #include "KOReaderCredentialStore.h"
 // WODLE-PORT: KOReaderSyncActivity pruned (WiFi)
 #include "MappedInputManager.h"
@@ -165,12 +166,18 @@ void EpubReaderActivity::onEnter() {
   APP_STATE.saveToFile();
   RECENT_BOOKS.addBook(epub->getPath(), epub->getTitle(), epub->getAuthor(), epub->getThumbBmpPath());
 
+  // WODLE-PORT: attach the background section prefetcher (its own isolated Epub).
+  SectionPrefetcher::instance().beginBook(renderer, epub->getPath());
+
   // Trigger first update
   requestUpdate();
 }
 
 void EpubReaderActivity::onExit() {
   Activity::onExit();
+
+  // WODLE-PORT: detach the prefetcher before tearing down the book.
+  SectionPrefetcher::instance().endBook();
 
   // Reset orientation back to portrait for the rest of the UI
   renderer.setOrientation(GfxRenderer::Orientation::Portrait);
@@ -933,6 +940,18 @@ void EpubReaderActivity::silentIndexNextChapterIfNeeded(const uint16_t viewportW
                                   SETTINGS.extraParagraphSpacing, SETTINGS.paragraphAlignment, viewportWidth,
                                   viewportHeight, SETTINGS.hyphenationEnabled, SETTINGS.embeddedStyle,
                                   SETTINGS.imageRendering, SETTINGS.focusReadingEnabled)) {
+    return;
+  }
+
+  // WODLE-PORT: build the next-chapter cache off the UI thread when the prefetcher is
+  // available (no penultimate-page freeze); otherwise fall back to a synchronous build.
+  auto& prefetcher = SectionPrefetcher::instance();
+  if (prefetcher.active()) {
+    prefetcher.request(nextSpineIndex,
+                       {SETTINGS.getReaderFontId(), SETTINGS.getReaderLineCompression(),
+                        SETTINGS.extraParagraphSpacing, SETTINGS.paragraphAlignment, viewportWidth, viewportHeight,
+                        SETTINGS.hyphenationEnabled, SETTINGS.embeddedStyle, SETTINGS.imageRendering,
+                        SETTINGS.focusReadingEnabled});
     return;
   }
 
