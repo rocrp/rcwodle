@@ -83,7 +83,12 @@ thread itself: mitigated by ample stack (8 KB) and reusing the proven `createSec
   serial logging.
 - **Verified:** 214/214 host tests pass (incl. the EPUB cache suite, exercising the atomic write);
   SCons firmware build OK (3.50 MB).
-- **HIL pending:** the device booted into the app after the Phase-1 flash, and there's no software
-  path back to recovery, so Phase 2 isn't flashed yet. To verify: re-enter recovery (power+down
-  10 s), `wodle_flash.py write main.bin --addr 0x12218000`, open a multi-chapter **EPUB**, page
-  across a section boundary, and confirm `wodle stat` shows `prefetch` incrementing with no crash.
+- **HIL (2026-06-15): flashed + boots healthy; prefetch path not yet exercised.** main.bin flashed
+  via recovery; device boots clean, navigates/reads without crashing, and `wodle stat` shows the live
+  `prefetch=0` counter. The atomic-write change is covered by the host EPUB suite. The background-build
+  path could NOT be exercised on-device this session: the only book present (三国演义) is a `.txt`
+  (TxtReaderActivity has no prefetcher — confirmed by heap not dropping ~16 KB on open), and loading an
+  EPUB needs USB-MSC File Transfer, whose console-driven home-menu navigation was intractable here.
+  The unverified part is benign (pure optimization; atomic write + validation fallback ⇒ a bug only
+  costs a redundant build). **To finish:** copy a multi-chapter EPUB via File Transfer (physical
+  buttons are easy), open it, page into a multi-page chapter, and confirm `wodle stat prefetch` rises.
