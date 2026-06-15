@@ -14,34 +14,40 @@
 #include "KOReaderCredentialStore.h"
 #include "activities/settings/SettingsActivity.h"
 
-// Build the font family setting dynamically. When registry is non-null, SD card fonts
-// are appended after the built-in fonts. Otherwise only built-in fonts are listed.
+// Build the font family setting dynamically. Options are tiered:
+//   [0, BUILTIN)            built-in fonts (Serif/Sans, StrId labels)
+//   [BUILTIN, BUILTIN+F)    WODLE-PORT flash-resident XIP families (SETTINGS.flashFontFamilies)
+//   [BUILTIN+F, ...+S)      SD card families (registry)
+// Selecting a tier sets its name field and clears the others, so getReaderFontId()
+// resolves flash > SD > built-in unambiguously.
 inline SettingInfo buildFontFamilySetting(const SdCardFontRegistry* registry) {
-  // Built-in font labels (StrId)
   std::vector<StrId> enumValues = {StrId::STR_NOTO_SERIF, StrId::STR_NOTO_SANS};
-  // Runtime string labels for SD card fonts
-  std::vector<std::string> enumStringValues;
 
-  // Reserve: first CrossPointSettings::BUILTIN_FONT_COUNT entries use StrId, rest use strings
+  // Flash families come from SETTINGS (populated by FlashFontSystem::begin()).
+  std::vector<std::string> flashNames;
+  for (uint8_t i = 0; i < SETTINGS.flashFontFamilyCount && i < CrossPointSettings::MAX_FLASH_FAMILIES; i++) {
+    flashNames.emplace_back(SETTINGS.flashFontFamilies[i]);
+  }
+  // SD families from the registry.
+  std::vector<std::string> sdNames;
   if (registry) {
     const auto& families = registry->getFamilies();
-    enumStringValues.reserve(families.size());
-    std::transform(families.begin(), families.end(), std::back_inserter(enumStringValues),
+    sdNames.reserve(families.size());
+    std::transform(families.begin(), families.end(), std::back_inserter(sdNames),
                    [](const SdCardFontFamilyInfo& f) { return f.name; });
   }
 
-  // Capture the SD font count for the lambdas
-  const int sdFontCount = static_cast<int>(enumStringValues.size());
+  const int B = CrossPointSettings::BUILTIN_FONT_COUNT;
+  const int F = static_cast<int>(flashNames.size());
 
-  // Total option count = built-in + SD card families
-  // For the combined enumStringValues: we need all entries as strings (built-in names + SD names)
-  // The render code checks enumStringValues first, then enumValues. So we build enumStringValues
-  // with all options when SD fonts are present.
+  // The render code prefers enumStringValues; populate it (with built-in labels
+  // first) whenever any external family exists.
   std::vector<std::string> allStringValues;
-  if (sdFontCount > 0) {
+  if (F > 0 || !sdNames.empty()) {
     allStringValues.push_back(I18N.get(StrId::STR_NOTO_SERIF));
     allStringValues.push_back(I18N.get(StrId::STR_NOTO_SANS));
-    allStringValues.insert(allStringValues.end(), enumStringValues.begin(), enumStringValues.end());
+    allStringValues.insert(allStringValues.end(), flashNames.begin(), flashNames.end());
+    allStringValues.insert(allStringValues.end(), sdNames.begin(), sdNames.end());
   }
 
   SettingInfo s;
@@ -52,37 +58,38 @@ inline SettingInfo buildFontFamilySetting(const SdCardFontRegistry* registry) {
   s.key = "fontFamily";
   s.category = StrId::STR_CAT_READER;
 
-  // Capture registry families by copy for the lambdas
-  std::vector<std::string> sdFamilyNames;
-  if (registry) {
-    const auto& families = registry->getFamilies();
-    sdFamilyNames.reserve(families.size());
-    std::transform(families.begin(), families.end(), std::back_inserter(sdFamilyNames),
-                   [](const SdCardFontFamilyInfo& f) { return f.name; });
-  }
-
-  s.valueGetter = [sdFamilyNames]() -> uint8_t {
-    // If an SD card font is selected, find its index
-    if (SETTINGS.sdFontFamilyName[0] != '\0') {
-      for (int i = 0; i < static_cast<int>(sdFamilyNames.size()); i++) {
-        if (sdFamilyNames[i] == SETTINGS.sdFontFamilyName) {
-          return static_cast<uint8_t>(CrossPointSettings::BUILTIN_FONT_COUNT + i);
-        }
+  s.valueGetter = [flashNames, sdNames, B, F]() -> uint8_t {
+    if (SETTINGS.flashFontFamilyName[0] != '\0') {
+      for (int i = 0; i < static_cast<int>(flashNames.size()); i++) {
+        if (flashNames[i] == SETTINGS.flashFontFamilyName) return static_cast<uint8_t>(B + i);
       }
-      // SD font name not found in registry — fall through to built-in
     }
-    return SETTINGS.fontFamily < CrossPointSettings::BUILTIN_FONT_COUNT ? SETTINGS.fontFamily : 0;
+    if (SETTINGS.sdFontFamilyName[0] != '\0') {
+      for (int i = 0; i < static_cast<int>(sdNames.size()); i++) {
+        if (sdNames[i] == SETTINGS.sdFontFamilyName) return static_cast<uint8_t>(B + F + i);
+      }
+    }
+    return SETTINGS.fontFamily < B ? SETTINGS.fontFamily : 0;
   };
 
-  s.valueSetter = [sdFamilyNames](uint8_t v) {
-    if (v < CrossPointSettings::BUILTIN_FONT_COUNT) {
+  s.valueSetter = [flashNames, sdNames, B, F](uint8_t v) {
+    if (v < B) {
       SETTINGS.fontFamily = v;
+      SETTINGS.flashFontFamilyName[0] = '\0';
       SETTINGS.sdFontFamilyName[0] = '\0';
+    } else if (v < B + F) {
+      const int idx = v - B;
+      if (idx < static_cast<int>(flashNames.size())) {
+        strncpy(SETTINGS.flashFontFamilyName, flashNames[idx].c_str(), sizeof(SETTINGS.flashFontFamilyName) - 1);
+        SETTINGS.flashFontFamilyName[sizeof(SETTINGS.flashFontFamilyName) - 1] = '\0';
+        SETTINGS.sdFontFamilyName[0] = '\0';
+      }
     } else {
-      int sdIdx = v - CrossPointSettings::BUILTIN_FONT_COUNT;
-      if (sdIdx < static_cast<int>(sdFamilyNames.size())) {
-        strncpy(SETTINGS.sdFontFamilyName, sdFamilyNames[sdIdx].c_str(), sizeof(SETTINGS.sdFontFamilyName) - 1);
+      const int idx = v - B - F;
+      if (idx < static_cast<int>(sdNames.size())) {
+        strncpy(SETTINGS.sdFontFamilyName, sdNames[idx].c_str(), sizeof(SETTINGS.sdFontFamilyName) - 1);
         SETTINGS.sdFontFamilyName[sizeof(SETTINGS.sdFontFamilyName) - 1] = '\0';
+        SETTINGS.flashFontFamilyName[0] = '\0';
       }
     }
   };
@@ -285,7 +292,10 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
   }();
 
   std::vector<SettingInfo> v = baseList;
-  if (registry && registry->getFamilyCount() > 0) {
+  // Rebuild the font-family entry only on the live-menu path (registry passed) when
+  // any external family exists. JsonSettingsIO calls with no registry, so it keeps
+  // the static entry and serializes the raw built-in `fontFamily` member.
+  if (registry && (registry->getFamilyCount() > 0 || SETTINGS.flashFontFamilyCount > 0)) {
     auto it = std::find_if(v.begin(), v.end(), [](const SettingInfo& s) { return s.nameId == StrId::STR_FONT_FAMILY; });
     if (it != v.end()) {
       *it = buildFontFamilySetting(registry);

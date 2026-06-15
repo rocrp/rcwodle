@@ -4,6 +4,12 @@
 #include <cstdint>
 #include <iosfwd>
 
+// WODLE-PORT: default flash-resident font selected on first boot / when settings
+// predate the feature. MUST match the family flashed by tools/build_flash_fonts.py
+// (--name). Degrades gracefully: if that font isn't in flash, the resolver returns
+// 0 and getReaderFontId() falls back to SD/built-in.
+#define CROSSPOINT_DEFAULT_FLASH_FONT "霞鹜文楷"
+
 class CrossPointSettings {
  private:
   // Private constructor for singleton
@@ -258,6 +264,10 @@ class CrossPointSettings {
   uint8_t focusReadingEnabled = 0;
   // SD card font family name (empty = use built-in fontFamily)
   char sdFontFamilyName[32] = "";
+  // WODLE-PORT: flash-resident XIP font family (see FlashFontSystem). Resolved
+  // ahead of sdFontFamilyName in getReaderFontId(). Empty = opted out (use SD /
+  // built-in). Default is the shipped CJK font; switched via the font-family menu.
+  char flashFontFamilyName[32] = CROSSPOINT_DEFAULT_FLASH_FONT;
   // Show hidden files/directories (starting with '.') in the file browser (0 = hidden, 1 = show)
   uint8_t showHiddenFiles = 0;
   // Remove a book from the Recent Books list when its End-of-Book screen is reached (0 = off, 1 = on)
@@ -287,6 +297,15 @@ class CrossPointSettings {
   using SdFontIdResolver = int (*)(void* ctx, const char* familyName, uint8_t fontSize);
   SdFontIdResolver sdFontIdResolver = nullptr;
   void* sdFontResolverCtx = nullptr;
+
+  // WODLE-PORT: flash-font resolver + discovered family names, set by
+  // FlashFontSystem::begin(). Runtime-only (not serialized); the family list feeds
+  // the font-family settings menu. Fixed char arrays keep this header POD-style.
+  SdFontIdResolver flashFontIdResolver = nullptr;
+  void* flashFontResolverCtx = nullptr;
+  static constexpr uint8_t MAX_FLASH_FAMILIES = 8;
+  uint8_t flashFontFamilyCount = 0;
+  char flashFontFamilies[MAX_FLASH_FAMILIES][32] = {};
 
   uint16_t getPowerButtonDuration() const {
     return (shortPwrBtn == CrossPointSettings::SHORT_PWRBTN::SLEEP) ? 10 : 400;

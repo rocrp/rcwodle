@@ -151,6 +151,9 @@ bool JsonSettingsIO::saveSettings(const CrossPointSettings& s, const char* path)
   if (s.sdFontFamilyName[0] != '\0') {
     doc["sdFontFamilyName"] = s.sdFontFamilyName;
   }
+  // WODLE-PORT: flash-font selection — always written (empty string = explicit
+  // opt-out, so a built-in/SD choice survives the missing-key default below).
+  doc["flashFontFamilyName"] = s.flashFontFamilyName;
 
   // Language -- managed by LanguageSelectActivity, not in SettingsList.
   // Stored as ISO code string ("EN", "DE", ...) for stability across enum reorders.
@@ -253,6 +256,11 @@ bool JsonSettingsIO::loadSettings(CrossPointSettings& s, const char* json, bool*
   const char* sfn = doc["sdFontFamilyName"] | "";
   strncpy(s.sdFontFamilyName, sfn, sizeof(s.sdFontFamilyName) - 1);
   s.sdFontFamilyName[sizeof(s.sdFontFamilyName) - 1] = '\0';
+  // WODLE-PORT: flash-font selection. Missing key (settings predate the feature)
+  // defaults to the shipped CJK font; an explicit "" means the user chose built-in/SD.
+  const char* ffn = doc["flashFontFamilyName"] | CROSSPOINT_DEFAULT_FLASH_FONT;
+  strncpy(s.flashFontFamilyName, ffn, sizeof(s.flashFontFamilyName) - 1);
+  s.flashFontFamilyName[sizeof(s.flashFontFamilyName) - 1] = '\0';
   if (storedFontFamily == CrossPointSettings::LEGACY_OPENDYSLEXIC && s.sdFontFamilyName[0] == '\0') {
     s.fontFamily = CrossPointSettings::NOTOSERIF;
     strncpy(s.sdFontFamilyName, "OpenDyslexic", sizeof(s.sdFontFamilyName) - 1);

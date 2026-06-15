@@ -30,6 +30,7 @@
 #include "ReadingStatsStore.h"  // WODLE-PORT
 #include "MappedInputManager.h"
 #include "OpdsServerStore.h"
+#include "FlashFontSystem.h"  // WODLE-PORT
 #include "RecentBooksStore.h"
 #include "SdCardFontSystem.h"
 #include "activities/Activity.h"
@@ -51,6 +52,7 @@ GfxRenderer renderer(display);
 ActivityManager activityManager(renderer, mappedInputManager);
 FontDecompressor fontDecompressor;
 SdCardFontSystem sdFontSystem;
+FlashFontSystem flashFontSystem;  // WODLE-PORT: XIP fonts from NOR flash
 FontCacheManager fontCacheManager(renderer.getFontMap(), renderer.getSdCardFonts());
 static unsigned long allowSleepAt = 0;
 
@@ -275,6 +277,10 @@ void setupDisplayAndFonts(bool seamless = false) {
   renderer.insertFont(UI_10_FONT_ID, ui10FontFamily);
   renderer.insertFont(UI_12_FONT_ID, ui12FontFamily);
   renderer.insertFont(SMALL_FONT_ID, smallFontFamily);
+
+  // WODLE-PORT: register flash-resident XIP fonts (CJK) before SD discovery so
+  // the renderer knows them when the reader resolves its body font.
+  flashFontSystem.begin(renderer);
 
   // Discover and load SD card fonts
   sdFontSystem.begin(renderer);

@@ -346,6 +346,13 @@ int CrossPointSettings::getRefreshFrequency() const {
 }
 
 int CrossPointSettings::getReaderFontId() const {
+  // WODLE-PORT: flash-resident XIP font wins (zero glyph-bitmap RAM, great CJK).
+  if (flashFontFamilyName[0] != '\0' && flashFontIdResolver) {
+    int id = flashFontIdResolver(flashFontResolverCtx, flashFontFamilyName, fontSize);
+    if (id != 0) return id;
+    // Fall through to SD / built-in if the flash font isn't present.
+  }
+
   // Check SD card font first
   if (sdFontFamilyName[0] != '\0' && sdFontIdResolver) {
     int id = sdFontIdResolver(sdFontResolverCtx, sdFontFamilyName, fontSize);
