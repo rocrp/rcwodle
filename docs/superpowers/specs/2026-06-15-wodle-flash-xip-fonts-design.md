@@ -117,4 +117,24 @@ This is the more invasive half — lands second, on its own spec/plan once Phase
 ## Out of scope (YAGNI)
 
 - Reverse-engineering `.epdfont`. - Runtime font install UI (fengda's full FFS). - Web flasher.
-- Repartitioning to fit full-20k-glyph or >3 sizes. - Multiple simultaneous flash families.
+- Multiple simultaneous flash families. - Real bold (Medium) weight in flash (fake-bold for now).
+
+## As-built (2026-06-15, Phase 1 shipped + HIL-verified)
+
+- **Region**: measurement showed full-GB2312 costs ~1.0/1.4/1.8/2.3 MB at 12/14/16/18 pt — the
+  4 MB `FONT_REGION` only fit 2 sizes. The neighbouring `EZIP_REGION` (6.5 MB @ `0x12580000`)
+  is referenced *nowhere* in firmware (the `EZIP_*` config hits are the image codec, not the
+  partition), so the flash-font area was widened to the contiguous **unused EZIP+FONT = 10.5 MB
+  @ `0x12580000`**. No partition-table change: the stock bootloader/ftab own only the HCPU app;
+  these data regions are pure XIP-by-address. `FlashFontSystem::kBase/kSize` + the build tool's
+  `FLASH_FONT_BASE/SIZE` mirror this.
+- **Font**: full GB2312 (7817 glyphs) × 4 sizes (12/14/16/18), `dist/fonts.bin` ≈ 6.6 MB,
+  LXGW WenKai Regular (reused from `build_cjk_font.py`'s `gh`-fetched cache). Bold = fake-bold.
+- **Deploy** (`build_flash_fonts.py` prints it): the recovery bootloader sees ezip (6.5 MB) +
+  font (4 MB) as separate partitions, so the 6.6 MB blob is split at the partition boundary
+  (= exactly the font partition start) into `fonts_ezip.bin` (→ `0x12580000`) + `fonts_font.bin`
+  (→ `0x12C00000`), two partition-aligned writes that land contiguous in XIP. Flash alongside
+  `main.bin` @ `0x12218000`.
+- **Verified**: `FlashFontTest` (4) + full host suite 214/214; SCons firmware build OK; flashed
+  to the device (every byte CRC-verified by the flasher); CJK renders throughout the reader
+  (三国演义 chapter list + body pages) with the flash 霞鹜文楷 as the default reader font.

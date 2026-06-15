@@ -46,6 +46,10 @@ fc = bcf.fc
 # unused partitions needs no partition-table change. Mirrored by FlashFontSystem::kBase/kSize.
 FLASH_FONT_BASE = 0x12580000
 FLASH_FONT_SIZE = 0x00A80000  # 10.5 MB
+# The two underlying partitions the recovery bootloader reports (split deploy below).
+EZIP_BASE = 0x12580000
+EZIP_SIZE = 0x00680000  # 6.5 MB; EZIP_BASE + EZIP_SIZE == FONT_BASE (contiguous in XIP)
+FONT_BASE = 0x12C00000
 DIST = bcf.REPO / "dist/fonts.bin"
 
 WFFD_MAGIC = b"WFFD"
@@ -174,7 +178,23 @@ def main() -> None:
         f"{FLASH_FONT_SIZE / 1024 / 1024:.1f} MB region",
         file=sys.stderr,
     )
-    print(f"  flash: uv run tools/wodle_flash.py write {outp} --addr 0x{FLASH_FONT_BASE:08X}", file=sys.stderr)
+
+    # The recovery bootloader knows ezip (0x12580000, 6.5 MB) and font (0x12c00000,
+    # 4 MB) as separate partitions; a single cross-boundary write is unverified. When
+    # the blob exceeds the ezip partition, emit two partition-aligned pieces (the split
+    # point is exactly the font partition start, so they land contiguous in XIP) and
+    # print the safe two-write deploy.
+    if len(out_bytes) > EZIP_SIZE:
+        p1, p2 = out_bytes[:EZIP_SIZE], out_bytes[EZIP_SIZE:]
+        f1, f2 = outp.with_name("fonts_ezip.bin"), outp.with_name("fonts_font.bin")
+        f1.write_bytes(p1)
+        f2.write_bytes(p2)
+        print(f"  spans ezip+font; split -> {f1.name} ({len(p1)} B) + {f2.name} ({len(p2)} B)", file=sys.stderr)
+        print("  flash (after main.bin):", file=sys.stderr)
+        print(f"    uv run tools/wodle_flash.py write {f1} --addr 0x{EZIP_BASE:08X} --no-reboot -y", file=sys.stderr)
+        print(f"    uv run tools/wodle_flash.py write {f2} --addr 0x{FONT_BASE:08X} -y", file=sys.stderr)
+    else:
+        print(f"  flash: uv run tools/wodle_flash.py write {outp} --addr 0x{FLASH_FONT_BASE:08X}", file=sys.stderr)
 
 
 if __name__ == "__main__":
